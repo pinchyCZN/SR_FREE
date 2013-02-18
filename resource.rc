@@ -1,0 +1,299 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 404, 238
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+EXSTYLE WS_EX_ACCEPTFILES
+CAPTION "SR FREE"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Search",IDC_SEARCH,0,1,48,11
+    PUSHBUTTON      "Replace",IDC_REPLACE,47,1,48,11
+    CONTROL         "case sense",IDC_CASE,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,94,1,48,11
+    CONTROL         "search subdirs",IDC_SUBDIRS,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,141,1,48,11
+    CONTROL         "whole word",IDC_WHOLEWORD,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,188,1,48,11
+    CONTROL         "wildcard",IDC_WILDCARD,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,235,1,48,11
+    CONTROL         "ignore wspace",IDC_IGNOREWS,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,282,1,48,11
+    CONTROL         "unicode",IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,94,12,48,11
+    CONTROL         "HEX",IDC_HEX,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | 
+                    WS_TABSTOP,142,12,48,11
+    CONTROL         "on top",IDC_ONTOP,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,329,1,48,11
+    PUSHBUTTON      "OPTIONS",IDC_OPTIONS,329,12,48,11
+    LTEXT           "Search for:",IDC_STATIC,0,30,39,11
+    LTEXT           "Replace with:",IDC_STATIC,0,47,46,9
+    LTEXT           "File Mask:",IDC_STATIC,0,63,36,10
+    LTEXT           "Path:",IDC_STATIC,0,82,24,12
+    LTEXT           "Search Results:",IDC_STATIC,0,95,54,12
+    COMBOBOX        IDC_COMBO_SEARCH,48,29,306,204,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_REPLACE,48,45,306,193,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_MASK,48,60,306,178,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_PATH,48,75,306,161,CBS_DROPDOWN | 
+                    CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_SEARCH_OPTIONS,354,28,22,14
+    PUSHBUTTON      "...",IDC_REPLACE_OPTIONS,354,44,22,14
+    PUSHBUTTON      "...",IDC_FILE_OPTIONS,354,59,23,14
+    PUSHBUTTON      "...",IDC_PATH_OPTIONS,354,75,24,14
+    LISTBOX         IDC_LIST1,0,110,403,115,LBS_OWNERDRAWFIXED | 
+                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | 
+                    LBS_WANTKEYBOARDINPUT | LBS_EXTENDEDSEL | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_STATUS,0,225,387,13,SS_SUNKEN
+    PUSHBUTTON      "<",IDC_PATH_UPONE,30,74,14,14
+END
+
+IDD_SEARCH_PROGRESS DIALOG DISCARDABLE  0, 0, 186, 94
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Searching"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,68,74,50,14
+    LTEXT           "",IDC_SEARCH_STATUS,0,5,186,27
+    CONTROL         "Progress1",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,
+                    0,46,186,14
+END
+
+IDD_VIEWCONTEXT DIALOGEX 0, 0, 404, 310
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "View Context"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    SCROLLBAR       IDC_CONTEXT_SCROLLBAR,394,0,10,299,SBS_VERT | WS_TABSTOP
+    EDITTEXT        IDC_CONTEXT,61,0,331,310,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    NOT WS_BORDER | WS_HSCROLL
+    EDITTEXT        IDC_ROWNUMBER,0,0,60,310,ES_RIGHT | ES_MULTILINE | NOT 
+                    WS_BORDER | WS_HSCROLL | NOT WS_TABSTOP,WS_EX_RIGHT
+END
+
+IDD_OPTIONS DIALOG DISCARDABLE  0, 0, 258, 166
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Options"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Select open command",IDC_STATIC,9,7,80,9
+    COMBOBOX        IDC_SELECT_OPEN,95,5,59,124,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Caption",IDC_STATIC,9,23,37,11
+    LTEXT           "Open Command",IDC_STATIC,95,23,82,8
+    EDITTEXT        IDC_CAPTION,6,34,83,18,ES_AUTOHSCROLL
+    EDITTEXT        IDC_OPEN1,95,34,162,18,ES_AUTOHSCROLL
+    PUSHBUTTON      "Apply",IDC_APPLY,7,58,50,14
+    LTEXT           "Combo Font:",IDC_STATIC,7,90,45,13
+    COMBOBOX        IDC_COMBO_FONT,63,89,194,69,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Listbox Font:",IDC_STATIC,0,113,49,12
+    COMBOBOX        IDC_LISTBOX_FONT,63,110,194,55,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Hit Width:",IDC_STATIC,11,135,40,8
+    EDITTEXT        IDC_HIT_WIDTH,69,129,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Show column",IDC_SHOW_COLUMN,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,123,130,60,10
+    DEFPUSHBUTTON   "OK",IDOK,0,152,50,14
+    PUSHBUTTON      "Open INI",IDC_OPEN_INI,69,151,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,185,152,50,14
+    CONTROL         "File name color",IDC_FNAME_COLOR,"Button",BS_OWNERDRAW | 
+                    WS_TABSTOP,63,71,58,14
+    PUSHBUTTON      "Match color",IDC_MATCH_COLOR,145,70,58,14
+END
+
+IDD_CUSTOM_SEARCH DIALOG DISCARDABLE  0, 0, 290, 161
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "Custom search"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_BIG_EDIT,0,2,290,141,ES_MULTILINE | ES_WANTRETURN | 
+                    WS_VSCROLL | WS_HSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,0,147,50,14
+    CONTROL         "Extended (\\n \\r \\t \\0...)",IDC_EXTENDED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,61,149,88,10
+    PUSHBUTTON      "Cancel",IDCANCEL,190,147,50,14
+END
+
+IDD_REPLACE DIALOG DISCARDABLE  0, 0, 348, 166
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Replace"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LISTBOX         IDC_LIST1,0,2,348,111,LBS_OWNERDRAWFIXED | 
+                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | 
+                    LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_HSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "Replace This",IDC_REPLACE_THIS,38,119,76,14
+    PUSHBUTTON      "Replace Rest In File",IDC_REPLACE_REST_FILE,130,119,76,
+                    14
+    PUSHBUTTON      "Replace All Remaining",IDC_REPLACE_ALL,222,119,76,14
+    PUSHBUTTON      "Skip This",IDC_SKIPTHIS,38,145,76,14
+    PUSHBUTTON      "Skip Rest of File",IDC_SKIP_REST_FILE,130,145,76,14
+    PUSHBUTTON      "Cancel Remaining",IDC_CANCEL_REMAINING,222,145,76,14
+END
+
+IDD_FAVORITES DIALOGEX 0, 0, 301, 105
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+EXSTYLE WS_EX_ACCEPTFILES
+CAPTION "Favorites"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LISTBOX         IDC_LIST1,0,0,301,80,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_FAV_EDIT,0,79,300,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_ADD,0,91,50,14
+    PUSHBUTTON      "Delete",IDC_DELETE,71,91,50,14
+    PUSHBUTTON      "Browse Dir",IDC_BROWSE_DIR,139,91,50,14
+    PUSHBUTTON      "Select",IDC_SELECT,189,91,50,14
+    PUSHBUTTON      "Close",IDCANCEL,239,91,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_OPTIONS, DIALOG
+    BEGIN
+        RIGHTMARGIN, 257
+        VERTGUIDE, 63
+        BOTTOMMARGIN, 165
+        HORZGUIDE, 52
+        HORZGUIDE, 58
+    END
+
+    IDD_CUSTOM_SEARCH, DIALOG
+    BEGIN
+        RIGHTMARGIN, 289
+    END
+
+    IDD_REPLACE, DIALOG
+    BEGIN
+        VERTGUIDE, 38
+    END
+
+    IDD_FAVORITES, DIALOG
+    BEGIN
+        RIGHTMARGIN, 292
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_EXPANDED            BITMAP  DISCARDABLE     "img_expanded.bmp"
+IDB_COLLAPSED           BITMAP  DISCARDABLE     "img_collapsed.bmp"
+IDB_LINE                BITMAP  DISCARDABLE     "img_line.bmp"
+IDB_FOUND               BITMAP  DISCARDABLE     "img_found.bmp"
+IDB_EMPTY               BITMAP  DISCARDABLE     "img_empty.bmp"
+IDB_CONTINUE            BITMAP  DISCARDABLE     "img_continue.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR ACCELERATORS DISCARDABLE 
+BEGIN
+    "F",            IDC_COMBO_MASK,         VIRTKEY, CONTROL, NOINVERT
+    "L",            IDC_LIST1,              VIRTKEY, CONTROL, NOINVERT
+    "O",            IDC_OPTIONS,            VIRTKEY, CONTROL, NOINVERT
+    "P",            IDC_COMBO_PATH,         VIRTKEY, CONTROL, NOINVERT
+    "R",            IDC_COMBO_REPLACE,      VIRTKEY, CONTROL, NOINVERT
+    "S",            IDC_COMBO_SEARCH,       VIRTKEY, CONTROL, NOINVERT
+    VK_F5,          IDC_SEARCH,             VIRTKEY, NOINVERT
+    VK_F6,          IDC_REPLACE,            VIRTKEY, NOINVERT
+    VK_F9,          IDC_OPTIONS,            VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON                ICON    DISCARDABLE     "search-b-icon64.ico"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
