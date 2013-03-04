@@ -827,8 +827,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_VKEYTOITEM:
 		switch(LOWORD(wparam)){
-		case '1':case'2':case'3':case'4':case'5':
-			handle_context_open(hwnd,CMD_OPENWITH+LOWORD(wparam)-'1');
+		case '0':case '1':case'2':case'3':case'4':case'5':
+			{
+				int index=CMD_OPENWITH+LOWORD(wparam)-'1';
+			if(LOWORD(wparam)=='0')
+				index=CMD_OPENASSOC;
+			handle_context_open(hwnd,index);
+			}
 			break;
 		case 'C':
 			{
