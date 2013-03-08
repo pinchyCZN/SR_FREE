@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include "resource.h"
 
-int max_items_combobox=4;
+int max_items_combobox=10;
 int max_open_with=10;
 
 int get_max_open_with()
