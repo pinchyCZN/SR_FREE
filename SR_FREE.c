@@ -103,6 +103,7 @@ int show_main_help(HWND hwnd,HELPINFO *hi)
 				"F5=Search\r\n"
 				"F6=Replace\r\n"
 				"F9 / ctrl+o=open options\r\n"
+				"ALT+HOME = always on top\r\n"
 				"double click on line to open in context viewer\r\n"
 				"[1-9] open with app set in options\r\n"
 				"ctrl+a select all lines\r\n"
@@ -953,6 +954,15 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			exclude_buttons(hwnd,LOWORD(wparam));
 			break;
 		case IDC_ONTOP:
+			if(HIWORD(wparam)!=0){ //from accelerator
+				int check;
+				check=IsDlgButtonChecked(hwnd,LOWORD(wparam));
+				if(check==BST_CHECKED)
+					check=BST_UNCHECKED;
+				else
+					check=BST_CHECKED;
+				 CheckDlgButton(hwnd,LOWORD(wparam),check);
+			}
 			SetWindowPos(hwnd,IsDlgButtonChecked(hwnd,LOWORD(wparam))?HWND_TOPMOST:HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 			break;
 		}
