@@ -808,10 +808,8 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	//	InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_DRAWITEM:
-		if(!is_thread_busy()){
-			list_drawitem(hwnd,wparam,lparam);
-			set_scroll_width(hwnd,IDC_LIST1);
-		}
+		list_drawitem(hwnd,wparam,lparam);
+		set_scroll_width(hwnd,IDC_LIST1);
 		return TRUE;
 		break;
 	case WM_DROPFILES:
