@@ -965,6 +965,12 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			break;
 		}
 		break;
+	case WM_ENDSESSION:
+		if(wparam){
+			save_window_size(hwnd,"MAIN_WINDOW");
+			save_ini_stuff(hwnd);
+		}
+		break;
 	case WM_CLOSE:
 		save_window_size(hwnd,"MAIN_WINDOW");
 		save_ini_stuff(hwnd);
