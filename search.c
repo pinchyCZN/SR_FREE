@@ -385,7 +385,7 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 					}
 					if(binary){
 						line[line_index+1]=0;
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %i %i -%s",line_offset+start_pos,c,l,s);
+						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",line_offset+start_pos,line_num,c,l,s);
 					}
 					else
 						lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
@@ -723,9 +723,9 @@ check_nibble:
 				}
 				if(binary){
 					if(unicode_search)
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %i %i -%s",offset-match_len*2+2,line_col,match_len*2,str);
+						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset-match_len*2+2,line_num,line_col,match_len*2,str);
 					else
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %i %i -%s",offset-match_len+1,line_col,match_len,str);
+						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset-match_len+1,line_num,line_col,match_len,str);
 					
 				}
 				else

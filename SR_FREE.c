@@ -580,7 +580,8 @@ int open_with_cmd(HWND hwnd,char *fname,int index,int cmd)
 			if(strnicmp(buf,"line",sizeof("line")-1)==0)
 				sscanf(buf,"%*s %I64i %*s %I64i %*s %*s %*s %I64x",&line,&col,&offset);//"Line %I64i col %I64i = %i %i %I64X -%s"
 			else if(strnicmp(buf,"offset",sizeof("offset")-1)==0)
-				sscanf(buf,"%*s 0x%I64x",&offset);
+				//"Offset 0x%I64X = %I64i %i %i -%s"
+				sscanf(buf,"%*s 0x%I64x %*s %I64i",&offset,&line);
 			str=malloc(MAX_PATH*2);
 			if(str!=0){
 				int open_num=cmd-CMD_OPENWITH+1;

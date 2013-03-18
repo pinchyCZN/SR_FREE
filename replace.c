@@ -32,7 +32,7 @@ int create_replace_str(char *istr,char *ostr,int olen)
 			is_line=TRUE;
 		}
 		if(strnicmp(istr,"offset ",sizeof("offset ")-1)==0){
-			sscanf(istr,"%*s 0x%I64X %*s %i %i",&offset,&col,&len);
+			sscanf(istr,"%*s 0x%I64X %*s %*s %i %i",&offset,&col,&len);
 			is_line=FALSE;
 		}
 		if(len>0 && s!=0){
@@ -45,7 +45,7 @@ int create_replace_str(char *istr,char *ostr,int olen)
 				if(is_line)
 					_snprintf(info,size,"Line %I64i col %I64i = %i %i %I64X -",line,column,col,rlen,offset);
 				else
-					_snprintf(info,size,"Offset 0x%I64X = %i %i -",offset,col,rlen);
+					_snprintf(info,size,"Offset 0x%I64X = %I64i %i %i -",offset,line,col,rlen);
 				index=replace_index=0;
 				s=s+1;
 				for(i=0;i<size;i++){
@@ -72,13 +72,13 @@ int create_new_replace_str(char *str,int size,__int64 offset)
 	int col=0,len=0;
 	__int64 l=0,c=0;
 	if(strnicmp(str,"offset",sizeof("offset")-1)==0){
-		sscanf(str,"%*s %*s %*s %i %i",&col,&len);
+		sscanf(str,"%*s %*s %*s %*s %i %i",&col,&len);
 		s=strstr(str,"-");
 		if(s!=0){
 			s++;
 			strncpy(tmp,s,sizeof(tmp));
 			tmp[sizeof(tmp)-1]=0;
-			_snprintf(str,size,"Offset 0x%I64X = %i %i -%s",offset,col,len,tmp);
+			_snprintf(str,size,"Offset 0x%I64X = %I64i %i %i -%s",offset,l,col,len,tmp);
 		}
 	}
 	else if(strnicmp(str,"line",sizeof("line")-1)==0){
@@ -204,7 +204,8 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 		is_line=TRUE;
 	}
 	if(strnicmp(info,"offset ",sizeof("offset ")-1)==0){
-		sscanf(info,"%*s 0x%I64X %*s %*s %i",&offset,&match_len);
+				//"Offset 0x%I64X = %I64i %i %i -%s"
+		sscanf(info,"%*s 0x%I64X %*s %*s %*s %i",&offset,&match_len);
 		is_line=FALSE;
 	}
 	if(fin!=0 && fout!=0 && offset>=0){

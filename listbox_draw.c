@@ -132,8 +132,8 @@ int draw_item(DRAWITEMSTRUCT *di,char *list_string)
 			sscanf(list_string,"%*s %*s %*s %*s %*s %i %i",&col,&mlen);
 		}
 		else{
-							//"Offset 0x%I64X = %i %i -%s"
-			sscanf(list_string,"%*s %*s %*s %i %i",&col,&mlen);
+							//"Offset 0x%I64X = %I64i %i %i -%s"
+			sscanf(list_string,"%*s %*s %*s %*s %i %i",&col,&mlen);
 		}
 		start=strstr(list_string,"-");
 		if(start!=0){
