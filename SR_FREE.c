@@ -765,7 +765,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	static DWORD tick=0;
 
 #ifdef _DEBUG
-	if(FALSE)
+//	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
@@ -807,6 +807,18 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 //		dump_main(hwnd);
 		resize_main(hwnd);
 	//	InvalidateRect(hwnd,NULL,TRUE);
+		break;
+	case WM_MOUSEWHEEL:
+		if(GetFocus()==GetDlgItem(hwnd,IDC_LIST1)){
+			WPARAM _wparam=wparam&0xFFFF0000;
+			if(wparam&MK_CONTROL)
+				_wparam<<=1;
+			if(wparam&MK_SHIFT)
+				_wparam<<=2;
+			if((wparam&MK_CONTROL) && (wparam&MK_SHIFT))
+				_wparam=wparam<<4;
+			SendMessage(GetDlgItem(hwnd,IDC_LIST1),msg,_wparam,lparam);
+		}
 		break;
 	case WM_DRAWITEM:
 		list_drawitem(hwnd,wparam,lparam);
