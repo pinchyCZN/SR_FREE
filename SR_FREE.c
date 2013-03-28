@@ -979,13 +979,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		}
 		break;
 	case WM_QUERYENDSESSION:
+		save_window_size(hwnd,"MAIN_WINDOW");
+		save_ini_stuff(hwnd);
 		SetWindowLong(hwnd,DWL_MSGRESULT,TRUE); //ok to end session
 		return TRUE;
 	case WM_ENDSESSION:
 		if(wparam){
 			SetWindowText(hwnd,"Shutting down");
-			save_window_size(hwnd,"MAIN_WINDOW");
-			save_ini_stuff(hwnd);
 			SetWindowLong(hwnd,DWL_MSGRESULT,0);
 			return TRUE;
 		}
