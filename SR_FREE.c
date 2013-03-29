@@ -719,6 +719,7 @@ int save_window_size(HWND hwnd,char *section)
 	int x,y;
 
 	wp.showCmd=0;
+	wp.length=sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(hwnd,&wp);
 	if(wp.showCmd==SW_SHOWMINIMIZED)
 		ShowWindow(hwnd,SW_SHOWNORMAL);
