@@ -694,23 +694,28 @@ int handle_context_open(HWND hwnd,int cmd)
 }
 int load_window_size(HWND hwnd,char *section)
 {
-	int x=0,y=0;
-	if(get_ini_value(section,"width",&x) &&
-		get_ini_value(section,"height",&y)){
-		if(x<0 || y<0){
-			PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
-			return TRUE;
-		}
-		if((x==0) || (y==0))
-			return TRUE;
-		if(x<100)x=320;
-		if(y<100)y=240;
-		if(x>5000)x=640;
-		if(y>5000)y=480;
-		SetWindowPos(hwnd,NULL,NULL,NULL,x,y,SWP_NOMOVE|SWP_NOZORDER|SWP_SHOWWINDOW);	
-		return TRUE;
+	int width=0,height=0,x=0,y=0,maximized=0;
+	RECT rect={0};
+	int result=FALSE;
+	get_ini_value(section,"width",&width);
+	get_ini_value(section,"height",&height);
+	get_ini_value(section,"xpos",&x);
+	get_ini_value(section,"ypos",&y);
+	get_ini_value(section,"maximized",&maximized);
+	if(GetWindowRect(GetDesktopWindow(),&rect)!=0){
+		int flags=SWP_SHOWWINDOW;
+		if(width<50 || height<50)
+			flags|=SWP_NOSIZE;
+		if(x<-32 || y<=-32)
+			flags|=SWP_NOMOVE;
+		if(x<((rect.right-rect.left)-50))
+			if(y<((rect.bottom-rect.top)-50))
+				if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
+					result=TRUE;
 	}
-	return FALSE;
+	if(maximized)
+		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
+	return TRUE;
 }
 int save_window_size(HWND hwnd,char *section)
 {
@@ -718,23 +723,23 @@ int save_window_size(HWND hwnd,char *section)
 	RECT rect={0};
 	int x,y;
 
-	wp.showCmd=0;
 	wp.length=sizeof(wp);
-	GetWindowPlacement(hwnd,&wp);
-	if(wp.showCmd==SW_SHOWMINIMIZED)
-		ShowWindow(hwnd,SW_SHOWNORMAL);
-	if(wp.showCmd==SW_SHOWMAXIMIZED){
-		write_ini_value(section,"width",-1);
-		write_ini_value(section,"height",-1);
-		return TRUE;
+	if(GetWindowPlacement(hwnd,&wp)!=0){
+		if(wp.flags&WPF_RESTORETOMAXIMIZED)
+			write_ini_value(section,"maximized",1);
+		else
+			write_ini_value(section,"maximized",0);
+
+		rect=wp.rcNormalPosition;
+		x=rect.right-rect.left;
+		y=rect.bottom-rect.top;
+		if(x<100)x=320;
+		if(y<100)y=240;
+		write_ini_value(section,"width",x);
+		write_ini_value(section,"height",y);
+		write_ini_value(section,"xpos",rect.left);
+		write_ini_value(section,"ypos",rect.top);
 	}
-	GetWindowRect(hwnd,&rect);
-	x=rect.right-rect.left;
-	y=rect.bottom-rect.top;
-	if(x<100)x=100;
-	if(y<100)y=100;
-	write_ini_value(section,"width",x);
-	write_ini_value(section,"height",y);
 	return TRUE;
 }
 int exclude_buttons(HWND hwnd,int ctrl)
