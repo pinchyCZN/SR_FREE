@@ -694,13 +694,19 @@ int handle_context_open(HWND hwnd,int cmd)
 }
 int load_window_size(HWND hwnd,char *section)
 {
-	int x=100,y=100;
+	int x=0,y=0;
 	if(get_ini_value(section,"width",&x) &&
 		get_ini_value(section,"height",&y)){
-		if(x<100)x=100;
-		if(y<100)y=100;
-		if(x>5000)x=500;
-		if(y>5000)y=500;
+		if(x<0 || y<0){
+			PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
+			return TRUE;
+		}
+		if((x==0) || (y==0))
+			return TRUE;
+		if(x<100)x=320;
+		if(y<100)y=240;
+		if(x>5000)x=640;
+		if(y>5000)y=480;
 		SetWindowPos(hwnd,NULL,NULL,NULL,x,y,SWP_NOMOVE|SWP_NOZORDER|SWP_SHOWWINDOW);	
 		return TRUE;
 	}
@@ -708,8 +714,19 @@ int load_window_size(HWND hwnd,char *section)
 }
 int save_window_size(HWND hwnd,char *section)
 {
+	WINDOWPLACEMENT wp;
 	RECT rect={0};
 	int x,y;
+
+	wp.showCmd=0;
+	GetWindowPlacement(hwnd,&wp);
+	if(wp.showCmd==SW_SHOWMINIMIZED)
+		ShowWindow(hwnd,SW_SHOWNORMAL);
+	if(wp.showCmd==SW_SHOWMAXIMIZED){
+		write_ini_value(section,"width",-1);
+		write_ini_value(section,"height",-1);
+		return TRUE;
+	}
 	GetWindowRect(hwnd,&rect);
 	x=rect.right-rect.left;
 	y=rect.bottom-rect.top;
@@ -979,13 +996,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		}
 		break;
 	case WM_QUERYENDSESSION:
-		save_window_size(hwnd,"MAIN_WINDOW");
-		save_ini_stuff(hwnd);
 		SetWindowLong(hwnd,DWL_MSGRESULT,TRUE); //ok to end session
 		return TRUE;
 	case WM_ENDSESSION:
 		if(wparam){
 			SetWindowText(hwnd,"Shutting down");
+			save_window_size(hwnd,"MAIN_WINDOW");
+			save_ini_stuff(hwnd);
 			SetWindowLong(hwnd,DWL_MSGRESULT,0);
 			return TRUE;
 		}
