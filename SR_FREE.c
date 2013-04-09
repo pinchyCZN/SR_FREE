@@ -22,6 +22,7 @@ enum{
 	CMD_SEARCH_THIS_FILE=10000+100,
 	CMD_SEARCH_THIS_FILE_TYPE,
 	CMD_SEARCH_ALL_FILE,
+	CMD_SEARCH_THIS_FOLDER,
 	CMD_END
 };
 int move_console()
@@ -547,6 +548,7 @@ int create_list_menu(HWND hwnd){
 		InsertMenu(list_menu,0xFFFFFFFF,MF_BYPOSITION|MF_STRING,CMD_SEARCH_THIS_FILE,"search this file");
 		InsertMenu(list_menu,0xFFFFFFFF,MF_BYPOSITION|MF_STRING,CMD_SEARCH_THIS_FILE_TYPE,"search this file type");
 		InsertMenu(list_menu,0xFFFFFFFF,MF_BYPOSITION|MF_STRING,CMD_SEARCH_ALL_FILE,"search *.*");
+		InsertMenu(list_menu,0xFFFFFFFF,MF_BYPOSITION|MF_STRING,CMD_SEARCH_THIS_FOLDER,"search this folder");
 	}
 	return TRUE;
 }
@@ -657,6 +659,15 @@ int handle_context_open(HWND hwnd,int cmd)
 			switch(cmd){
 			default:
 				open_with_cmd(hwnd,fname,index,cmd);
+				break;
+			case CMD_SEARCH_THIS_FOLDER:
+				{
+					char drive[_MAX_DRIVE]={0},dir[_MAX_DIR],path[_MAX_PATH];
+					_splitpath(fname,drive,dir,NULL,NULL);
+					_snprintf(path,sizeof(path),"%s%s",drive,dir);
+					if(strlen(path)>0)
+						SetDlgItemText(hwnd,IDC_COMBO_PATH,path);
+				}
 				break;
 			case CMD_SEARCH_THIS_FILE_TYPE:
 				{
