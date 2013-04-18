@@ -822,6 +822,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SendDlgItemMessage(hwnd,IDC_COMBO_REPLACE,EM_LIMITTEXT,1024,0);
 		SendDlgItemMessage(hwnd,IDC_COMBO_MASK,EM_LIMITTEXT,1024,0);
 		SendDlgItemMessage(hwnd,IDC_COMBO_PATH,EM_LIMITTEXT,1024,0);
+		SendDlgItemMessage(hwnd,IDC_DEPTH_LEVEL,EM_LIMITTEXT,3,0);
 		set_fonts(hwnd);
 		reset_line_width();
 		get_ini_stuff(hwnd);
@@ -923,8 +924,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			InvalidateRect(GetDlgItem(hwnd,IDC_LIST1),NULL,TRUE);
 			break;
 		case IDCANCEL:
-			if(GetDlgItem(hwnd,IDC_LIST1)==GetFocus())
+			{
+			HWND focus=GetFocus();
+			if(GetDlgItem(hwnd,IDC_LIST1)==focus)
 				SendDlgItemMessage(hwnd,IDC_LIST1,LB_SELITEMRANGE,0,MAKELPARAM(0,0xFFFF));
+			else if(GetDlgItem(hwnd,IDC_CHECK_DEPTH)==focus || GetDlgItem(hwnd,IDC_DEPTH_LEVEL)==focus)
+				SetDlgItemText(hwnd,IDC_DEPTH_LEVEL,"0");
+			}
 		//	PostQuitMessage(0);
 			break;
 		default:
@@ -997,6 +1003,43 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		case IDC_WILDCARD:
 		case IDC_IGNOREWS:
 			exclude_buttons(hwnd,LOWORD(wparam));
+			break;
+		case IDC_DEPTH_LEVEL:
+			switch(HIWORD(wparam)){
+			case EN_CHANGE:
+				{
+					char str[20]={0};
+					int depth=MAXDWORD;
+					GetDlgItemText(hwnd,IDC_DEPTH_LEVEL,str,sizeof(str));
+					if(str[0]!=0)
+						depth=atoi(str);
+					if(depth>=999)
+						depth=MAXDWORD;
+					set_depth_limit(depth);
+				}
+				break;
+			}
+			break;
+		case IDC_CHECK_DEPTH:
+			{
+			char str[20]={0};
+			int flags=0;
+			static last_depth=0;
+			if(IsDlgButtonChecked(hwnd,LOWORD(wparam))!=BST_CHECKED){
+				flags=SW_HIDE;
+				set_depth_limit(MAXDWORD);
+				GetDlgItemText(hwnd,IDC_DEPTH_LEVEL,str,sizeof(str));
+				if(str[0]!=0)
+					last_depth=atoi(str);
+			}
+			else{
+				set_depth_limit(last_depth);
+				_snprintf(str,sizeof(str),"%i",last_depth);
+				SetWindowText(GetDlgItem(hwnd,IDC_DEPTH_LEVEL),str);
+				flags=SW_SHOW;
+			}
+			ShowWindow(GetDlgItem(hwnd,IDC_DEPTH_LEVEL),flags);
+			}
 			break;
 		case IDC_ONTOP:
 			if(HIWORD(wparam)!=0){ //from accelerator

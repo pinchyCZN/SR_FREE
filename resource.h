@@ -68,6 +68,8 @@
 #define IDC_SELECT                      1060
 #define IDC_FAV_EDIT                    1061
 #define IDC_EXTENDED                    1063
+#define IDC_CHECK_DEPTH                 1064
+#define IDC_DEPTH_LEVEL                 1065
 
 // Next default values for new objects
 // 
@@ -75,7 +77,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         40003
-#define _APS_NEXT_CONTROL_VALUE         1064
+#define _APS_NEXT_CONTROL_VALUE         1066
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

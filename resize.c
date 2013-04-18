@@ -200,6 +200,16 @@ short win_main_list[]={
 			HUG_R,-21,YPOS,122, /*x.off=-83 y.off=-275*/
 			WIDTH,21,HEIGHT,21, /*w.off=-578 h.off=-374*/
 			CONTROL_FINISH,-1,
+	CONTROL_ID,IDC_CHECK_DEPTH,
+			WIDTH,80,HEIGHT,21,
+			XPOS,150,
+			YPOS,148,
+			CONTROL_FINISH,-1,
+	CONTROL_ID,IDC_DEPTH_LEVEL,
+			WIDTH,40,HEIGHT,18,
+			XPOS,250,
+			YPOS,148,
+			CONTROL_FINISH,-1,
 	CONTROL_ID,IDC_LIST1,
 			XPOS,0,YPOS,170, /*x.off=-614 y.off=-225*/
 			//WIDTH,605,HEIGHT,192, /*w.off=-9 h.off=-205*/

@@ -31,6 +31,7 @@ int ignore_whitespace=FALSE;
 int unicode_search=FALSE;
 int wildcard_search=FALSE;
 int hex_search=FALSE;
+unsigned int depth_limit=MAXDWORD;
 
 int files_searched=0;
 int files_occured=0;
@@ -898,7 +899,7 @@ int search_thread(HWND hwnd)
 			index=0;
 			if(strlen(path)==0)
 				continue;
-			find_files(hwnd,path,filemask,&total,search_sub_dirs,MAXDWORD,0);
+			find_files(hwnd,path,filemask,&total,search_sub_dirs,depth_limit,0);
 			add_listbox_str(GetParent(hwnd),"Searched %i file(s), found %i occurrences in %i file(s)",
 				files_searched,total_matches,files_occured);
 			if(stop_thread){
@@ -999,4 +1000,12 @@ int start_search(HWND hwnd,int replace)
 int is_thread_busy()
 {
 	return thread_busy;
+}
+int set_depth_limit(int limit)
+{
+	return depth_limit=limit;
+}
+int get_depth_limit()
+{
+	return depth_limit;
 }
