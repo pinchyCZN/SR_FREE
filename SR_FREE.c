@@ -260,9 +260,21 @@ check:
 }
 int CALLBACK BrowseCallbackProc(HWND hwnd,UINT msg,LPARAM lparam,LPARAM lpdata)
 {
+	static int init=FALSE;
 	switch(msg){
 	case BFFM_INITIALIZED:
 		SendMessage(hwnd,BFFM_SETSELECTION,TRUE,lpdata);
+		init=TRUE;
+		break;
+	case BFFM_SELCHANGED:
+		if(init)
+		{
+			HTREEITEM h;
+			HWND tree = GetDlgItem(GetDlgItem(hwnd, 0), 0x64);
+			h=TreeView_GetSelection(tree);
+			TreeView_EnsureVisible(tree,h);
+			init=FALSE;
+		}
 		break;
 	}
 	return 0;
