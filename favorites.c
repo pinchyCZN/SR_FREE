@@ -218,7 +218,6 @@ static int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
-	static DWORD tick=0;
 
 #ifdef _DEBUG
 	if(FALSE)
@@ -227,6 +226,7 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
 	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
 	{
+		static DWORD tick=0;
 		if((GetTickCount()-tick)>500)
 			printf("--\n");
 		printf("*");

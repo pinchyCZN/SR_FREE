@@ -944,6 +944,20 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			flags|=SWP_NOSIZE;
 		SetWindowPos(hwnd,NULL,rect.left,rect.top,width,height,flags);
 		return 0;
+	case WM_HSCROLL:
+		PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),WM_VSCROLL,wparam,lparam);
+		break;
+	case WM_MOUSEWHEEL:
+		SetFocus(grippy);
+		if(LOWORD(wparam)==MK_RBUTTON){
+			WPARAM scrollcode=SB_PAGEUP;
+			if(HIWORD(wparam)&0x8000)
+				scrollcode=SB_PAGEDOWN;
+			PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),WM_VSCROLL,scrollcode,0);
+		}
+		else
+			PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),msg,wparam,lparam);
+		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
 		resize_search(hwnd);

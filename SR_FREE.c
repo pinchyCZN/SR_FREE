@@ -808,15 +808,15 @@ int load_icon(HWND hwnd)
 LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
-	static DWORD tick=0;
 
 #ifdef _DEBUG
-//	if(FALSE)
+	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
 	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
 	{
+		static DWORD tick=0;
 		if((GetTickCount()-tick)>500)
 			printf("--\n");
 		printf("*");
@@ -1117,7 +1117,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 	while(GetMessage(&msg,NULL,0,0))
 	{
 		{
-			static DWORD tick=0;
 			int _msg,lparam,wparam;
 			_msg=msg.message;
 			lparam=msg.lParam;
@@ -1127,6 +1126,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 				&&_msg!=WM_CTLCOLORBTN&&_msg!=WM_CTLCOLOREDIT)
 			//if(_msg!=WM_NCHITTEST&&_msg!=WM_SETCURSOR&&_msg!=WM_ENTERIDLE)
 			{
+				static DWORD tick=0;
 				if((GetTickCount()-tick)>500)
 					printf("--\n");
 				printf("*");
