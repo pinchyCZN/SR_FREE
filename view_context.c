@@ -17,6 +17,7 @@ __int64 _ftelli64(FILE *stream);
 __int64 start_offset=0;
 __int64 start_line=0;
 __int64 current_line=0;
+__int64 last_offset=0;
 int binary=FALSE;
 char fname[MAX_PATH];
 __int64 fsize=0;
@@ -30,6 +31,26 @@ int get_file_size(FILE *f,__int64 *s)
 	_fseeki64(f,0,SEEK_END);
 	s[0]=_ftelli64(f);
 	return TRUE;
+}
+static int close_file()
+{
+	if(f!=0){
+		last_offset=_ftelli64(f);
+		fclose(f);
+		f=0;
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+static int open_file()
+{
+	if(f==0){
+		f=fopen(fname,"rb");
+		if(f!=0)
+			_fseeki64(f,last_offset,SEEK_SET);
+	}
+	return f!=0 ? TRUE:FALSE;
 }
 int add_line(HWND hwnd,int ctrl,char *line)
 {
@@ -269,14 +290,22 @@ int get_number_of_lines(HWND hwnd,int ctrl)
 int do_scroll_proc(HWND hwnd,int lines,int dir)
 {
 	int delta;
-	delta=seek_line_relative(f,lines,dir);
-	if(dir>0)
-		current_line+=delta;
-	else if(dir<0)
-		current_line-=delta;
-	fill_context(hwnd,IDC_CONTEXT,f);
-	set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
-	return TRUE;
+	if(open_file()){
+		delta=seek_line_relative(f,lines,dir);
+		if(dir>0)
+			current_line+=delta;
+		else if(dir<0)
+			current_line-=delta;
+		fill_context(hwnd,IDC_CONTEXT,f);
+		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
+		return close_file();
+	}
+	else{
+		char str[MAX_PATH*2]={0};
+		_snprintf(str,sizeof(str),"Cant open %s",fname);
+		MessageBox(hwnd,str,"error",MB_OK);
+		return FALSE;
+	}
 }
 
 LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
@@ -331,8 +360,14 @@ LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			set_context_font(GetParent(hwnd));
 			break;
 		case VK_HOME:
-			_fseeki64(f,start_offset,SEEK_SET);
-			current_line=start_line;
+			if(GetKeyState(VK_CONTROL)&0x8000){
+				last_offset=0;
+				current_line=1;
+			}
+			else{
+				last_offset=start_offset; //_fseeki64(f,start_offset,SEEK_SET);
+				current_line=start_line;
+			}
 			lines=dir=0;
 			do_scroll=TRUE;
 			break;
@@ -421,10 +456,12 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		SetFocus(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR));
 		get_ini_value("CONTEXT_SETTINGS","row_width",&row_width);
 		set_context_divider(row_width);
-		load_window_size(hwnd,"CONTEXT_SETTINGS");
+		load_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
 		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
+		open_file();
 		fill_context(hwnd,IDC_CONTEXT,f);
+		close_file();
 		orig_edit=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,subclass_edit);
 		SetWindowText(hwnd,fname);
 		grippy=create_grippy(hwnd);
@@ -437,8 +474,10 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		grippy_move(hwnd,grippy);
 		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
+		open_file();
 		fill_context(hwnd,IDC_CONTEXT,f);
 		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
+		close_file();
 		break;
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -453,7 +492,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		break;
 	case WM_MOUSEFIRST:
 		{
-			int y=HIWORD(lparam);
 			int x=LOWORD(lparam);
 			SetCursor(LoadCursor(NULL,IDC_SIZEWE));
 			if(divider_drag){
@@ -494,8 +532,14 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		switch(LOWORD(wparam)){
 		static int final_pos=0;
 		case SB_TOP:
-			_fseeki64(f,start_offset,SEEK_SET);
-			current_line=start_line;
+			if(GetKeyState(VK_CONTROL)&0x8000){
+				last_offset=0;
+				current_line=1;
+			}
+			else{
+				last_offset=start_offset; //_fseeki64(f,start_offset,SEEK_SET);
+				current_line=start_line;
+			}
 			lines=dir=0;
 			do_scroll=TRUE;
 			break;
@@ -548,6 +592,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 			f=0;
 			if(orig_edit!=0)SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,orig_edit);
 			save_window_size(hwnd,"CONTEXT_SETTINGS");
+			save_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
 			EndDialog(hwnd,0);
 			return 0;
 		}
@@ -568,6 +613,8 @@ int view_context(HWND hwnd)
 		int found_line=FALSE;
 		binary=FALSE;
 		len=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETTEXTLEN,index,0);
+		if(len==LB_ERR)
+			len=0x10000;
 		str=malloc(len+1);
 		if(str!=0){
 			str[0]=0;

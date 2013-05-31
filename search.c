@@ -117,7 +117,7 @@ int wild_card_match(const char *match,const char *str)
 }
 int str_trim_right(char *s)
 {
-	int i,found=FALSE,len=strlen(s);
+	int i,len=strlen(s);
 	for(i=len-1;i>=0;i--){
 		if(s[i]>' ')
 			break;
@@ -166,7 +166,7 @@ int does_file_match(char *mask,char *fname,char *path)
 	}
 	return fmatch && pmatch;
 }
-int set_progress_bar(HWND hwnd,float percent)
+int set_progress_bar(HWND hwnd,double percent)
 {
 	SendDlgItemMessage(hwnd,IDC_PROGRESS1,PBM_SETPOS,(int)(percent+0.5),0);
 	return TRUE;
@@ -748,7 +748,6 @@ check_nibble:
 }
 int search_replace_file(HWND hwnd,char *fname,char *path)
 {
-	char str[1024]={0};
 	FILE *f;
 	strncpy(current_fname,path,sizeof(current_fname));
 	current_fname[sizeof(current_fname)-1]=0;
@@ -768,7 +767,6 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 		buf=malloc(size);
 		if(buf!=0){
 			unsigned long t1=GetTickCount();
-			int pstart=FALSE;
 			__int64 flen=0;
 			set_message_str(hwnd,"%s",current_fname);
 			matches_found=0;
@@ -971,19 +969,10 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_USER+1:
 		{
-			RECT rect_parent={0};
-			int xpos,ypos;
 			GetWindowRect(hwnd,&rect);
-			GetWindowRect(hwnd_parent,&rect_parent);
 			write_ini_value("SEARCH_STATUS_WINDOW","width",rect.right-rect.left);
 			write_ini_value("SEARCH_STATUS_WINDOW","height",rect.bottom-rect.top);
-			xpos=rect.left-rect_parent.left;
-			ypos=rect.top-rect_parent.top;
-			if(GetKeyState(VK_SHIFT)&0x8000){
-				xpos=ypos=0;
-			}
-			write_ini_value("SEARCH_STATUS_WINDOW","xpos",xpos);
-			write_ini_value("SEARCH_STATUS_WINDOW","ypos",ypos);
+			save_window_pos_relative(hwnd_parent,hwnd,"SEARCH_STATUS_WINDOW");
 			EndDialog(hwnd,0);
 		}
 		break;

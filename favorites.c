@@ -184,7 +184,6 @@ static int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 {
 	int i,count;
 	char str[MAX_PATH];
-	char paths[1024]={0},mask[1024]={0};
 	count=DragQueryFile(hdrop,-1,NULL,0);
 	for(i=0;i<count;i++){
 		str[0]=0;
