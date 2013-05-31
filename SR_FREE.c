@@ -1061,7 +1061,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 					check=BST_UNCHECKED;
 				else
 					check=BST_CHECKED;
-				 CheckDlgButton(hwnd,LOWORD(wparam),check);
+				CheckDlgButton(hwnd,LOWORD(wparam),check);
 			}
 			SetWindowPos(hwnd,IsDlgButtonChecked(hwnd,LOWORD(wparam))?HWND_TOPMOST:HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 			break;
