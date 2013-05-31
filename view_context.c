@@ -568,6 +568,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 			do_scroll=TRUE;
 			break;
 		case SB_THUMBTRACK:
+			printf("pos=%i\n",HIWORD(wparam));
 			if(pos<scroll_pos){
 				dir=-1;
 				lines=3+1;

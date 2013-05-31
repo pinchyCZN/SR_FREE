@@ -791,14 +791,15 @@ int load_window_size(HWND hwnd,char *section)
 	get_ini_value(section,"maximized",&maximized);
 	if(GetWindowRect(GetDesktopWindow(),&rect)!=0){
 		int flags=SWP_SHOWWINDOW;
-		if(width<50 || height<50)
-			flags|=SWP_NOSIZE;
-		if(x<-32 || y<=-32)
-			flags|=SWP_NOMOVE;
-		if(x<((rect.right-rect.left)-50))
-			if(y<((rect.bottom-rect.top)-50))
-				if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
-					result=TRUE;
+		if((GetKeyState(VK_SHIFT)&0x8000)==0){
+			if(width<50 || height<50)
+				flags|=SWP_NOSIZE;
+			if(x<-32 || y<=-32)
+				flags|=SWP_NOMOVE;
+			//MonitorFromRect(&rect,MONITOR_DEFAULTTONEAREST);
+			if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
+				result=TRUE;
+		}
 	}
 	if(maximized)
 		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
