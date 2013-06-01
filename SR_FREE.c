@@ -718,6 +718,23 @@ int handle_context_open(HWND hwnd,int cmd)
 	}
 	return TRUE;
 }
+int get_nearest_monitor(int x,int y,int width,int height,RECT *rect)
+{
+	HMONITOR hmon;
+	MONITORINFO mi;
+	RECT r={0};
+	r.left=x;
+	r.top=y;
+	r.right=x+width;
+	r.bottom=y+height;
+	hmon=MonitorFromRect(&r,MONITOR_DEFAULTTONEAREST);
+    mi.cbSize=sizeof(mi);
+	if(GetMonitorInfo(hmon,&mi)){
+		*rect=mi.rcWork;
+		return TRUE;
+	}
+	return FALSE;
+}
 int save_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 {
 	WINDOWPLACEMENT wp;
@@ -758,21 +775,18 @@ int load_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 	get_ini_value(section,"xpos",&x);
 	get_ini_value(section,"ypos",&y);
 	get_ini_value(section,"maximized",&maximized);
-	if(GetWindowRect(GetDesktopWindow(),&rect)!=0){
-		RECT rect_parent={0};
+	if(get_nearest_monitor(x,y,width,height,&rect)){
 		int flags=SWP_SHOWWINDOW;
 		if(width<50 || height<50)
 			flags|=SWP_NOSIZE;
 		if(hparent!=0){
+			RECT rect_parent={0};
 			GetWindowRect(hparent,&rect_parent);
-			if(rect_parent.left+x<0)
-				x=0;
-			else
-				x=rect_parent.left+x;
-			if(rect_parent.top+y<0)
-				y=0;
-			else
-				y=rect_parent.top+y;
+			x=rect_parent.left+x;
+			y=rect_parent.top+y;
+			if(x>(rect.right-25) || x<(rect.left-25)
+				|| y<(rect.top-25) || y>(rect.bottom-25))
+				flags|=SWP_NOMOVE;
 		}
 		else
 			flags|=SWP_NOMOVE;
@@ -781,13 +795,11 @@ int load_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 	}
 	if(maximized)
 		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
-	return TRUE;
+	return result;
 }
 int load_window_size(HWND hwnd,char *section)
 {
-	HMONITOR hmon;
-	MONITORINFO mi;
-	RECT rect;
+	RECT rect={0};
 	int width=0,height=0,x=0,y=0,maximized=0;
 	int result=FALSE;
 	get_ini_value(section,"width",&width);
@@ -795,21 +807,13 @@ int load_window_size(HWND hwnd,char *section)
 	get_ini_value(section,"xpos",&x);
 	get_ini_value(section,"ypos",&y);
 	get_ini_value(section,"maximized",&maximized);
-	rect.left=x;
-	rect.top=y;
-	rect.right=x+width;
-	rect.bottom=y+height;
-	hmon=MonitorFromRect(&rect,MONITOR_DEFAULTTONEAREST);
-    mi.cbSize=sizeof(mi);
-	if(GetMonitorInfo(hmon,&mi)){
-		RECT *r=0;
+	if(get_nearest_monitor(x,y,width,height,&rect)){
 		int flags=SWP_SHOWWINDOW;
 		if((GetKeyState(VK_SHIFT)&0x8000)==0){
 			if(width<50 || height<50)
 				flags|=SWP_NOSIZE;
-			r=&mi.rcWork;
-			if(x>(r->right-25) || x<(r->left-25)
-				|| y<(r->top-25) || y>(r->bottom-25))
+			if(x>(rect.right-25) || x<(rect.left-25)
+				|| y<(rect.top-25) || y>(rect.bottom-25))
 				flags|=SWP_NOMOVE;
 			if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
 				result=TRUE;
@@ -817,7 +821,7 @@ int load_window_size(HWND hwnd,char *section)
 	}
 	if(maximized)
 		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
-	return TRUE;
+	return result;
 }
 int save_window_size(HWND hwnd,char *section)
 {
