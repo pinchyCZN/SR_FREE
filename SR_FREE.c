@@ -795,8 +795,6 @@ int load_window_size(HWND hwnd,char *section)
 	get_ini_value(section,"xpos",&x);
 	get_ini_value(section,"ypos",&y);
 	get_ini_value(section,"maximized",&maximized);
-//	x+=2000;
-//	y+=1000;
 	rect.left=x;
 	rect.top=y;
 	rect.right=x+width;
@@ -804,13 +802,11 @@ int load_window_size(HWND hwnd,char *section)
 	hmon=MonitorFromRect(&rect,MONITOR_DEFAULTTONEAREST);
     mi.cbSize=sizeof(mi);
 	if(GetMonitorInfo(hmon,&mi)){
-//	if(GetWindowRect(GetDesktopWindow(),&rect)){
 		RECT *r=0;
 		int flags=SWP_SHOWWINDOW;
 		if((GetKeyState(VK_SHIFT)&0x8000)==0){
 			if(width<50 || height<50)
 				flags|=SWP_NOSIZE;
-			//r=&rect;
 			r=&mi.rcWork;
 			if(x>(r->right-25) || x<(r->left-25)
 				|| y<(r->top-25) || y>(r->bottom-25))
