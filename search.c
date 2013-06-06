@@ -149,10 +149,14 @@ int does_file_match(char *mask,char *fname,char *path)
 			}
 			if(m[0]=='\\'){
 				m++;
-				if(wild_card_match(m,path))
-					pmatch=TRUE && (!exclude);
-				else
-					pmatch=FALSE || exclude;
+				if(wild_card_match(m,path)){
+					if(exclude)
+						pmatch=FALSE;
+					else
+						pmatch=TRUE;
+				}
+				else if(!exclude)
+					pmatch=FALSE;
 			}
 			else if(wild_card_match(m,fname)){
 				if(exclude)
