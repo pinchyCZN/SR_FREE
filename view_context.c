@@ -287,7 +287,7 @@ int get_number_of_lines(HWND hwnd,int ctrl)
 		i=10;
 	return i;
 }
-int do_scroll_proc(HWND hwnd,int lines,int dir)
+int do_scroll_proc(HWND hwnd,int lines,int dir,int update_pos)
 {
 	int delta;
 	if(open_file()){
@@ -297,7 +297,8 @@ int do_scroll_proc(HWND hwnd,int lines,int dir)
 		else if(dir<0)
 			current_line-=delta;
 		fill_context(hwnd,IDC_CONTEXT,f);
-		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
+		if(update_pos)
+			set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
 		return close_file();
 	}
 	else{
@@ -401,7 +402,7 @@ LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	}
 	if(do_scroll)
-		do_scroll_proc(GetParent(hwnd),lines,dir);
+		do_scroll_proc(GetParent(hwnd),lines,dir,TRUE);
 	if(do_proc)
 		return CallWindowProc(orig_edit,hwnd,msg,wparam,lparam); 
 	else
@@ -420,8 +421,8 @@ int context_help(HWND hwnd)
 LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
-	int lines,dir,do_scroll=FALSE;
-	static int divider_drag=FALSE,row_width=90;
+	int lines,dir,do_scroll=FALSE,update_scroll_pos=TRUE;
+	static int divider_drag=FALSE,row_width=90,last_pos=0;
 #ifdef _DEBUG
 	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
@@ -462,6 +463,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		open_file();
 		fill_context(hwnd,IDC_CONTEXT,f);
 		close_file();
+		last_pos=-1;
 		orig_edit=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,subclass_edit);
 		SetWindowText(hwnd,fname);
 		grippy=create_grippy(hwnd);
@@ -530,7 +532,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		{
 		int pos=HIWORD(wparam);
 		switch(LOWORD(wparam)){
-		static int final_pos=0;
 		case SB_TOP:
 			if(GetKeyState(VK_CONTROL)&0x8000){
 				last_offset=0;
@@ -568,21 +569,34 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 			do_scroll=TRUE;
 			break;
 		case SB_THUMBTRACK:
-			printf("pos=%i\n",HIWORD(wparam));
-			if(pos<scroll_pos){
+			//printf("pos=%i last_pos=%i scroll_pos=%i line_count=%i\n",HIWORD(wparam),last_pos,scroll_pos,line_count);
+			if(pos<last_pos){
 				dir=-1;
-				lines=3+1;
+				lines=line_count/4;
+				if(lines<=1)
+					lines=2;
 				do_scroll=TRUE;
 			}
-			else if(pos>scroll_pos){
+			else if(pos>last_pos){
 				dir=1;
-				lines=3;
+				lines=line_count/4;
+				if(lines==0)
+					lines=1;
 				do_scroll=TRUE;
 			}
-		}
+			if(last_pos==-1)
+				do_scroll=FALSE;
+			last_pos=pos;
+			update_scroll_pos=FALSE;
+			break;
+		case SB_THUMBPOSITION: //dragged and released
+			dir=lines=0;
+			do_scroll=TRUE;
 			break;
 		case SB_ENDSCROLL:
+			last_pos=-1;
 			break;
+		}
 		}
 		break;
 	case WM_COMMAND:
@@ -600,7 +614,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		break;
 	}
 	if(do_scroll)
-		do_scroll_proc(hwnd,lines,dir);
+		do_scroll_proc(hwnd,lines,dir,update_scroll_pos);
 	return 0;
 }
 
