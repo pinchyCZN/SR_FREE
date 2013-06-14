@@ -25,6 +25,7 @@ FILE *f=0;
 int line_count=0;
 int scroll_pos=0;
 WNDPROC orig_edit=0;
+WNDPROC orig_scroll=0;
 
 int get_file_size(FILE *f,__int64 *s)
 {
@@ -137,18 +138,18 @@ int seek_line_relative(FILE *f,int lines,int dir)
 }
 int sanitize_str(char *buf,int len)
 {
-	int i;
+	int i,result=FALSE;
 	for(i=0;i<len;i++){
 		if((unsigned char)buf[i]==0)
-			binary=TRUE;
+			result=TRUE;
 		if(buf[i]>0x7E)
-			binary=TRUE;
+			result=TRUE;
 		if(buf[i]=='\r'||buf[i]=='\n'||buf[i]=='\t')
 			continue;
 		if(buf[i]<' ' || buf[i]>0x7E)
 			buf[i]='.';
 	}
-	return TRUE;
+	return result;
 }
 int fill_line_col(HWND hwnd,int ctrl,__int64 line)
 {
@@ -207,7 +208,7 @@ int format_hex_str(char *in,int ilen,char *out,int olen)
 int fill_context(HWND hwnd,int ctrl,FILE *f)
 {
 	char buf[512];
-	int i,len,count;
+	int i,len,count,buf_size=sizeof(buf);
 	__int64 offset,line;
 	offset=_ftelli64(f);
 
@@ -241,16 +242,27 @@ int fill_context(HWND hwnd,int ctrl,FILE *f)
 			len=strlen(buf);
 		}
 		else{
-			if(fgets(buf,sizeof(buf)-1,f)==0)
+			__int64 pos=0;
+			pos=_ftelli64(f);
+			if(fgets(buf,buf_size-1,f)==0)
 				break;
-			if(buf[sizeof(buf)-3]!='\n'){
-				buf[sizeof(buf)-2]='\n';
-				buf[sizeof(buf)-1]=0;
+			pos=_ftelli64(f)-pos;
+			if(((buf_size-2)>=0) && buf[buf_size-2]!='\n'){
+				buf[buf_size-2]='\n';
+				buf[buf_size-1]=0;
 			}
-			len=strlen(buf);
-			if(len>sizeof(buf))
-				len=sizeof(buf);
-			sanitize_str(buf,len);
+			len=(int)pos;
+			if(len>buf_size-1)
+				len=buf_size-1;
+			if(sanitize_str(buf,len)){
+				buf_size=80;
+				if(buf_size>sizeof(buf))
+					buf_size=sizeof(buf)/4;
+				if(((buf_size-2)>=0) && buf[buf_size-2]!='\n'){
+					buf[buf_size-2]='\n';
+					buf[buf_size-1]=0;
+				}
+			}
 		}
 		add_line(hwnd,ctrl,buf);
 	}
@@ -308,6 +320,31 @@ int do_scroll_proc(HWND hwnd,int lines,int dir,int update_pos)
 		return FALSE;
 	}
 }
+LRESULT APIENTRY subclass_scroll(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+	if(FALSE)
+	{
+		static DWORD tick=0;
+		if((GetTickCount()-tick)>500)
+			printf("--\n");
+		printf("s");
+		print_msg(msg,lparam,wparam);
+		tick=GetTickCount();
+	}
+	switch(msg){
+	case WM_GETDLGCODE:
+		switch(wparam){
+		case VK_RETURN:
+		case VK_F9:
+			binary=!binary;
+			set_context_font(GetParent(hwnd));
+			do_scroll_proc(GetParent(hwnd),0,0,TRUE);
+			break;
+		}
+		break;
+	}
+	return CallWindowProc(orig_scroll,hwnd,msg,wparam,lparam); 
+}
 
 LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
@@ -323,7 +360,7 @@ LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		static DWORD tick=0;
 		if((GetTickCount()-tick)>500)
 			printf("--\n");
-		printf("*");
+		printf("e");
 		print_msg(msg,lparam,wparam);
 		tick=GetTickCount();
 	}
@@ -428,12 +465,12 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 //	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 //		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT&&msg!=WM_CTLCOLORSCROLLBAR)
-	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
+	if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
 	{
 		static DWORD tick=0;
 		if((GetTickCount()-tick)>500)
 			printf("--\n");
-		printf("*");
+		printf("v");
 		print_msg(msg,lparam,wparam);
 		tick=GetTickCount();
 	}
@@ -465,6 +502,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		close_file();
 		last_pos=-1;
 		orig_edit=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,subclass_edit);
+		orig_scroll=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR),GWL_WNDPROC,subclass_scroll);
 		SetWindowText(hwnd,fname);
 		grippy=create_grippy(hwnd);
 		return 0;
