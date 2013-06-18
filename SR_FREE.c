@@ -925,6 +925,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		create_list_menu(hwnd);
 		resize_main(hwnd);
 		SetWindowPos(hwnd,IsDlgButtonChecked(hwnd,IDC_ONTOP)?HWND_TOPMOST:HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+		SendMessage(hwnd,WM_COMMAND,MAKEWPARAM(IDC_SUBDIRS,BN_CLICKED),0);
 		load_icon(hwnd);
 		break;
 	case WM_HELP:
@@ -1091,6 +1092,17 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			}
 			else
 				handle_favorites(hwnd,IDC_PATH_OPTIONS);
+			break;
+		case IDC_SUBDIRS:
+			if(IsDlgButtonChecked(hwnd,IDC_SUBDIRS)){
+				ShowWindow(GetDlgItem(hwnd,IDC_CHECK_DEPTH),SW_SHOW);
+				if(IsDlgButtonChecked(hwnd,IDC_CHECK_DEPTH))
+					ShowWindow(GetDlgItem(hwnd,IDC_DEPTH_LEVEL),SW_SHOW);
+			}
+			else{
+				ShowWindow(GetDlgItem(hwnd,IDC_CHECK_DEPTH),SW_HIDE);
+				ShowWindow(GetDlgItem(hwnd,IDC_DEPTH_LEVEL),SW_HIDE);
+			}
 			break;
 		case IDC_WHOLEWORD:
 		case IDC_HEX:
