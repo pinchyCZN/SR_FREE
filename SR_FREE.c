@@ -749,8 +749,6 @@ int save_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 		rect=wp.rcNormalPosition;
 		width=rect.right-rect.left;
 		height=rect.bottom-rect.top;
-		if(width<100)width=320;
-		if(height<100)height=240;
 		write_ini_value(section,"width",width);
 		write_ini_value(section,"height",height);
 
@@ -784,9 +782,10 @@ int load_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 			GetWindowRect(hparent,&rect_parent);
 			x=rect_parent.left+x;
 			y=rect_parent.top+y;
-			if(x>(rect.right-25) || x<(rect.left-25)
-				|| y<(rect.top-25) || y>(rect.bottom-25))
-				flags|=SWP_NOMOVE;
+			if(x>(rect.right-25) || x<rect.left)
+				x=rect_parent.left;
+			if(y<rect.top || y>(rect.bottom-25))
+				y=rect_parent.top;
 		}
 		else
 			flags|=SWP_NOMOVE;
@@ -839,8 +838,6 @@ int save_window_size(HWND hwnd,char *section)
 		rect=wp.rcNormalPosition;
 		x=rect.right-rect.left;
 		y=rect.bottom-rect.top;
-		if(x<100)x=320;
-		if(y<100)y=240;
 		write_ini_value(section,"width",x);
 		write_ini_value(section,"height",y);
 		write_ini_value(section,"xpos",rect.left);

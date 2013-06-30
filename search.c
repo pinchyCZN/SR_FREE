@@ -924,12 +924,10 @@ int search_thread(HWND hwnd)
 LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
-	RECT rect;
 	switch(msg)
 	{
 	case WM_INITDIALOG:
 		{
-		int xpos,ypos,width,height,flags;
 		if(!thread_busy){
 			stop_thread=FALSE;
 			_beginthread(search_thread,0,hwnd);
@@ -938,18 +936,7 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			EndDialog(hwnd,0);
 		grippy=create_grippy(hwnd);
 		SetFocus(GetDlgItem(hwnd,IDCANCEL));
-		xpos=ypos=width=height=0;
-		get_ini_value("SEARCH_STATUS_WINDOW","width",&width);
-		get_ini_value("SEARCH_STATUS_WINDOW","height",&height);
-		get_ini_value("SEARCH_STATUS_WINDOW","xpos",&xpos);
-		get_ini_value("SEARCH_STATUS_WINDOW","ypos",&ypos);
-		GetWindowRect(hwnd_parent,&rect);
-		flags=SWP_NOZORDER|SWP_SHOWWINDOW;
-		if(width<=100 || height<=40)
-			flags|=SWP_NOSIZE;
-		if(rect.left+xpos<0)xpos=0;
-		if(rect.top+ypos<0)ypos=0;
-		SetWindowPos(hwnd,NULL,rect.left+xpos,rect.top+ypos,width,height,flags);
+		load_window_pos_relative(GetParent(hwnd),hwnd,"SEARCH_STATUS_WINDOW");
 		}
 		return 0;
 	case WM_HSCROLL:
@@ -972,13 +959,8 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_USER+1:
-		{
-			GetWindowRect(hwnd,&rect);
-			write_ini_value("SEARCH_STATUS_WINDOW","width",rect.right-rect.left);
-			write_ini_value("SEARCH_STATUS_WINDOW","height",rect.bottom-rect.top);
-			save_window_pos_relative(hwnd_parent,hwnd,"SEARCH_STATUS_WINDOW");
-			EndDialog(hwnd,0);
-		}
+		save_window_pos_relative(hwnd_parent,hwnd,"SEARCH_STATUS_WINDOW");
+		EndDialog(hwnd,0);
 		break;
 	case WM_COMMAND:
 		switch(LOWORD(wparam)){
