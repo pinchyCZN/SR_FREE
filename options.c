@@ -9,6 +9,20 @@
 int max_items_combobox=10;
 int max_open_with=10;
 
+struct FONT_NAME{
+	int font_num;
+	char *font_name;
+};
+struct FONT_NAME font_names[7]={
+	{OEM_FIXED_FONT,"OEM_FIXED_FONT"},
+	{ANSI_FIXED_FONT,"ANSI_FIXED_FONT"},
+	{ANSI_VAR_FONT,"ANSI_VAR_FONT"},
+	{SYSTEM_FONT,"SYSTEM_FONT"},
+	{DEVICE_DEFAULT_FONT,"DEVICE_DEFAULT_FONT"},
+	{SYSTEM_FIXED_FONT,"SYSTEM_FIXED_FONT"},
+	{DEFAULT_GUI_FONT,"DEFAULT_GUI_FONT"}
+};
+
 int get_max_open_with()
 {
 	return max_open_with;
@@ -18,21 +32,9 @@ int get_max_items_combobox()
 
 int add_fonts(HWND hwnd,int ctrl)
 {
-	char tmp[80];
-	_snprintf(tmp,sizeof(tmp),"%s","OEM_FIXED_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","ANSI_FIXED_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","ANSI_VAR_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","SYSTEM_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","DEVICE_DEFAULT_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","SYSTEM_FIXED_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
-	_snprintf(tmp,sizeof(tmp),"%s","DEFAULT_GUI_FONT");
-	SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,tmp);
+	int i;
+	for(i=0;i<sizeof(font_names)/sizeof(struct FONT_NAME);i++)
+		SendDlgItemMessage(hwnd,ctrl,CB_ADDSTRING,0,font_names[i].font_name);
 	return TRUE;
 }
 int get_dropdown_name(int ctrl,char *name,int len){
@@ -51,35 +53,29 @@ int get_dropdown_name(int ctrl,char *name,int len){
 }
 int int_to_fontname(int font,char *name,int len)
 {
-	switch(font){
-	case OEM_FIXED_FONT:_snprintf(name,len,"OEM_FIXED_FONT");break;
-	case ANSI_FIXED_FONT:_snprintf(name,len,"ANSI_FIXED_FONT");break;
-	case ANSI_VAR_FONT:_snprintf(name,len,"ANSI_VAR_FONT");break;
-	default:
-	case SYSTEM_FONT:_snprintf(name,len,"SYSTEM_FONT");break;
-	case DEVICE_DEFAULT_FONT:_snprintf(name,len,"DEVICE_DEFAULT_FONT");break;
-	case SYSTEM_FIXED_FONT:_snprintf(name,len,"SYSTEM_FIXED_FONT");break;
-	case DEFAULT_GUI_FONT:_snprintf(name,len,"DEFAULT_GUI_FONT");break;
+	int i,result=FALSE;
+	for(i=0;i<sizeof(font_names)/sizeof(struct FONT_NAME);i++){
+		if(font==font_names[i].font_num){
+			_snprintf(name,len,font_names[i].font_name);
+			result=TRUE;
+			break;
+		}
+	}
+	if(!result){
+		_snprintf(name,len,"SYSTEM_FONT");
+		result=TRUE;
 	}
 	name[len-1]=0;
-	return TRUE;
+	return result;
 }
 int fontname_to_int(char *name)
 {
-	if(strnicmp(name,"OEM_FIXED_FONT",sizeof("OEM_FIXED_FONT")-1)==0)
-		return OEM_FIXED_FONT;
-	if(strnicmp(name,"ANSI_FIXED_FONT",sizeof("ANSI_FIXED_FONT")-1)==0)
-		return ANSI_FIXED_FONT;
-	if(strnicmp(name,"ANSI_VAR_FONT",sizeof("ANSI_VAR_FONT")-1)==0)
-		return ANSI_VAR_FONT;
-	if(strnicmp(name,"SYSTEM_FONT",sizeof("SYSTEM_FONT")-1)==0)
-		return SYSTEM_FONT;
-	if(strnicmp(name,"DEVICE_DEFAULT_FONT",sizeof("DEVICE_DEFAULT_FONT")-1)==0)
-		return DEVICE_DEFAULT_FONT;
-	if(strnicmp(name,"SYSTEM_FIXED_FONT",sizeof("SYSTEM_FIXED_FONT")-1)==0)
-		return SYSTEM_FIXED_FONT;
-	if(strnicmp(name,"DEFAULT_GUI_FONT",sizeof("DEFAULT_GUI_FONT")-1)==0)
-		return DEFAULT_GUI_FONT;
+	int i;
+	for(i=0;i<sizeof(font_names)/sizeof(struct FONT_NAME);i++){
+		if(stricmp(name,font_names[i].font_name)==0){
+			return font_names[i].font_num;
+		}
+	}
 	return DEFAULT_GUI_FONT;
 }
 int get_current_font(HWND hwnd,int ctrl)
