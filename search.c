@@ -440,6 +440,7 @@ reset:
 	}
 	return 0;
 }
+int search_line(
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
 	int i;
@@ -482,7 +483,30 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		}
 		return 0;
 	}
-	STBM_Search
+	{
+		for(i=0;i<len;i++){
+			line[line_pos]=buf[i];
+			line_pos++;
+			if(buf[i]=='\n' || line_pos>=sizeof_line){
+				search_line(hwnd,line,line_pos,spec,offset);
+				line_num++;
+			}
+			else if(buf[i]==0)
+				binary=TRUE;
+			offset++;
+
+		}
+		char *cur=buf;
+		int cur_len=len;
+		while(TRUE){
+			char *match=0;
+			STBM_Search(spec,cur,len,&match);
+			if(match!=0){
+				add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,total_col-match_len,line_col,match_len,offset-match_len+1,str);
+			}
+		}
+	}
+
 	for(i=0;i<len;i++){
 		if(stop_thread)
 			break;
