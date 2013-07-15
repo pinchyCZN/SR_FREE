@@ -1,0 +1,61 @@
+CSRC=	bakslash.c fastfile.c ggrep.c matchgcc.c \
+	memrchr.c platform.c regexp00.c retable.c \
+	scanfile.c stbm.c stbmshim.c tbldisp.c \
+	tracery.c
+
+CPPINCLUDES= -I.
+
+CFLAGS=	
+
+#CPPDEBUGS=	-g -DTRACERY_ENABLED # -save-temps
+CPPDEBUGS=     -O3
+
+OBJ=$(CSRC:.c=.o)
+
+default: ggrep
+all: clean ggrep install
+
+
+.c.o:
+	gcc -c $(CPPINCLUDES) $(CPPDEBUGS) $(CFLAGS) $<
+
+ggrep: $(OBJ)
+	gcc -o ggrep $(CPPINCLUDES) $(CPPDEBUGS) $(LDFLAGS) $(CFLAGS) $(OBJ)
+
+
+
+
+## 386 Assembly level optimisation
+Linux_i386: matchgcc.edited.s
+	gcc -c -save-temps $(CPPINCLUDES) $(CPPDEBUGS) $(CFLAGS) matchgcc.c
+	gcc -c $(CPPINCLUDES) $(CPPDEBUGS) $(CFLAGS) matchgcc.edited.s
+	gcc -o ggrep $(CPPINCLUDES) $(CPPDEBUGS) $(LDFLAGS) $(CFLAGS) \
+			$(OBJ:matchgcc.o=matchgcc.edited.o)
+
+## 386 Assembly level optimisation
+matchgcc.edited.s:
+	cd src; ./trimasm matchgcc.s >../matchgcc.edited.s
+
+
+depend:
+	makedepend $(CPPINCLUDES) $(CSRC)
+
+clean:
+	/bin/rm -f *.o ggrep ggrep-c matchgcc.*.s
+
+bindir=/opt/ggrep/bin
+install:
+	test -d $(bindir) || mkdirhier $(bindir)
+	bsdinst -c  -s $(BIN) $(bindir)
+	
+
+
+snoopmatchgcc:
+	gcc -c $(CPPINCLUDES) $(CPPDEBUGS) $(CFLAGS) matchgcc.c -Wa,-a=matchgcc.lst
+
+
+.SUFFIXES:
+.SUFFIXES: .c .s .o
+
+
+# DO NOT DELETE
