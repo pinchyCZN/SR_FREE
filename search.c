@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <process.h>
 #include "resource.h"
+#include "stbm.h"
 
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
@@ -454,6 +455,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static int binary=FALSE;
 	static int sizeof_line=sizeof(line);
 	static int nibble=0;
+	static STBM_SearchSpec *spec=0;
 	if(wildcard_search)
 		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
 	if(init){
@@ -471,8 +473,16 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		if(sizeof_line>sizeof(line))
 			sizeof_line=sizeof(line);
 		memset(line,0,sizeof(line));
+		STBM_Init();
+		{
+		int flags=0;
+		if(!case_sensitive)
+			flags=STBM_SEARCH_CASE_INSENSITIVE;
+		STBM_Compile(strlen_search_str,search_str,flags,&spec);
+		}
 		return 0;
 	}
+	STBM_Search
 	for(i=0;i<len;i++){
 		if(stop_thread)
 			break;
