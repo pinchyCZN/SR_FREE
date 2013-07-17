@@ -453,6 +453,7 @@ int search_line(HWND hwnd,char *line,int line_len,STBM_SearchSpec *spec,__int64 
 				add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
 					line_num,distance,distance,strlen_search_str,offset,line);
 				cur=match+strlen_search_str;
+				cur_len=line_len-(match-line);
 
 			}
 			else

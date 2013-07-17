@@ -70,8 +70,10 @@ typedef signed char                     INT8;
 typedef unsigned char                   UINT8;
 typedef signed short                    INT16;
 typedef unsigned short                  UINT16;
-typedef signed long int                 INT32;
-typedef unsigned long int               UINT32;
+
+//typedef signed long int                 INT32;
+//typedef unsigned long int               UINT32;
+
 
 /*Fixed-width types but with implementation trickery based on size*/
 /*(Implementing these types with more bits will lead to incorrect results)*/
