@@ -6,7 +6,6 @@
 #include <fcntl.h>
 #include <process.h>
 #include "resource.h"
-#include "stbm.h"
 
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
@@ -440,27 +439,6 @@ reset:
 	}
 	return 0;
 }
-int search_line(HWND hwnd,char *line,int line_len,STBM_SearchSpec *spec,__int64 offset,__int64 line_num)
-{
-		char *cur=line;
-		int cur_len=line_len;
-		while(TRUE){
-			char *match=0;
-			STBM_Search(spec,cur,cur_len,&match);
-			if(match!=0){
-				__int64 distance=0;
-				distance=match-cur;
-				add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
-					line_num,distance,distance,strlen_search_str,offset,line);
-				cur=match+strlen_search_str;
-				cur_len=line_len-(match-line);
-
-			}
-			else
-				break;
-		}
-
-}
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
 	int i;
@@ -476,7 +454,6 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static int binary=FALSE;
 	static int sizeof_line=sizeof(line);
 	static int nibble=0;
-	static STBM_SearchSpec *spec=0;
 	if(wildcard_search)
 		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
 	if(init){
@@ -494,32 +471,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		if(sizeof_line>sizeof(line))
 			sizeof_line=sizeof(line);
 		memset(line,0,sizeof(line));
-		STBM_Init();
-		{
-		int flags=0;
-		if(!case_sensitive)
-			flags=STBM_SEARCH_CASE_INSENSITIVE;
-		STBM_Compile(strlen_search_str,search_str,flags,&spec);
-		}
 		return 0;
 	}
-	{
-		for(i=0;i<len;i++){
-			line[line_pos]=buf[i];
-			line_pos++;
-			if(buf[i]=='\n' || line_pos>=sizeof_line){
-				search_line(hwnd,line,line_pos,spec,offset,line_num);
-				line_num++;
-				line_pos=0;
-			}
-			else if(buf[i]==0)
-				binary=TRUE;
-			offset++;
-
-		}
-		return 0;
-	}
-
 	for(i=0;i<len;i++){
 		if(stop_thread)
 			break;
