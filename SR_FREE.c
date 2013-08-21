@@ -1064,9 +1064,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			SetFocus(GetDlgItem(hwnd,IDC_LIST1));
 			break;
 		case IDC_SEARCH:
-			start_search(hwnd,FALSE);
-			InvalidateRect(GetDlgItem(hwnd,IDC_LIST1),NULL,TRUE);
-			SetFocus(GetDlgItem(hwnd,IDC_LIST1));
+			{
+				int result;
+				result=start_search(hwnd,FALSE);
+				InvalidateRect(GetDlgItem(hwnd,IDC_LIST1),NULL,TRUE);
+				if(result)
+					SetFocus(GetDlgItem(hwnd,IDC_LIST1));
+			}
 			break;
 		case IDC_SEARCH_OPTIONS:
 			search_options(hwnd);

@@ -1002,7 +1002,8 @@ int start_search(HWND hwnd,int replace)
 	save_combo_edit_ctrl(hwnd);
 	hwnd_parent=hwnd;
 
-	return DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
+	DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
+	return total_matches>0;
 }
 int is_thread_busy()
 {
