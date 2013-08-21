@@ -1013,8 +1013,13 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 				view_context(hwnd);
 				break;
 			}
-			start_search(hwnd,FALSE);
-			InvalidateRect(GetDlgItem(hwnd,IDC_LIST1),NULL,TRUE);
+			else{
+				int result;
+				result=start_search(hwnd,FALSE);
+				InvalidateRect(GetDlgItem(hwnd,IDC_LIST1),NULL,TRUE);
+				if(result)
+					SetFocus(GetDlgItem(hwnd,IDC_LIST1));
+			}
 			break;
 		case IDCANCEL:
 			{
