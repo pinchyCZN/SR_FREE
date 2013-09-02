@@ -232,6 +232,13 @@ int is_alphanumeric(char a)
 	else
 		return FALSE;
 }
+int is_wordsubset(char a)
+{
+	if((a>='A' && a<='Z')||(a>='a' && a<='z')||(a>='0' && a<='9')||(a=='_'))
+		return TRUE;
+	else
+		return FALSE;
+}
 int convert_char(char a)
 {
 	if(a=='\t' || a=='\r')
@@ -568,7 +575,7 @@ check_nibble:
 						int j=line_pos-1;
 						if(j<0)
 							j=sizeof_line-1;
-						if(is_alphanumeric(line[j])){
+						if(is_wordsubset(line[j])){
 							found=FALSE;
 							match_offset=0;
 						}
@@ -580,13 +587,13 @@ check_nibble:
 							char a=0;
 							//if(FALSE)
 							if(fetch_next_byte(f,&a)){
-								if(is_alphanumeric(a)){
+								if(is_wordsubset(a)){
 									found=FALSE;
 									match_offset=0;
 								}
 							}
 						}
-						else if(i+1<len && is_alphanumeric(buf[i+1])){
+						else if(i+1<len && is_wordsubset(buf[i+1])){
 							found=FALSE;
 							match_offset=0;
 						}
