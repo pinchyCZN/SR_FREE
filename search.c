@@ -18,6 +18,7 @@ char search_str[0x10000];
 int strlen_search_str=0;
 char replace_str[0x10000];
 int strlen_replace_str=0;
+int leading_repeat=0;
 
 int replace_rest_file=FALSE;
 int replace_all_remain=FALSE;
@@ -354,13 +355,24 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 						start_pos=j;
 				}
 				else if(wpos<0){
+					if(leading_repeat>0){ //naive search
+						j-=match_offset;
+					}
 					start_pos=-1;
 					match_offset=0;
 				}
 				else if(wpos>=0){
 					if(search_str[match_offset-1]!='*'){
-						if(match_offset>0)
-							match_offset--;
+						if(match_offset>0){
+							if(leading_repeat>0){ //naive search
+								if(j>match_offset && j>wpos){
+									j-=wpos;
+									match_offset-=wpos;
+								}
+							}
+							else
+								match_offset--;
+						}
 					}
 				}
 				else{
@@ -375,8 +387,8 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 					int c,l,k,lb_index=-1;
 					c=start_pos;
 					l=j-start_pos+1;
-					if(line_offset+start_pos==0x1461E5B)
-						l=l;
+					//if(line_offset+start_pos==0x1461E5B)
+					//	l=l;
 					for(k=0;k<line_index+1;k++){
 						if(line[k]=='\t')
 							continue;
@@ -504,14 +516,20 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			}
 			else{
 check_nibble:
-				if(match_offset==match_len-1)
-				;//	printf("%s\n",line);
+				//if(match_offset==match_len-1)
+				//;//	printf("%s\n",line);
 				if(case_sensitive){
 					if(search_str[match_offset]==buf[i]){
 						match_offset++;
 						nibble=1;
 					}
 					else if(match_offset>0){
+						if(leading_repeat>0){ //naive search
+							i-=match_offset-1;
+							line_pos-=match_offset-1;
+							total_col-=match_offset-1;
+							offset-=match_offset-1;
+						}
 						if(search_str[0]==buf[i]){
 							line_col=line_pos;
 							match_offset=1;
@@ -528,6 +546,12 @@ check_nibble:
 					nibble=1;
 				}
 				else if(match_offset>0){
+					if(leading_repeat>0){ //naive search
+						i-=match_offset-1;
+						line_pos-=match_offset-1;
+						total_col-=match_offset-1;
+						offset-=match_offset-1;
+					}
 					if(upper_case(search_str[0])==upper_case(buf[i])){
 						line_col=line_pos;
 						match_offset=1;
@@ -547,11 +571,16 @@ check_nibble:
 				if(search_str[match_offset]==buf[i])
 					match_offset++;
 				else if(match_offset>0){
+					if(leading_repeat>0){ //naive search
+						i-=match_offset-1;
+						line_pos-=match_offset-1;
+						total_col-=match_offset-1;
+						offset-=match_offset-1;
+					}
 					if(search_str[0]==buf[i]){
 						line_col=line_pos;
 						match_offset=1;
-					}
-					else{
+					}else{
 						found=FALSE;
 						match_offset=0;
 					}
@@ -560,6 +589,12 @@ check_nibble:
 			else if(upper_case(search_str[match_offset])==upper_case(buf[i]))
 				match_offset++;
 			else if(match_offset>0){
+				if(leading_repeat>0){ //naive search
+					i-=match_offset-1;
+					line_pos-=match_offset-1;
+					total_col-=match_offset-1;
+					offset-=match_offset-1;
+				}
 				if(upper_case(search_str[0])==upper_case(buf[i])){
 					line_col=line_pos;
 					match_offset=1;
@@ -611,10 +646,10 @@ check_nibble:
 		if(match_offset>=match_len){
 			char str[sizeof(line)*2]={0};
 			int sizeof_str=sizeof_line*2;
-			if(line_num==480 && total_col-match_len==1)
-				line_num=line_num;
-			if(offset==0x2503)
-				offset=offset;
+			//if(line_num==480 && total_col-match_len==1)
+			//	line_num=line_num;
+			//if(offset==0x2503)
+			//	offset=offset;
 			if((offset>=sizeof_line-1) && line_pos<sizeof_line){
 				int j,k,l,m;
 				k=0;l=line_pos+1;m=0;
@@ -981,6 +1016,23 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	return 0;
 }
 
+int get_leading_repeats(char *str,int len)
+{
+	int i;
+	char a;
+	leading_repeat=0;
+	if(len>0)
+		a=str[0];
+	for(i=1;i<len;i++){
+		if(wildcard_search && ((str[i]=='?') || (str[i]=='*')))
+			leading_repeat++;
+		else if(a==str[i])
+			leading_repeat++;
+		else
+			break;
+	}
+	return leading_repeat;
+}
 int start_search(HWND hwnd,int replace)
 {
 	extern HINSTANCE	ghinstance;
@@ -1003,7 +1055,7 @@ int start_search(HWND hwnd,int replace)
 		GetDlgItemText(hwnd,IDC_COMBO_REPLACE,replace_str,sizeof(replace_str));
 		strlen_replace_str=strlen(replace_str);
 	}
-
+	get_leading_repeats(search_str,strlen_search_str);
 	search_str[sizeof(search_str)-1]=0;
 	replace_str[sizeof(replace_str)-1]=0;
 	save_combo_edit_ctrl(hwnd);
