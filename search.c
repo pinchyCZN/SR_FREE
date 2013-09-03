@@ -1024,9 +1024,15 @@ int get_leading_repeats(char *str,int len)
 	if(len>0)
 		a=str[0];
 	for(i=1;i<len;i++){
+		int compare=FALSE;
+		if(case_sensitive)
+			compare=(a==str[i]);
+		else
+			compare=(upper_case(a)==upper_case(str[i]));
+
 		if(wildcard_search && ((str[i]=='?') || (str[i]=='*')))
 			leading_repeat++;
-		else if(a==str[i])
+		else if(compare)
 			leading_repeat++;
 		else
 			break;
