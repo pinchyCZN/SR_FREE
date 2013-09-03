@@ -473,6 +473,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static int binary=FALSE;
 	static int sizeof_line=sizeof(line);
 	static int nibble=0;
+	int compare;
 	if(wildcard_search)
 		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
 	if(init){
@@ -518,47 +519,49 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 check_nibble:
 				//if(match_offset==match_len-1)
 				//;//	printf("%s\n",line);
-				if(case_sensitive){
-					if(search_str[match_offset]==buf[i]){
-						match_offset++;
-						nibble=1;
-					}
-					else if(match_offset>0){
-						if(leading_repeat>0){ //naive search
-							i-=match_offset-1;
-							line_pos-=match_offset-1;
-							total_col-=match_offset-1;
-							offset-=match_offset-1;
-						}
-						if(search_str[0]==buf[i]){
-							line_col=line_pos;
-							match_offset=1;
-						}
-						else{
-							found=FALSE;
-							match_offset=0;
-							nibble=0;
-						}
-					}
-				}
-				else if(upper_case(search_str[match_offset])==upper_case(buf[i])){
+				if(case_sensitive)
+					compare=(search_str[match_offset]==buf[i]);
+				else
+					compare=(upper_case(search_str[match_offset])==upper_case(buf[i]));
+
+				if(compare){
 					match_offset++;
 					nibble=1;
 				}
 				else if(match_offset>0){
 					if(leading_repeat>0){ //naive search
-						i-=match_offset-1;
-						line_pos-=match_offset-1;
-						total_col-=match_offset-1;
-						offset-=match_offset-1;
+						int delta=match_offset;
+						if(delta==0)
+							;
+						else{
+							delta--;
+							delta*=2;
+						}
+						i-=delta;
+						line_pos-=delta;
+						total_col-=delta;
+						offset-=delta;
 					}
-					if(upper_case(search_str[0])==upper_case(buf[i])){
+					if(case_sensitive)
+						compare=(search_str[0]==buf[i]);
+					else
+						compare=(upper_case(search_str[0])==upper_case(buf[i]));
+
+					if(compare){
 						line_col=line_pos;
 						match_offset=1;
-						nibble=1;
 					}
 					else{
 						found=FALSE;
+						if(match_offset>0){
+							int delta=match_offset;
+							delta*=2;
+							i-=delta;
+							line_pos-=delta;
+							total_col-=delta;
+							offset-=delta;
+						}
+
 						match_offset=0;
 						nibble=0;
 					}
@@ -567,26 +570,12 @@ check_nibble:
 		}
 		else{
 			/*---------NON unicode------------------*/
-			if(case_sensitive){
-				if(search_str[match_offset]==buf[i])
-					match_offset++;
-				else if(match_offset>0){
-					if(leading_repeat>0){ //naive search
-						i-=match_offset-1;
-						line_pos-=match_offset-1;
-						total_col-=match_offset-1;
-						offset-=match_offset-1;
-					}
-					if(search_str[0]==buf[i]){
-						line_col=line_pos;
-						match_offset=1;
-					}else{
-						found=FALSE;
-						match_offset=0;
-					}
-				}
-			}
-			else if(upper_case(search_str[match_offset])==upper_case(buf[i]))
+			if(case_sensitive)
+				compare=(search_str[match_offset]==buf[i]);
+			else
+				compare=(upper_case(search_str[match_offset])==upper_case(buf[i]));
+
+			if(compare)
 				match_offset++;
 			else if(match_offset>0){
 				if(leading_repeat>0){ //naive search
@@ -595,7 +584,12 @@ check_nibble:
 					total_col-=match_offset-1;
 					offset-=match_offset-1;
 				}
-				if(upper_case(search_str[0])==upper_case(buf[i])){
+				if(case_sensitive)
+					compare=(search_str[0]==buf[i]);
+				else
+					compare=(upper_case(search_str[0])==upper_case(buf[i]));
+
+				if(compare){
 					line_col=line_pos;
 					match_offset=1;
 				}
