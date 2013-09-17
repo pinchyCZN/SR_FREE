@@ -225,6 +225,11 @@ int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 		}
 	}
 	DragFinish(hdrop);
+	if(ctrl && (!shift)){ //only search this file
+		SendDlgItemMessage(hwnd,IDC_SUBDIRS,BM_SETCHECK,BST_UNCHECKED,0);
+		ShowWindow(GetDlgItem(hwnd,IDC_CHECK_DEPTH),SW_HIDE);
+		ShowWindow(GetDlgItem(hwnd,IDC_DEPTH_LEVEL),SW_HIDE);
+	}
 	if(mask[0]!=0){
 		int index;
 		if(shift || ctrl || 0==GetWindowTextLength(GetDlgItem(hwnd,IDC_COMBO_MASK))){
