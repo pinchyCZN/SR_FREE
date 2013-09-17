@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <shlwapi.h>
 #include <Shlobj.h>
+#include <oleidl.h>
 #include "resource.h"
 
 HWND		hwindow;
@@ -890,6 +891,11 @@ int load_icon(HWND hwnd)
 	}
 	return FALSE;
 }
+int register_drag_drop(HWND hwnd)
+{
+//	RegisterDragDrop(hwnd,
+}
+
 LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
@@ -929,6 +935,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SetWindowPos(hwnd,IsDlgButtonChecked(hwnd,IDC_ONTOP)?HWND_TOPMOST:HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 		SendMessage(hwnd,WM_COMMAND,MAKEWPARAM(IDC_SUBDIRS,BN_CLICKED),0);
 		load_icon(hwnd);
+		register_drag_drop(hwnd);
 		break;
 	case WM_HELP:
 		show_main_help(hwnd,(HELPINFO *)lparam);
