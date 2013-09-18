@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <shlwapi.h>
 #include <Shlobj.h>
-#include <oleidl.h>
 #include "resource.h"
 
 HWND		hwindow;
@@ -891,10 +890,6 @@ int load_icon(HWND hwnd)
 	}
 	return FALSE;
 }
-int register_drag_drop(HWND hwnd)
-{
-//	RegisterDragDrop(hwnd,
-}
 
 LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
@@ -1207,6 +1202,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 	HACCEL haccel;
 	ghinstance=hInstance;
 
+	OleInitialize(0);
 	init_ini_file();
 	
 	hwindow=CreateDialog(ghinstance,MAKEINTRESOURCE(IDD_DIALOG1),NULL,MainDlg);
