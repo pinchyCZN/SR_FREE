@@ -30,12 +30,11 @@ idroptarget_release (IDropTarget* This)
 //	IDropTarget::DragEnter
 static HRESULT STDMETHODCALLTYPE idroptarget_dragenter(IDropTarget* This, IDataObject * pDataObject, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
-	printf("dragenter\n");
 	if(ghwnd!=0){
 		original_title_bar[0]=0;
 		GetWindowText(ghwnd,original_title_bar,sizeof(original_title_bar));
 		original_title_bar[sizeof(original_title_bar)-1]=0;
-		SetWindowText(ghwnd,"CTRL=mask exact filename SHIFT");
+		SetWindowText(ghwnd,"CTRL=mask exact filename, SHIFT=mask *.*, CTRL+SHIFT mask by *.ext");
 	}
 	return S_OK;
 }
@@ -43,14 +42,12 @@ static HRESULT STDMETHODCALLTYPE idroptarget_dragenter(IDropTarget* This, IDataO
 //	IDropTarget::DragOver
 static HRESULT STDMETHODCALLTYPE idroptarget_dragover(IDropTarget* This, DWORD grfKeyState, POINTL pt, DWORD * pdwEffect)
 {
-	printf("dragover\n");
 	return S_OK;
 }
 
 //	IDropTarget::DragLeave
 static HRESULT STDMETHODCALLTYPE idroptarget_dragleave(IDropTarget* This)
 {
-	printf("drag leave\n");
 	if(ghwnd!=0 && original_title_bar[0]!=0){
 		SetWindowText(ghwnd,original_title_bar);
 	}

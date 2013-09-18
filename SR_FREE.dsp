@@ -113,6 +113,10 @@ SOURCE=.\debug_print.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dragdrop.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\favorites.c
 # End Source File
 # Begin Source File
