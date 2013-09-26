@@ -19,6 +19,7 @@ int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
 char *cmdline=0;
 static HMENU list_menu=0;
+static HWND gresult_list=0;
 
 enum{
 	CMD_OPENASSOC=10000,
@@ -890,13 +891,53 @@ int load_icon(HWND hwnd)
 	}
 	return FALSE;
 }
+int process_custom_hlist(MSG *msg,HWND hlist)
+{
+	static int rmb_pressed=FALSE;
+	if(hlist==0)
+		return FALSE;
+	if(rmb_pressed && msg->message==WM_RBUTTONUP){
+		rmb_pressed=FALSE;
+		return TRUE;
+	}
+	if(msg->message==WM_MOUSEWHEEL){
+		int dir;
+		short delta=(short)HIWORD(msg->wParam);
+		if(msg->wParam&MK_RBUTTON){
+			if(delta<0)
+				dir=SB_PAGEDOWN;
+			else
+				dir=SB_PAGEUP;
+			SendMessage(hlist,WM_VSCROLL,dir,0);
+			rmb_pressed=TRUE;
+			return TRUE;
+		}
+		else if(msg->wParam&MK_SHIFT){
+			if(delta<0)
+				dir=SB_PAGEDOWN;
+			else
+				dir=SB_PAGEUP;
+			SendMessage(hlist,WM_VSCROLL,dir,0);
+			return TRUE;
+		}
+		else if(msg->wParam&MK_CONTROL){
+			if(delta<0)
+				dir=SB_LINEDOWN;
+			else
+				dir=SB_LINEUP;
+			SendMessage(hlist,WM_VSCROLL,dir,0);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
 
 #ifdef _DEBUG
-	if(FALSE)
+//	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
@@ -931,6 +972,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SendMessage(hwnd,WM_COMMAND,MAKEWPARAM(IDC_SUBDIRS,BN_CLICKED),0);
 		load_icon(hwnd);
 		register_drag_drop(hwnd);
+		gresult_list=GetDlgItem(hwnd,IDC_LIST1);
 		break;
 	case WM_HELP:
 		show_main_help(hwnd,(HELPINFO *)lparam);
@@ -942,18 +984,6 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 //		dump_main(hwnd);
 		resize_main(hwnd);
 	//	InvalidateRect(hwnd,NULL,TRUE);
-		break;
-	case WM_MOUSEWHEEL:
-		if(GetFocus()==GetDlgItem(hwnd,IDC_LIST1)){
-			WPARAM _wparam=wparam&0xFFFF0000;
-			if(wparam&MK_CONTROL)
-				_wparam<<=1;
-			if(wparam&MK_SHIFT)
-				_wparam<<=2;
-			if((wparam&MK_CONTROL) && (wparam&MK_SHIFT))
-				_wparam=wparam<<4;
-			SendMessage(GetDlgItem(hwnd,IDC_LIST1),msg,_wparam,lparam);
-		}
 		break;
 	case WM_DRAWITEM:
 		list_drawitem(hwnd,wparam,lparam);
@@ -1241,6 +1271,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 				printf("*");
 				print_msg(_msg,lparam,wparam);
 				tick=GetTickCount();
+			}
+			if(gresult_list!=0 && msg.hwnd==gresult_list){
+				if(process_custom_hlist(&msg,gresult_list))
+					continue;
 			}
 		}
 		if(haccel!=0)
