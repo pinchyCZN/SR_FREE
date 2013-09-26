@@ -57,7 +57,7 @@ LINK32=Link.exe
 # Begin Special Build Tool
 TargetPath=.\Release\SR_FREE.exe
 SOURCE="$(InputPath)"
-PostBuild_Cmds=copy $(TargetPath) "c:\Program Files\Search_Replace\"
+PostBuild_Cmds=copy $(TargetPath) "c:\Program Files\Search_Replace\"	upx $(TargetPath) 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
