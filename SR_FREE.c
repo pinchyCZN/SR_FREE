@@ -159,6 +159,58 @@ checknext:
 		goto checknext;
 	return FALSE;
 }
+int check_ext_favs(char *mask,int mask_size,char *ext)
+{
+	int result=FALSE;
+	char *tmpstr=0;
+	int tmpsize=mask_size;
+	int i;
+	if(mask_size<=2 || mask==0 || ext==0)
+		return result;
+	if(ext[0]==0)
+		return result;
+	tmpstr=malloc(tmpsize);
+	if(tmpstr==0)
+		return result;
+#define MAX_FAVS 25
+	for(i=0;i<MAX_FAVS;i++){
+		char key[10]={0};
+		_snprintf(key,sizeof(key),"item%i",i);
+		tmpstr[0]=0;
+		get_ini_str("FILE_MASK_FAVS",key,tmpstr,tmpsize);
+		if(tmpstr[0]=='>'){
+			char *orig;
+			int origsize=tmpsize;
+			orig=malloc(origsize);
+			if(orig!=0){
+				char *token;
+				int j=0;
+				strncpy(orig,tmpstr+1,origsize);
+				orig[origsize-1]=0;
+				tmpstr[tmpsize-1]=0;
+				token=strtok(tmpstr+1,";"); //skip >
+				while(token!=0){
+					if(wild_card_match(token,ext)){
+						strncpy(mask,orig,mask_size);
+						mask[mask_size-1]=0;
+						result=TRUE;
+						break;
+					}
+					token=strtok(NULL,";");
+					j++;
+					if(j>100)
+						break;
+				}
+				free(orig);
+			}
+		}
+		if(result)
+			break;
+	}
+	if(tmpstr!=0)
+		free(tmpstr);
+	return result;
+}
 int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 {
 	int i,count;
@@ -214,6 +266,9 @@ int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 						strcat(mask,f);
 					}
 				}
+			}
+			else if(check_ext_favs(mask,sizeof(mask),ext)){
+				SetWindowText(GetDlgItem(hwnd,IDC_COMBO_MASK),mask);
 			}
 			else if(ext[0]!=0 && strstr(mask,ext)==0){
 				if((strlen(mask)+strlen(ext)+1)<sizeof(mask)){

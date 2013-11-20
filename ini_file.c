@@ -124,6 +124,19 @@ int extract_folder(char *f,int size)
 	}
 	return TRUE;
 }
+//returns no trailing slash
+int set_module_dir()
+{
+	char path[MAX_PATH]={0};
+	GetModuleFileName(NULL,path,sizeof(path));
+	extract_folder(path,sizeof(path));
+	if(path[0]!=0 && is_path_directory(path)){
+		SetCurrentDirectory(path);
+		return TRUE;
+	}
+	return FALSE;
+
+}
 int init_ini_file()
 {
 	char path[MAX_PATH],str[MAX_PATH];
@@ -131,10 +144,8 @@ int init_ini_file()
 	memset(ini_file,0,sizeof(ini_file));
 	memset(path,0,sizeof(path));
 	memset(str,0,sizeof(str));
-	GetModuleFileName(NULL,path,sizeof(path));
-	extract_folder(path,sizeof(path));
-	if(path[0]==0)
-		GetCurrentDirectory(sizeof(path),path);
+	set_module_dir();
+	GetCurrentDirectory(sizeof(path),path);
 	_snprintf(str,sizeof(str)-1,"%s\\" APP_NAME "_portable",path);
 	if(does_file_exist(str)){
 		_snprintf(str,sizeof(str)-1,"%s\\" APP_NAME ".ini",path);
@@ -160,6 +171,7 @@ int init_ini_file()
 					break;
 				case IDYES:
 					CreateDirectory(path,NULL);
+					SetCurrentDirectory(path);
 					break;
 				case IDNO:
 					GetCurrentDirectory(sizeof(path),path);
@@ -170,10 +182,7 @@ int init_ini_file()
 		}else{
 			char str[MAX_PATH*3];
 install:
-			GetModuleFileName(NULL,path,sizeof(path));
-			extract_folder(path,sizeof(path));
-			if(path[0]==0)
-				GetCurrentDirectory(sizeof(path),path);
+			GetCurrentDirectory(sizeof(path),path);
 			memset(str,0,sizeof(str));
 			_snprintf(str,sizeof(str)-1,
 				"OK=Install INI in current directory %s\r\n\r\n"

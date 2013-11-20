@@ -160,7 +160,10 @@ int select_and_close(HWND hwnd)
 	str[sizeof(str)-1]=0;
 	str_trim_right(str);
 	if(str[0]!=0){
-		SetDlgItemText(hwnd_parent,get_parent_combo(),str);
+		char *s=str;
+		if(s[0]=='>')
+			s++;
+		SetDlgItemText(hwnd_parent,get_parent_combo(),s);
 		save_favs_size(hwnd);
 		EndDialog(hwnd,0);
 	}
