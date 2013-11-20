@@ -267,8 +267,9 @@ int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 					}
 				}
 			}
-			else if(check_ext_favs(mask,sizeof(mask),ext)){
-				SetWindowText(GetDlgItem(hwnd,IDC_COMBO_MASK),mask);
+			else if((!ctrl) && (!shift)){
+				if(check_ext_favs(mask,sizeof(mask),ext))
+					SetWindowText(GetDlgItem(hwnd,IDC_COMBO_MASK),mask);
 			}
 			else if(ext[0]!=0 && strstr(mask,ext)==0){
 				if((strlen(mask)+strlen(ext)+1)<sizeof(mask)){
