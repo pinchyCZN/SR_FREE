@@ -60,11 +60,11 @@ int write_ini_str(char *section,char *key,char *str)
 	else
 		return FALSE;
 }
-int add_trail_slash(char *path)
+int add_trail_slash(char *path,int size)
 {
 	int i;
 	i=strlen(path);
-	if(i>0 && path[i-1]!='\\')
+	if((i<(size-1)) && i>0 && path[i-1]!='\\')
 		strcat(path,"\\");
 	return TRUE;
 }
@@ -78,12 +78,14 @@ int does_file_exist(char *fname)
 	}
 	return FALSE;
 }
-int get_appdata_folder(char *path)
+int get_appdata_folder(char *path,int size)
 {
 	int found=FALSE;
 	ITEMIDLIST *pidl;
 	IMalloc	*palloc;
 	HWND hwindow=0;
+	if(size<MAX_PATH)
+		return found;
 	if(SHGetSpecialFolderLocation(hwindow,CSIDL_APPDATA,&pidl)==NOERROR){
 		if(SHGetPathFromIDList(pidl,path)){
 			found=TRUE;
@@ -153,8 +155,8 @@ int init_ini_file()
 			goto install;
 	}
 	else{
-		if(get_appdata_folder(path)){
-			add_trail_slash(path);
+		if(get_appdata_folder(path,sizeof(path))){
+			add_trail_slash(path,sizeof(path));
 			strcat(path,APP_NAME "\\");
 			_snprintf(str,sizeof(str)-1,"%s%s",path,APP_NAME ".ini");
 			if((!is_path_directory(path)) || (!does_file_exist(str))){
@@ -199,7 +201,7 @@ install:
 		}
 
 	}
-	add_trail_slash(path);
+	add_trail_slash(path,sizeof(path));
 	_snprintf(ini_file,sizeof(ini_file)-1,"%s%s",path,APP_NAME ".ini");
 	f=fopen(ini_file,"rb");
 	if(f==0){
