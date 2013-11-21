@@ -107,6 +107,11 @@ int create_portable_file()
 	}
 	return FALSE;
 }
+int write_new_list_ini()
+{
+	write_ini_str(APP_NAME,"installed","TRUE");
+	return TRUE;
+}
 //no trailing slash
 int extract_folder(char *f,int size)
 {
@@ -232,11 +237,5 @@ int open_ini(HWND hwnd)
 		_snprintf(str,sizeof(str)-1,"cant locate ini file:\r\n%s",ini_file);
 		MessageBox(hwnd,str,"Error",MB_OK);
 	}
-	return TRUE;
-}
-
-int write_new_list_ini()
-{
-	write_ini_str(APP_NAME,"installed","TRUE");
 	return TRUE;
 }
