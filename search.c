@@ -368,7 +368,11 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 								if(j>match_offset && j>wpos){
 									int k=match_offset;
 									for( ;k>0;k--){
-										if(search_str[k]=='*' || search_str[k]=='?'){
+										if(search_str[k]=='*'){
+											break;
+										}
+										else if(search_str[k]=='?'){
+											k--;
 											break;
 										}
 									}
