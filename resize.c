@@ -373,18 +373,18 @@ short win_favs_list[]={
 };
 short install_dlg_anchors[]={
 	CONTROL_ID,IDC_INSTALL_INFO,
-			XPOS,0,YPOS,10, /*x.off=-537 y.off=-140*/
-			WIDTH,0,HEIGHT,23, /*w.off=-1 h.off=-127*/
+			XPOS,0,YPOS,10,
+			WIDTH,0,HEIGHT,23,
 			SIZE_WIDTH_OFF,0,
 			CONTROL_FINISH,-1,
 	CONTROL_ID,IDC_TXT_LOCAL,
-			XPOS,92,YPOS,49, /*x.off=-445 y.off=-101*/
-			WIDTH,0,HEIGHT,23, /*w.off=-93 h.off=-127*/
+			XPOS,92,YPOS,49,
+			WIDTH,0,HEIGHT,23,
 			SIZE_WIDTH_OFF,-92,
 			CONTROL_FINISH,-1,
 	CONTROL_ID,IDC_TXT_APPDATA,
-			XPOS,92,YPOS,85, /*x.off=-445 y.off=-65*/
-			WIDTH,0,HEIGHT,23, /*w.off=-93 h.off=-127*/
+			XPOS,92,YPOS,85,
+			WIDTH,0,HEIGHT,23,
 			SIZE_WIDTH_OFF,-92,
 			CONTROL_FINISH,-1,
 	RESIZE_FINISH
