@@ -297,7 +297,7 @@ LRESULT CALLBACK options_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			}
 			break;
 		case IDC_OPEN_INI:
-			open_ini(hwnd);
+			open_ini(hwnd,GetKeyState(VK_CONTROL)&0x8000);
 			break;
 		case IDC_APPLY:
 			save_options(hwnd);

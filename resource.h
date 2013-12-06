@@ -17,6 +17,7 @@
 #define IDB_CONTINUE                    114
 #define IDI_ICON                        116
 #define IDD_FAVORITES                   117
+#define IDD_INSTALL_DIALOG              118
 #define IDC_COMBO_SEARCH                1000
 #define IDC_COMBO_REPLACE               1001
 #define IDC_COMBO_MASK                  1002
@@ -70,7 +71,12 @@
 #define IDC_EXTENDED                    1063
 #define IDC_CHECK_DEPTH                 1064
 #define IDC_DEPTH_LEVEL                 1065
-
+#define IDC_INSTALL_INFO                1066
+#define IDC_USE_LOCAL                   1067
+#define IDC_USE_APPDATA                 1068
+#define IDC_NO_INI                      1069
+#define IDC_TXT_LOCAL                   1070
+#define IDC_TXT_APPDATA                 1071
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
