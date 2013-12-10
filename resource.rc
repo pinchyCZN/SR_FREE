@@ -106,7 +106,7 @@ BEGIN
 END
 
 IDD_OPTIONS DIALOG DISCARDABLE  0, 0, 258, 166
-STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Options"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -200,6 +200,7 @@ BEGIN
     EDITTEXT        IDC_TXT_APPDATA,61,52,296,14,ES_AUTOHSCROLL | 
                     ES_READONLY
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
