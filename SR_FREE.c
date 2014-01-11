@@ -484,6 +484,8 @@ int save_combo_box(HWND hwnd,int ctrl,char *keystart)
 }
 int save_ini_stuff(HWND hwnd)
 {
+	if(GetKeyState(VK_CONTROL)&8000)
+		return TRUE;
 	write_ini_value("BUTTON_SETTINGS","search_subdirs",is_button_checked(hwnd,IDC_SUBDIRS));
 	write_ini_value("BUTTON_SETTINGS","unicode",is_button_checked(hwnd,IDC_UNICODE));
 	write_ini_value("BUTTON_SETTINGS","case",is_button_checked(hwnd,IDC_CASE));
