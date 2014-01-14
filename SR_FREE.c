@@ -484,8 +484,6 @@ int save_combo_box(HWND hwnd,int ctrl,char *keystart)
 }
 int save_ini_stuff(HWND hwnd)
 {
-	if(GetKeyState(VK_CONTROL)&8000)
-		return TRUE;
 	write_ini_value("BUTTON_SETTINGS","search_subdirs",is_button_checked(hwnd,IDC_SUBDIRS));
 	write_ini_value("BUTTON_SETTINGS","unicode",is_button_checked(hwnd,IDC_UNICODE));
 	write_ini_value("BUTTON_SETTINGS","case",is_button_checked(hwnd,IDC_CASE));
@@ -1269,15 +1267,19 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	case WM_ENDSESSION:
 		if(wparam){
 			SetWindowText(hwnd,"Shutting down");
-			save_window_size(hwnd,"MAIN_WINDOW");
-			save_ini_stuff(hwnd);
+			if(!(GetKeyState(VK_SHIFT)&0x8000)){
+				save_window_size(hwnd,"MAIN_WINDOW");
+				save_ini_stuff(hwnd);
+			}
 			SetWindowLong(hwnd,DWL_MSGRESULT,0);
 			return TRUE;
 		}
 		break;
 	case WM_CLOSE:
-		save_window_size(hwnd,"MAIN_WINDOW");
-		save_ini_stuff(hwnd);
+		if(!(GetKeyState(VK_SHIFT)&0x8000)){
+			save_window_size(hwnd,"MAIN_WINDOW");
+			save_ini_stuff(hwnd);
+		}
 		PostQuitMessage(0);
 		break;
 	}
