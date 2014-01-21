@@ -13,7 +13,7 @@
 #include <Shlobj.h>
 #include "resource.h"
 
-HWND		hwindow;
+HWND		ghwindow;
 HINSTANCE	ghinstance;
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
@@ -993,7 +993,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	static HWND grippy=0;
 
 #ifdef _DEBUG
-//	if(FALSE)
+	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
@@ -1294,20 +1294,21 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 
 	OleInitialize(0);
 	init_ini_file();
-	
-	hwindow=CreateDialog(ghinstance,MAKEINTRESOURCE(IDD_DIALOG1),NULL,MainDlg);
-	if(!hwindow){
-		
-		MessageBox(NULL,"Could not create main dialog","ERROR",MB_ICONERROR | MB_OK);
-		return 0;
-	}
 
 #ifdef _DEBUG
 	open_console();
 	move_console();
 #endif
-	ShowWindow(hwindow,iCmdShow);
-	UpdateWindow(hwindow);
+	
+	ghwindow=CreateDialog(ghinstance,MAKEINTRESOURCE(IDD_DIALOG1),NULL,MainDlg);
+	if(!ghwindow){
+		
+		MessageBox(NULL,"Could not create main dialog","ERROR",MB_ICONERROR | MB_OK);
+		return 0;
+	}
+
+	ShowWindow(ghwindow,iCmdShow);
+	UpdateWindow(ghwindow);
 
 	if(szCmdLine!=0 && szCmdLine[0]!=0)
 		cmdline=szCmdLine;
@@ -1338,8 +1339,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 			}
 		}
 		if(haccel!=0)
-			TranslateAccelerator(hwindow,haccel,&msg);
-		if(!IsDialogMessage(hwindow,&msg)){
+			TranslateAccelerator(ghwindow,haccel,&msg);
+		if(!IsDialogMessage(ghwindow,&msg)){
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}

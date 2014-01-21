@@ -7,9 +7,12 @@
 #include <process.h>
 #include "resource.h"
 
+extern HWND ghwindow;
+static HWND modeless_search_hwnd=0;
+
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
-static HWND hwnd_parent;
+//static HWND hwnd_parent;
 
 int thread_busy=FALSE;
 int stop_thread=FALSE;
@@ -394,7 +397,7 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				if(match_offset==1)
 					col_pos=j;
 				if(match_offset>=match_len){
-					HWND hwnd_parent=GetParent(hwnd);
+					HWND hwnd_parent=ghwindow;
 					char *s=line;
 					int c,l,k,lb_index=-1;
 					c=start_pos;
@@ -768,7 +771,7 @@ check_nibble:
 				}
 			}
 			{
-				HWND hwnd_parent=GetParent(hwnd);
+				HWND hwnd_parent=ghwindow;
 				int lb_index=-1;
 				if(matches_found==0){
 					add_listbox_str(hwnd_parent,"File %s",current_fname);
@@ -808,7 +811,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	_snprintf(current_fname,sizeof(current_fname),"%s%s",current_fname,fname);
 	current_fname[sizeof(current_fname)-1]=0;
 	if(strlen_search_str==0){
-		add_listbox_str(GetParent(hwnd),"File %s",current_fname);
+		add_listbox_str(ghwindow,"File %s",current_fname);
 		return FALSE;
 	}
 	f=fopen(current_fname,"rb");
@@ -843,7 +846,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 			}
 			total_matches+=matches_found;
 			if(matches_found>0)
-				add_listbox_str(GetParent(hwnd),"found %i matches",matches_found);
+				add_listbox_str(ghwindow,"found %i matches",matches_found);
 			if(flen!=0)
 				set_progress_bar(hwnd,0);
 			free(buf);
@@ -911,19 +914,19 @@ int search_thread(HWND hwnd)
 	int search_sub_dirs=TRUE;
 	thread_busy=TRUE;
 	memset(&fd,0,sizeof(fd));
-	GetDlgItemText(GetParent(hwnd),IDC_COMBO_PATH,all_paths,sizeof(all_paths));
-	GetDlgItemText(GetParent(hwnd),IDC_COMBO_MASK,filemask,sizeof(filemask));
+	GetDlgItemText(ghwindow,IDC_COMBO_PATH,all_paths,sizeof(all_paths));
+	GetDlgItemText(ghwindow,IDC_COMBO_MASK,filemask,sizeof(filemask));
 
-	SendDlgItemMessage(GetParent(hwnd),IDC_LIST1,LB_RESETCONTENT,0,0);
+	SendDlgItemMessage(ghwindow,IDC_LIST1,LB_RESETCONTENT,0,0);
 	reset_line_width();
-	set_status_bar(GetParent(hwnd),"");
-	case_sensitive=is_button_checked(GetParent(hwnd),IDC_CASE);
-	unicode_search=is_button_checked(GetParent(hwnd),IDC_UNICODE);
-	search_sub_dirs=is_button_checked(GetParent(hwnd),IDC_SUBDIRS);
-	wildcard_search=is_button_checked(GetParent(hwnd),IDC_WILDCARD);
-	ignore_whitespace=is_button_checked(GetParent(hwnd),IDC_IGNOREWS);
-	match_whole=is_button_checked(GetParent(hwnd),IDC_WHOLEWORD);
-	hex_search=is_button_checked(GetParent(hwnd),IDC_HEX);
+	set_status_bar(ghwindow,"");
+	case_sensitive=is_button_checked(ghwindow,IDC_CASE);
+	unicode_search=is_button_checked(ghwindow,IDC_UNICODE);
+	search_sub_dirs=is_button_checked(ghwindow,IDC_SUBDIRS);
+	wildcard_search=is_button_checked(ghwindow,IDC_WILDCARD);
+	ignore_whitespace=is_button_checked(ghwindow,IDC_IGNOREWS);
+	match_whole=is_button_checked(ghwindow,IDC_WHOLEWORD);
+	hex_search=is_button_checked(ghwindow,IDC_HEX);
 	if(hex_search){
 		strlen_search_str=convert_hex_str(search_str,sizeof(search_str));
 		strlen_replace_str=convert_hex_str(replace_str,sizeof(replace_str));
@@ -950,26 +953,26 @@ int search_thread(HWND hwnd)
 			if(strlen(path)==0)
 				continue;
 			find_files(hwnd,path,filemask,&total,search_sub_dirs,depth_limit,0);
-			add_listbox_str(GetParent(hwnd),"Searched %i file(s), found %i occurrences in %i file(s)",
+			add_listbox_str(ghwindow,"Searched %i file(s), found %i occurrences in %i file(s)",
 				files_searched,total_matches,files_occured);
 			if(stop_thread){
-				set_status_bar(GetParent(hwnd),"search aborted: Searched %i file(s), found %i occurrences in %i file(s)",
+				set_status_bar(ghwindow,"search aborted: Searched %i file(s), found %i occurrences in %i file(s)",
 					files_searched,total_matches,files_occured);
 				break;
 			}
 			else
-				set_status_bar(GetParent(hwnd),"Searched %i file(s), found %i occurrences in %i file(s)",
+				set_status_bar(ghwindow,"Searched %i file(s), found %i occurrences in %i file(s)",
 					files_searched,total_matches,files_occured);
 
 		}
 	}
-	PostMessage(hwnd,WM_USER+1,0,0);
+	PostMessage(hwnd,WM_APP,0,0);
 	thread_busy=FALSE;
 	_endthread();
 	return 0;
 }
 
-LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+LRESULT CALLBACK modal_search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
 	switch(msg)
@@ -1006,8 +1009,8 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		resize_search(hwnd);
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
-	case WM_USER+1:
-		save_window_pos_relative(hwnd_parent,hwnd,"SEARCH_STATUS_WINDOW");
+	case WM_APP:
+		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
 		EndDialog(hwnd,0);
 		break;
 	case WM_COMMAND:
@@ -1020,6 +1023,155 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	}
 	return 0;
+}
+/* modeless window */
+LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+	static HWND grippy=0;
+	static HWND hbutton=0;
+	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
+		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT&&msg!=WM_CTLCOLORSTATIC)
+	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
+	{
+		static DWORD tick=0;
+		if((GetTickCount()-tick)>500)
+			printf("--\n");
+		printf("*");
+		print_msg(msg,lparam,wparam);
+		tick=GetTickCount();
+	}
+
+	switch(msg)
+	{
+	case WM_CREATE:
+		grippy=create_grippy(hwnd);
+		{
+			CREATESTRUCT *cs=lparam;
+			hbutton=0;
+			if(cs!=0){
+				int i;
+				HWND h[2]={0,0};
+				load_window_pos_relative(cs->hwndParent,hwnd,"SEARCH_STATUS_WINDOW");
+				hbutton=h[0]=CreateWindow("BUTTON","Cancel",WS_CHILD|WS_TABSTOP|WS_VISIBLE|BS_PUSHBUTTON,0,0,10,10,hwnd,IDCANCEL,cs->hInstance,0);
+				CreateWindow("msctls_progress32","progress",WS_CHILD|WS_VISIBLE|WS_BORDER,0,0,10,10,hwnd,IDC_PROGRESS1,cs->hInstance,0);
+				h[1]=CreateWindow("STATIC","",WS_CHILD|WS_VISIBLE,0,0,10,10,hwnd,IDC_SEARCH_STATUS,cs->hInstance,0);
+				SetFocus(GetDlgItem(hwnd,IDCANCEL));
+				PostMessage(hwnd,WM_SIZE,0,0);
+				for(i=0;i<2;i++){
+					if(h[i]!=0){
+						SendMessage(h[i],WM_SETFONT,GetStockObject(DEFAULT_GUI_FONT),0);
+					}
+				}
+			}
+			if(hbutton!=0){
+			//	SetWindowLong(hbutton,GWL_WNDPROC	
+			}
+//			PostMessage(hwnd,WM_APP+1,1,1);
+		}
+		return 0;
+		break;
+	case WM_HSCROLL:
+		PostMessage(GetDlgItem(ghwindow,IDC_LIST1),WM_VSCROLL,wparam,lparam);
+		return 0;
+		break;
+	case WM_MOUSEWHEEL:
+		SetFocus(grippy);
+		if(LOWORD(wparam)==MK_RBUTTON){
+			WPARAM scrollcode=SB_PAGEUP;
+			if(HIWORD(wparam)&0x8000)
+				scrollcode=SB_PAGEDOWN;
+			PostMessage(GetDlgItem(ghwindow,IDC_LIST1),WM_VSCROLL,scrollcode,0);
+		}
+		else
+			PostMessage(GetDlgItem(ghwindow,IDC_LIST1),msg,wparam,lparam);
+		break;
+	case WM_SIZE:
+		grippy_move(hwnd,grippy);
+		resize_search(hwnd);
+		InvalidateRect(hwnd,NULL,TRUE);
+		break;
+	case WM_APP:
+		PostMessage(hwnd,WM_CLOSE,0,0);
+		break;
+	case WM_APP+1:
+	case WM_SHOWWINDOW:
+		if(wparam){
+			if(!thread_busy){
+				stop_thread=FALSE;
+				_beginthread(search_thread,0,hwnd);
+			}
+		}
+		break;
+	case WM_KEYFIRST:
+		{
+			int key=wparam;
+			switch(key){
+			case VK_ESCAPE:
+				PostMessage(hwnd,WM_CLOSE,0,0);
+				break;
+			case VK_TAB:
+				SetFocus(GetDlgItem(ghwindow,IDC_LIST1));
+				break;
+			}
+		}
+		break;
+	case WM_QUIT:
+	case WM_CLOSE:
+		if(thread_busy)
+			stop_thread=TRUE;
+		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
+		ShowWindow(hwnd,SW_HIDE);
+		return 0;
+		//DestroyWindow(hwnd);
+		break;
+	case WM_COMMAND:
+		switch(LOWORD(wparam)){
+		case IDCANCEL:
+			if(HIWORD(wparam)==BN_CLICKED){
+				stop_thread=TRUE;
+				PostMessage(hwnd,WM_CLOSE,0,0);
+			}
+			break;
+		}
+		break;
+	}
+	return DefWindowProc(hwnd,msg,wparam,lparam);
+}
+int create_search_win(HWND hwnd,void *sproc,HWND *out)
+{
+	extern HINSTANCE	ghinstance;
+	int result=FALSE;
+	static int atom=0;
+	const char *class_name="SEARCH_WIN_CLASS";
+	if(atom==0){
+		WNDCLASS wc;
+		memset(&wc,0,sizeof(wc));
+		wc.style         = 0;
+		if(sproc)
+			wc.lpfnWndProc   = sproc;
+		else
+			wc.lpfnWndProc   = search_proc;
+		wc.hInstance     = ghinstance;
+		wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+		wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+		wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+		wc.lpszClassName = class_name;
+		atom=RegisterClass(&wc);
+	}
+	if(atom){
+		static HWND hwin=0;
+		if(hwin==0){
+			hwin=CreateWindow(class_name,"Searching",WS_POPUP|WS_CAPTION|WS_THICKFRAME|WS_SYSMENU,0,0,100,100,hwnd,0,ghinstance,0);
+		}
+		if(hwin){
+			if(out!=0)
+				*out=hwnd;
+			if(!IsWindowVisible(hwin))
+				ShowWindow(hwnd,SW_SHOW);
+			result=TRUE;
+		}
+	}
+	return result;
 }
 
 int get_leading_repeats(char *str,int len)
@@ -1071,9 +1223,21 @@ int start_search(HWND hwnd,int replace)
 	search_str[sizeof(search_str)-1]=0;
 	replace_str[sizeof(replace_str)-1]=0;
 	save_combo_edit_ctrl(hwnd);
-	hwnd_parent=hwnd;
-
-	DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
+	if(replace)
+		DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,modal_search_proc);
+	else
+	{
+		HWND hsearch=0;
+		if(create_search_win(hwnd,search_proc,&hsearch)){
+			HWND h;
+			//h=GetDlgItem(hsearch,IDC_SEARCH_STATUS);
+			//SendMessage(hsearch,WM_USER+1,0,0);
+			//ShowWindow(hsearch,SW_SHOWNORMAL);
+			//PostMessage(hsearch,WM_USER+1,0,0);
+			//SendMessage(hsearch,WM_COMMAND,1,1);
+		}
+		return 0;
+	}
 	return total_matches>0;
 }
 int is_thread_busy()
