@@ -993,7 +993,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	static HWND grippy=0;
 
 #ifdef _DEBUG
-	if(FALSE)
+//	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
@@ -1121,6 +1121,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 				SendDlgItemMessage(hwnd,IDC_LIST1,LB_SELITEMRANGE,0,MAKELPARAM(0,0xFFFF));
 			else if(GetDlgItem(hwnd,IDC_CHECK_DEPTH)==focus || GetDlgItem(hwnd,IDC_DEPTH_LEVEL)==focus)
 				SetDlgItemText(hwnd,IDC_DEPTH_LEVEL,"0");
+			cancel_search();
 			}
 		//	PostQuitMessage(0);
 			break;

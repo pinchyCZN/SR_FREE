@@ -972,29 +972,74 @@ int search_thread(HWND hwnd)
 	return 0;
 }
 
-LRESULT CALLBACK modal_search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
-	static HWND grippy=0;
+	static HWND grippy=0,hbutton=0;
+	static void  *button_proc=0;
+	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
+		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT&&msg!=WM_CTLCOLORSTATIC)
+	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
+	{
+		static DWORD tick=0;
+		if((GetTickCount()-tick)>500)
+			printf("--\n");
+		printf(">");
+		print_msg(msg,lparam,wparam);
+		tick=GetTickCount();
+	}
+	if(hwnd==hbutton && button_proc!=0){
+		switch(msg){
+		case WM_KEYFIRST:
+			switch(wparam){
+			case VK_ESCAPE:
+				SendMessage(hwnd,BM_CLICK,0,0);
+				break;
+			case VK_PRIOR:
+			case VK_NEXT:
+			case VK_END:
+			case VK_HOME:
+			case VK_LEFT:
+			case VK_UP:
+			case VK_RIGHT:
+			case VK_DOWN:
+			case VK_TAB:
+				{
+					HWND h=GetDlgItem(ghwindow,IDC_LIST1);
+					if(h)SetFocus(h);
+				}
+				break;
+			}
+			break;
+		}
+		return CallWindowProc(button_proc,hwnd,msg,wparam,lparam);
+	}
 	switch(msg)
 	{
 	case WM_INITDIALOG:
 		{
-		if(!thread_busy){
-			stop_thread=FALSE;
-			_beginthread(search_thread,0,hwnd);
-		}
-		else
-			EndDialog(hwnd,0);
-		grippy=create_grippy(hwnd);
-		SetFocus(GetDlgItem(hwnd,IDCANCEL));
-		load_window_pos_relative(GetParent(hwnd),hwnd,"SEARCH_STATUS_WINDOW");
+			if(!thread_busy){
+				stop_thread=FALSE;
+				_beginthread(search_thread,0,hwnd);
+			}
+			else{
+				modeless_search_hwnd=0;
+				EndDialog(hwnd,0);
+			}
+			grippy=create_grippy(hwnd);
+			SetFocus(GetDlgItem(hwnd,IDCANCEL));
+			load_window_pos_relative(GetParent(hwnd),hwnd,"SEARCH_STATUS_WINDOW");
+			hbutton=GetDlgItem(hwnd,IDCANCEL);
+			button_proc=0;
+			if(hbutton)
+				button_proc=SetWindowLong(hbutton,GWL_WNDPROC,search_proc);
 		}
 		return 0;
 	case WM_HSCROLL:
 		PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),WM_VSCROLL,wparam,lparam);
 		break;
 	case WM_MOUSEWHEEL:
-		SetFocus(grippy);
+		SetFocus(GetDlgItem(ghwindow,IDC_LIST1));
+		/*
 		if(LOWORD(wparam)==MK_RBUTTON){
 			WPARAM scrollcode=SB_PAGEUP;
 			if(HIWORD(wparam)&0x8000)
@@ -1003,6 +1048,7 @@ LRESULT CALLBACK modal_search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		}
 		else
 			PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),msg,wparam,lparam);
+		*/
 		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
@@ -1011,6 +1057,7 @@ LRESULT CALLBACK modal_search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		break;
 	case WM_APP:
 		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
+		modeless_search_hwnd=0;
 		EndDialog(hwnd,0);
 		break;
 	case WM_COMMAND:
@@ -1023,119 +1070,6 @@ LRESULT CALLBACK modal_search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		break;
 	}
 	return 0;
-}
-/* modeless window */
-LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
-{
-	static HWND grippy=0;
-	static HWND hbutton=0;
-	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
-		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT&&msg!=WM_CTLCOLORSTATIC)
-	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
-	{
-		static DWORD tick=0;
-		if((GetTickCount()-tick)>500)
-			printf("--\n");
-		printf("*");
-		print_msg(msg,lparam,wparam);
-		tick=GetTickCount();
-	}
-
-	switch(msg)
-	{
-	case WM_CREATE:
-		grippy=create_grippy(hwnd);
-		{
-			CREATESTRUCT *cs=lparam;
-			hbutton=0;
-			if(cs!=0){
-				int i;
-				HWND h[2]={0,0};
-				load_window_pos_relative(cs->hwndParent,hwnd,"SEARCH_STATUS_WINDOW");
-				hbutton=h[0]=CreateWindow("BUTTON","Cancel",WS_CHILD|WS_TABSTOP|WS_VISIBLE|BS_PUSHBUTTON,0,0,10,10,hwnd,IDCANCEL,cs->hInstance,0);
-				CreateWindow("msctls_progress32","progress",WS_CHILD|WS_VISIBLE|WS_BORDER,0,0,10,10,hwnd,IDC_PROGRESS1,cs->hInstance,0);
-				h[1]=CreateWindow("STATIC","",WS_CHILD|WS_VISIBLE,0,0,10,10,hwnd,IDC_SEARCH_STATUS,cs->hInstance,0);
-				SetFocus(GetDlgItem(hwnd,IDCANCEL));
-				PostMessage(hwnd,WM_SIZE,0,0);
-				for(i=0;i<2;i++){
-					if(h[i]!=0){
-						SendMessage(h[i],WM_SETFONT,GetStockObject(DEFAULT_GUI_FONT),0);
-					}
-				}
-			}
-			if(hbutton!=0){
-			//	SetWindowLong(hbutton,GWL_WNDPROC	
-			}
-//			PostMessage(hwnd,WM_APP+1,1,1);
-		}
-		return 0;
-		break;
-	case WM_HSCROLL:
-		PostMessage(GetDlgItem(ghwindow,IDC_LIST1),WM_VSCROLL,wparam,lparam);
-		return 0;
-		break;
-	case WM_MOUSEWHEEL:
-		SetFocus(grippy);
-		if(LOWORD(wparam)==MK_RBUTTON){
-			WPARAM scrollcode=SB_PAGEUP;
-			if(HIWORD(wparam)&0x8000)
-				scrollcode=SB_PAGEDOWN;
-			PostMessage(GetDlgItem(ghwindow,IDC_LIST1),WM_VSCROLL,scrollcode,0);
-		}
-		else
-			PostMessage(GetDlgItem(ghwindow,IDC_LIST1),msg,wparam,lparam);
-		break;
-	case WM_SIZE:
-		grippy_move(hwnd,grippy);
-		resize_search(hwnd);
-		InvalidateRect(hwnd,NULL,TRUE);
-		break;
-	case WM_APP:
-		PostMessage(hwnd,WM_CLOSE,0,0);
-		break;
-	case WM_APP+1:
-	case WM_SHOWWINDOW:
-		if(wparam){
-			if(!thread_busy){
-				stop_thread=FALSE;
-				_beginthread(search_thread,0,hwnd);
-			}
-		}
-		break;
-	case WM_KEYFIRST:
-		{
-			int key=wparam;
-			switch(key){
-			case VK_ESCAPE:
-				PostMessage(hwnd,WM_CLOSE,0,0);
-				break;
-			case VK_TAB:
-				SetFocus(GetDlgItem(ghwindow,IDC_LIST1));
-				break;
-			}
-		}
-		break;
-	case WM_QUIT:
-	case WM_CLOSE:
-		if(thread_busy)
-			stop_thread=TRUE;
-		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
-		ShowWindow(hwnd,SW_HIDE);
-		return 0;
-		//DestroyWindow(hwnd);
-		break;
-	case WM_COMMAND:
-		switch(LOWORD(wparam)){
-		case IDCANCEL:
-			if(HIWORD(wparam)==BN_CLICKED){
-				stop_thread=TRUE;
-				PostMessage(hwnd,WM_CLOSE,0,0);
-			}
-			break;
-		}
-		break;
-	}
-	return DefWindowProc(hwnd,msg,wparam,lparam);
 }
 int create_search_win(HWND hwnd,void *sproc,HWND *out)
 {
@@ -1224,21 +1158,22 @@ int start_search(HWND hwnd,int replace)
 	replace_str[sizeof(replace_str)-1]=0;
 	save_combo_edit_ctrl(hwnd);
 	if(replace)
-		DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,modal_search_proc);
+		DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
 	else
 	{
-		HWND hsearch=0;
-		if(create_search_win(hwnd,search_proc,&hsearch)){
-			HWND h;
-			//h=GetDlgItem(hsearch,IDC_SEARCH_STATUS);
-			//SendMessage(hsearch,WM_USER+1,0,0);
-			//ShowWindow(hsearch,SW_SHOWNORMAL);
-			//PostMessage(hsearch,WM_USER+1,0,0);
-			//SendMessage(hsearch,WM_COMMAND,1,1);
+		if(modeless_search_hwnd==0)
+			modeless_search_hwnd=CreateDialog(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
+		if(modeless_search_hwnd){
+			SetWindowPos(modeless_search_hwnd,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
+			//ShowWindow(modeless_search_hwnd,SW_SHOW);
 		}
 		return 0;
 	}
 	return total_matches>0;
+}
+int cancel_search()
+{
+	return stop_thread=TRUE;
 }
 int is_thread_busy()
 {
