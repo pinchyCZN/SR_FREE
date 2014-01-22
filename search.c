@@ -1058,6 +1058,10 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	case WM_APP:
 		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
 		modeless_search_hwnd=0;
+		if(total_matches>0){
+			HWND h=GetDlgItem(ghwindow,IDC_LIST1);
+			if(h)SetFocus(h);
+		}
 		EndDialog(hwnd,0);
 		break;
 	case WM_COMMAND:
