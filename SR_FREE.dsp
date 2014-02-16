@@ -57,7 +57,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 TargetPath=.\Release\SR_FREE.exe
 SOURCE="$(InputPath)"
-PostBuild_Cmds=upx $(TargetPath)	copy $(TargetPath) "c:\Program Files\Search_Replace\"
+PostBuild_Cmds=upx $(TargetPath)	copy $(TargetPath) "c:\Program Files\SR_FREE\"
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
@@ -162,6 +162,10 @@ SOURCE=.\view_context.c
 # Begin Source File
 
 SOURCE=.\pragma.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ram_ini_file.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
