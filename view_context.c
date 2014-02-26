@@ -1,6 +1,7 @@
 #define _WIN32_WINNT 0x400
 #include <windows.h>
 #include <commctrl.h>
+#include <richedit.h>
 #include <stdio.h>
 #include <conio.h>
 #include <fcntl.h>
@@ -26,6 +27,7 @@ int line_count=0;
 int scroll_pos=0;
 WNDPROC orig_edit=0;
 WNDPROC orig_scroll=0;
+int edit_sel_pos=0;
 
 int get_file_size(FILE *f,__int64 *s)
 {
@@ -76,7 +78,7 @@ int set_scroll_pos(HWND hwnd,int ctrl,FILE *f)
 	_fseeki64(f,offset,SEEK_SET);
 	p=(double)offset/(double)size;
 	p*=10000;
-	pos=floor(p);
+	pos=(int)floor(p);
 	if(pos>10000)
 		pos=10000;
 	scroll_pos=pos;
@@ -136,11 +138,11 @@ int seek_line_relative(FILE *f,int lines,int dir)
 	}
 	return count;
 }
-int sanitize_str(char *buf,int len)
+int sanitize_str(unsigned char *buf,int len)
 {
 	int i,result=FALSE;
 	for(i=0;i<len;i++){
-		if((unsigned char)buf[i]==0)
+		if(buf[i]==0)
 			result=TRUE;
 		if(buf[i]>0x7E)
 			result=TRUE;
@@ -229,6 +231,7 @@ int fill_context(HWND hwnd,int ctrl,FILE *f)
 		fill_line_col(hwnd,IDC_ROWNUMBER,line);
 	}
 
+	SendDlgItemMessage(hwnd,ctrl,EM_GETSEL,&edit_sel_pos,0);
 	SetDlgItemText(hwnd,ctrl,"");
 	for(i=0;i<line_count;i++){
 		buf[0]=0;
@@ -266,6 +269,7 @@ int fill_context(HWND hwnd,int ctrl,FILE *f)
 		}
 		add_line(hwnd,ctrl,buf);
 	}
+	SendDlgItemMessage(hwnd,ctrl,EM_SETSEL,edit_sel_pos,edit_sel_pos);
 	_fseeki64(f,offset,SEEK_SET);
 	return TRUE;
 }
@@ -390,6 +394,14 @@ LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_KEYFIRST:
 		switch(wparam){
+		case 'A':
+			if(GetKeyState(VK_CONTROL)&0x8000)
+				SendMessage(hwnd,EM_SETSEL,0,-1);
+			break;
+		case VK_F5:
+			lines=dir=0;
+			do_scroll=TRUE;
+			break;
 		case VK_RETURN:
 		case VK_F9:
 			binary=!binary;
@@ -425,15 +437,33 @@ LRESULT APIENTRY subclass_edit(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			break;
 		case VK_LEFT:
 		case VK_UP:
-			dir=-1;
-			lines=2;
-			do_scroll=TRUE;
+			{
+				int ctrl=GetKeyState(VK_CONTROL)&0x8000;
+				int shift=GetKeyState(VK_SHIFT)&0x8000;
+				if(ctrl){
+					dir=-1;
+					if(shift)
+						lines=10;
+					else
+						lines=2;
+					do_scroll=TRUE;
+				}
+			}
 			break;
 		case VK_RIGHT:
 		case VK_DOWN:
-			dir=1;
-			lines=1;
-			do_scroll=TRUE;
+			{
+				int ctrl=GetKeyState(VK_CONTROL)&0x8000;
+				int shift=GetKeyState(VK_SHIFT)&0x8000;
+				if(ctrl){
+					dir=1;
+					if(shift)
+						lines=10;
+					else
+						lines=1;
+					do_scroll=TRUE;
+				}
+			}
 			break;
 		}
 		break;
@@ -479,6 +509,10 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 	{
 	case WM_INITDIALOG:
 		SendDlgItemMessage(hwnd,IDC_CONTEXT_SCROLLBAR,SBM_SETRANGE,0,10000);
+		{
+			int tabstop=21; //4 fixed chars
+			SendDlgItemMessage(hwnd,IDC_CONTEXT,EM_SETTABSTOPS,1,&tabstop);
+		}
 		set_context_font(hwnd);
 		f=fopen(fname,"rb");
 		if(f==0){
