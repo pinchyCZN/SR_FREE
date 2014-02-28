@@ -872,24 +872,14 @@ int load_window_size(HWND hwnd,char *section)
 		int flags=SWP_SHOWWINDOW;
 		if((GetKeyState(VK_SHIFT)&0x8000)==0){
 			if(width<50 || height<50){
-				int rw,rh;
-				rw=(rect.right-rect.left);
-				rh=(rect.bottom-rect.top);
-				width=rw*3/4;
-				height=rh*3/4;
-				x=rw/8;
-				y=rh/8;
-				if((width<100) || (height<100))
-					flags|=SWP_NOSIZE;
-				if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
-					result=TRUE;
-			}else{
-				if(x>(rect.right-25) || x<(rect.left-25)
-					|| y<(rect.top-25) || y>(rect.bottom-25))
-					flags|=SWP_NOMOVE;
-				if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
-					result=TRUE;
+				flags|=SWP_NOSIZE;
 			}
+			if(x>(rect.right-25) || x<(rect.left-25)
+				|| y<(rect.top-25) || y>(rect.bottom-25)){
+				flags|=SWP_NOMOVE;
+			}
+			if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
+				result=TRUE;
 		}
 	}
 	if(maximized)
