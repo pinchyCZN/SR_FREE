@@ -207,10 +207,31 @@ int format_hex_str(char *in,int ilen,char *out,int olen)
 	out[index++]=0;
 	return index;
 }
+int purge_string(FILE *f,int max_len)
+{
+	int i=0;
+	while(i<max_len){
+		char buf[256];
+		int buf_size=sizeof(buf);
+		int len;
+		unsigned __int64 pos;
+		pos=_ftelli64(f);
+		if(fgets(buf,buf_size-1,f)==0)
+			break;
+		pos=_ftelli64(f)-pos;
+		len=(int)pos;
+		if(len==0)
+			break;
+		i+=len;
+		if(buf[len-1]=='\n')
+			break;
+	}
+	return i;
+}
 int fill_context(HWND hwnd,int ctrl,FILE *f)
 {
 	char buf[512];
-	int i,len,count,buf_size=sizeof(buf);
+	int i,len,count;
 	__int64 offset,line;
 	offset=_ftelli64(f);
 
@@ -246,25 +267,27 @@ int fill_context(HWND hwnd,int ctrl,FILE *f)
 		}
 		else{
 			__int64 pos=0;
+			int buf_size=sizeof(buf);
 			pos=_ftelli64(f);
 			if(fgets(buf,buf_size-1,f)==0)
 				break;
+			buf[buf_size-1]=0;
 			pos=_ftelli64(f)-pos;
-			if(((buf_size-2)>=0) && buf[buf_size-2]!='\n'){
-				buf[buf_size-2]='\n';
-				buf[buf_size-1]=0;
-			}
 			len=(int)pos;
 			if(len>buf_size-1)
 				len=buf_size-1;
-			if(sanitize_str(buf,len)){
-				buf_size=80;
-				if(buf_size>sizeof(buf))
-					buf_size=sizeof(buf)/4;
-				if(((buf_size-2)>=0) && buf[buf_size-2]!='\n'){
-					buf[buf_size-2]='\n';
-					buf[buf_size-1]=0;
-				}
+			sanitize_str(buf,len);
+			if(buf[len-1]!='\n'){
+				char *s=buf+buf_size-3;
+				purge_string(f,0x10000);
+				if(len>buf_size-3)
+					s=buf+buf_size-3;
+				else
+					s=buf+len-3;
+				s[0]='\r';
+				s[1]='\n';
+				s[2]=0;
+
 			}
 		}
 		add_line(hwnd,ctrl,buf);
@@ -725,6 +748,45 @@ int view_context(HWND hwnd)
 		get_nearest_filename(hwnd,fname,sizeof(fname));
 		if(found_line && fname[0]!=0)
 			return DialogBox(ghinstance,MAKEINTRESOURCE(IDD_VIEWCONTEXT),hwnd,view_context_proc);
+	}
+	return FALSE;
+}
+
+int open_url_listview(HWND hwnd)
+{
+	int index,len;
+	index=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETCARETINDEX,0,0);
+	if(index>=0){
+		char *str=0;
+		int found_url=FALSE;
+		len=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETTEXTLEN,index,0);
+		if(len==LB_ERR)
+			len=0x10000;
+		str=malloc(len+1);
+		if(str!=0){
+			unsigned char *url;
+			str[0]=0;
+			SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETTEXT,index,str);
+			str[len]=0;
+			url=strstri(str,"http://");
+			if(url==0)
+				url=strstri(str,"https://");
+			if(url){
+				int i,max;
+				max=strlen(url);
+				for(i=0;i<max;i++){
+					if(url[i]<=' '){
+						url[i]=0;
+						break;
+					}
+				}
+				ShellExecute(NULL,"open",url,NULL,NULL,SW_SHOWNORMAL);
+				found_url=TRUE;
+			}
+			free(str);
+		}
+		if(!found_url)
+			view_context(hwnd);
 	}
 	return FALSE;
 }

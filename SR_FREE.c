@@ -1062,7 +1062,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_VKEYTOITEM:
 		switch(LOWORD(wparam)){
-		case '0':case '1':case'2':case'3':case'4':case'5':
+		case '0':case '1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
 			{
 				int index=CMD_OPENWITH+LOWORD(wparam)-'1';
 			if(LOWORD(wparam)=='0')
@@ -1139,7 +1139,10 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 				SetFocus(GetDlgItem(hwnd,LOWORD(wparam)));
 				break;
 			case LBN_DBLCLK:
-				view_context(hwnd);
+				if((GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000) || (GetKeyState(VK_MENU)&0x8000))
+					open_url_listview(hwnd);
+				else
+					view_context(hwnd);
 				break;
 			}
 			break;
