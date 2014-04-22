@@ -1,9 +1,6 @@
-#if _WIN32_WINNT<0x400
-#define _WIN32_WINNT 0x400
-#define COMPILE_MULTIMON_STUBS
-#endif
+#define WINVER 0x500
+#define _WIN32_WINNT 0x500
 #include <windows.h>
-#include <multimon.h>
 #include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,8 +29,8 @@ enum{
 };
 int move_console()
 {
-	BYTE Title[200]; 
-	HANDLE hConWnd; 
+	BYTE Title[200];
+	HANDLE hConWnd;
 	GetConsoleTitle(Title,sizeof(Title));
 	hConWnd=FindWindow(NULL,Title);
 	SetWindowPos(hConWnd,0,650,0,0,0,SWP_NOSIZE|SWP_NOZORDER);
@@ -41,12 +38,12 @@ int move_console()
 }
 void open_console()
 {
-	char title[MAX_PATH]={0}; 
-	HWND hcon; 
+	char title[MAX_PATH]={0};
+	HWND hcon;
 	FILE *hf;
 	static BYTE consolecreated=FALSE;
 	static int hcrt=0;
-	
+
 	if(consolecreated==TRUE)
 	{
 		GetConsoleTitle(title,sizeof(title));
@@ -58,26 +55,26 @@ void open_console()
 		FlushConsoleInputBuffer(hcon);
 		return;
 	}
-	AllocConsole(); 
+	AllocConsole();
 	hcrt=_open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE),_O_TEXT);
 
 	fflush(stdin);
-	hf=_fdopen(hcrt,"w"); 
-	*stdout=*hf; 
+	hf=_fdopen(hcrt,"w");
+	*stdout=*hf;
 	setvbuf(stdout,NULL,_IONBF,0);
 	GetConsoleTitle(title,sizeof(title));
 	if(title[0]!=0){
 		hcon=FindWindow(NULL,title);
-		ShowWindow(hcon,SW_SHOW); 
+		ShowWindow(hcon,SW_SHOW);
 		SetForegroundWindow(hcon);
 	}
 	consolecreated=TRUE;
 }
 void hide_console()
 {
-	char title[MAX_PATH]={0}; 
-	HANDLE hcon; 
-	
+	char title[MAX_PATH]={0};
+	HANDLE hcon;
+
 	GetConsoleTitle(title,sizeof(title));
 	if(title[0]!=0){
 		hcon=FindWindow(NULL,title);
@@ -569,7 +566,7 @@ copyall:
 										buf[size+len]=0;
 									size+=strlen(buf+size);
 								}else{
-									if(strnicmp(buf+size,"line ",sizeof("line ")-1)==0 || 
+									if(strnicmp(buf+size,"line ",sizeof("line ")-1)==0 ||
 										strnicmp(buf+size,"offset ",sizeof("offset ")-1)==0){
 										char *s=strstr(buf+size,"-");
 										if(s!=0){
@@ -1008,7 +1005,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		print_msg(msg,lparam,wparam);
 		tick=GetTickCount();
 	}
-#endif	
+#endif
 	switch(msg)
 	{
 	case WM_INITDIALOG:
@@ -1305,10 +1302,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,PSTR szCmdLine,in
 	open_console();
 	move_console();
 #endif
-	
+
 	ghwindow=CreateDialog(ghinstance,MAKEINTRESOURCE(IDD_DIALOG1),NULL,MainDlg);
 	if(!ghwindow){
-		
+
 		MessageBox(NULL,"Could not create main dialog","ERROR",MB_ICONERROR | MB_OK);
 		return 0;
 	}
