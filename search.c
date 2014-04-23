@@ -385,8 +385,13 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 									match_offset-=k;
 								}
 							}
-							else
+							else{
 								match_offset--;
+								j--;
+								if(j<=0)
+									j=1;
+
+							}
 						}
 					}
 				}
