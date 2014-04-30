@@ -957,6 +957,10 @@ int search_thread(HWND hwnd)
 			index=0;
 			if(strlen(path)==0)
 				continue;
+			if(!is_path_directory(path)){
+				add_listbox_str(ghwindow,"Invalid directory:%s",path);
+				continue;
+			}
 			find_files(hwnd,path,filemask,&total,search_sub_dirs,depth_limit,0);
 			add_listbox_str(ghwindow,"Searched %i file(s), found %i occurrences in %i file(s)",
 				files_searched,total_matches,files_occured);
