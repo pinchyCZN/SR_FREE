@@ -362,6 +362,8 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 						j-=match_offset;
 					}
 					start_pos=-1;
+					if(leading_repeat==0 && match_offset>0) //if target string has repeats
+						j--;
 					match_offset=0;
 				}
 				else if(wpos>=0){
@@ -388,9 +390,6 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 							else{
 								match_offset--;
 								j--;
-								if(j<=0)
-									j=1;
-
 							}
 						}
 					}
