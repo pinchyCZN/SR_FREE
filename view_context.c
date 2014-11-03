@@ -88,7 +88,7 @@ int set_scroll_pos(HWND hwnd,int ctrl,FILE *f)
 int seek_line_relative(FILE *f,int lines,int dir)
 {
 	__int64 offset;
-	int count=0,result;
+	int count=0,result,limit;
 	char buf[4];
 	offset=_ftelli64(f);
 	if(binary){
@@ -107,6 +107,7 @@ int seek_line_relative(FILE *f,int lines,int dir)
 	}
 	if(offset>fsize)
 		offset=fsize;
+	limit=0;
 	while(offset>=0){
 		if(dir>0)
 			offset++;
@@ -135,6 +136,9 @@ int seek_line_relative(FILE *f,int lines,int dir)
 			_fseeki64(f,0,SEEK_SET);
 			break;
 		}
+		limit++;
+		if(limit>0x4000)
+			break;
 	}
 	return count;
 }
@@ -512,7 +516,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 {
 	static HWND grippy=0;
 	int lines,dir,do_scroll=FALSE,update_scroll_pos=TRUE;
-	static int divider_drag=FALSE,row_width=90,last_pos=0;
+	static int divider_drag=FALSE,org_row_width=90,row_width=90,last_pos=0;
 #ifdef _DEBUG
 	if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
@@ -579,13 +583,16 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONUP:
 		ReleaseCapture();
-		write_ini_value("CONTEXT_SETTINGS","row_width",row_width);
-		divider_drag=FALSE;
+		if(divider_drag){
+			write_ini_value("CONTEXT_SETTINGS","row_width",row_width);
+			divider_drag=FALSE;
+		}
 		break;
 	case WM_LBUTTONDOWN:
 		SetCapture(hwnd);
 		SetCursor(LoadCursor(NULL,IDC_SIZEWE));
 		divider_drag=TRUE;
+		org_row_width=row_width;
 		break;
 	case WM_MOUSEFIRST:
 		{
@@ -697,6 +704,14 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 	case WM_COMMAND:
 		switch(LOWORD(wparam)){
 		case IDCANCEL:
+			if(divider_drag){
+				divider_drag=FALSE;
+				ReleaseCapture();
+				set_context_divider(org_row_width);
+				row_width=org_row_width;
+				resize_context(hwnd);
+				return 0;
+			}
 			if(f!=0)
 				fclose(f);
 			f=0;

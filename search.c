@@ -940,6 +940,10 @@ int search_thread(HWND hwnd)
 	get_ini_value("OPTIONS","show_column",&i);
 	set_show_column(i);
 
+	if(wildcard_search){
+		if(strchr(search_str,'*')==0 && strchr(search_str,'?')==0)
+			wildcard_search=FALSE;
+	}
 
 	replace_all_remain=FALSE;
 	files_searched=0;
