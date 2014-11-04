@@ -321,6 +321,8 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			int start_pos=-1;
 			int col_pos=0;
 			int wpos=-1;
+			int last_wc=-1;
+			int last_wc_off=-1;
 			line[sizeof(line)-1]=0;
 			if(buf[i]=='\n'){
 				line[line_index]=0;
@@ -345,12 +347,14 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 					b=upper_case(line[j]);
 				}
 				if(a=='*'){
-					match_offset++;
 					if(start_pos<0)
 						start_pos=j;
-					wpos=start_pos+1;
+					last_wc=j;
+					last_wc_off=match_offset;
+					wpos=j+1;
 					if(j>0)
 						j--;
+					match_offset++;
 				}
 				else if(a=='?' || a==b){
 					match_offset++;
@@ -388,8 +392,17 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 								}
 							}
 							else{
-								match_offset--;
-								j--;
+								if(j>=line_index){
+									if(last_wc_off!=0)
+										j=start_pos+1;
+									start_pos=-1;
+									match_offset=0;
+								}
+								else{
+									j=last_wc;
+									match_offset=last_wc_off;
+								}
+								wpos=-1;
 							}
 						}
 					}

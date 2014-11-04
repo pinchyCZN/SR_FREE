@@ -74,7 +74,7 @@ PostBuild_Cmds=upx $(TargetPath)	copy $(TargetPath) "c:\Program Files\SR_FREE\"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I ".\\" /I ".\ggrep\\" /FI"pragma.h" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR /YX /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I ".\\" /I ".\ggrep\\" /I ".\grep\\" /I ".\grep\lib\\" /FI"pragma.h" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "HAVE_CONFIG_H" /FR /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -101,6 +101,372 @@ LINK32=link.exe
 # Begin Source File
 
 SOURCE=.\ggrep\stbm.c
+# End Source File
+# End Group
+# Begin Group "grep"
+
+# PROP Default_Filter ""
+# Begin Group "lib"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\grep\lib\alloca.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\atexit.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\closeout.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\error.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\exclude.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\fnmatch.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\getopt.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\getopt1.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=".\grep\lib\hard-locale.c"
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\isdir.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\malloc.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\memchr.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\obstack.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\quotearg.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\realloc.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\regex.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\savedir.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\stpcpy.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\strtol.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\strtoul.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\strtoull.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\strtoumax.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\xmalloc.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\xstrtol.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\lib\xstrtoumax.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\grep\_search.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\dfa.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\grep.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\grepmat.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep\kwset.c
+
+!IF  "$(CFG)" == "SR_FREE - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Source File
