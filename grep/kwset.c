@@ -733,8 +733,8 @@ match:
 }
 
 /* Search through the given text for a match of any member of the
-given keyword set.  Return a pointer to the first character of
-the matching substring, or NULL if no match is found.  If FOUNDLEN
+given keyword set.  Return offset of first match found or -1 if none found.
+If FOUNDLEN
 is non-NULL store in the referenced location the length of the
 matching substring.  Similarly, if FOUNDIDX is non-NULL, store
 in the referenced location the index number of the particular

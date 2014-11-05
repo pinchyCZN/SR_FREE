@@ -1694,15 +1694,21 @@ int test_grep(char *file)
 {
 	FILE *f;
 	char buf[0x1000];
+	int match_size=0;
+	int size;
 	memset(buf,0,sizeof(buf));
-	sprintf(buf,"123");
+	sprintf(buf,"123.b");
 
 	(*compile)(buf, strlen(buf));
 
 	memset(buf,0,sizeof(buf));
-	sprintf(buf,"123    123\n\n 123");
+	sprintf(buf,"123abc    123\n\n 123");
+//EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
+	size=(*execute)(buf,40,&match_size,0);
+	printf("%s %i %i\n",size==-1?"not found":"found it!",size,match_size);
+	getch();
 
-	grepbuf(buf,buf+300);
+	//grepbuf(buf,buf+300);
 	//grepbuf(buf+3,buf+3+3);
 	//grepfile(file,&stats_base);
 	/*

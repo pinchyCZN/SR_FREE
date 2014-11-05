@@ -2895,7 +2895,7 @@ dfaexec (struct dfa *d, char const *begin, size_t size, int *backref)
 
 		if (s < 0)
 		{
-			if (p == end)
+			if (p >= end)
 			{
 #ifdef MBS_SUPPORT
 				if (MB_CUR_MAX > 1)
