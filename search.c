@@ -34,6 +34,7 @@ int match_whole=FALSE;
 int ignore_whitespace=FALSE;
 int unicode_search=FALSE;
 int wildcard_search=FALSE;
+int regex_search=FALSE;
 int hex_search=FALSE;
 unsigned int depth_limit=MAXDWORD;
 
@@ -186,7 +187,7 @@ int add_listbox_str(HWND hwnd,char *fmt,...)
 	va_start(args,fmt);
 	_vsnprintf(str,sizeof(str),fmt,args);
 	str[sizeof(str)-1]=0;
-	return SendDlgItemMessage(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
+//	return SendDlgItemMessage(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
 }
 int set_message_str(HWND hwnd,char *fmt,...)
 {
@@ -287,207 +288,48 @@ int fetch_more_data(FILE *f,char *buf,int len,int *binary)
 	_fseeki64(f,offset,SEEK_SET);
 	return i;
 }
-int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
+int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
-	static char line[512];
-	static int line_index=0;
-	static __int64 offset=0,line_offset=0;
-	static __int64 line_num=1;
-	static __int64 total_col=0;
+	static void (*compile)(char const *, size_t);
+	static size_t (*execute)(char const *, size_t, size_t *, int);
+	static unsigned __int64 offset=0,line_offset=0;
+	static unsigned __int64 line_num=1;
+	static unsigned __int64 total_col=0;
 	static int binary=FALSE;
-	static int match_offset=0,match_len=0;
+	int pos,match_size=0,line_col=0;
 	int i;
 	if(init){
-		memset(line,0,sizeof(line));
+		line_num=total_col=line_offset=offset=0;
 		line_num=1;
-		line_index=0;
-		match_offset=0;
-		match_len=strlen_search_str;
-		total_col=0;
-		line_offset=offset=0;
 		binary=FALSE;
+		get_def_match(&compile,&execute);
+		(*compile)(search_str,strlen_search_str);
 		return TRUE;
 	}
-	for(i=0;i<len;i++){
-		if(stop_thread)
-			break;
-		if(line_index==0)
-			line_offset=offset;
-		line[line_index]=buf[i];
-		if(buf[i]==0)
-			binary=TRUE;
-		if(buf[i]=='\n' || line_index>=sizeof(line)-2 || (eof && i==len-1)){
-			int j;
-			int start_pos=-1;
-			int col_pos=0;
-			int wpos=-1;
-			int last_wc=-1;
-			int last_wc_off=-1;
-			line[sizeof(line)-1]=0;
-			if(buf[i]=='\n'){
-				line[line_index]=0;
-				line_index--;
-				if(line_index>=0){
-					if(line[line_index]=='\r'){
-						line[line_index]=0;
-						line_index--;
-					}
-				}
+	pos=(*execute)(buf,len,&match_size,0);
+	if(pos>0){
+		HWND hwnd_parent=ghwindow;
+		int lb_index;
+		char str[1024];
+		int i,counter=0;
+		char *s=buf+pos;
+		for(i=pos;i>0;i--){
+			char a=buf[i];
+			if(a=='\r' || a=='\n' || (counter>hit_line_len)){
+				s=buf+i+1;
+				if(line_col>0)
+					line_col--;
+				break;
 			}
-			total_col+=line_index+1;
-			for(j=0;j<line_index+1;j++){
-				char a,b;
-				if(stop_thread)
-					break;
-				if(case_sensitive){
-					a=search_str[match_offset];
-					b=line[j];
-				}else{
-					a=upper_case(search_str[match_offset]);
-					b=upper_case(line[j]);
-				}
-				if(a=='*'){
-					if(start_pos<0)
-						start_pos=j;
-					last_wc=j;
-					last_wc_off=match_offset;
-					wpos=j+1;
-					if(j>0)
-						j--;
-					match_offset++;
-				}
-				else if(a=='?' || a==b){
-					match_offset++;
-					if(start_pos<0)
-						start_pos=j;
-				}
-				else if(wpos<0){
-					if(leading_repeat>0){ //naive search
-						j-=match_offset;
-					}
-					start_pos=-1;
-					if(leading_repeat==0 && match_offset>0) //if target string has repeats
-						j--;
-					match_offset=0;
-				}
-				else if(wpos>=0){
-					if(search_str[match_offset-1]!='*'){
-						if(match_offset>0){
-							if(leading_repeat>0){ //naive search
-								if(j>match_offset && j>wpos){
-									int k=match_offset;
-									for( ;k>0;k--){
-										if(search_str[k]=='*'){
-											break;
-										}
-										else if(search_str[k]=='?'){
-											k--;
-											break;
-										}
-									}
-									if(k==0)
-										k=wpos;
-									j-=k;
-									match_offset-=k;
-								}
-							}
-							else{
-								if(j>=line_index){
-									if(last_wc_off!=0)
-										j=start_pos+1;
-									start_pos=-1;
-									match_offset=0;
-								}
-								else{
-									j=last_wc;
-									match_offset=last_wc_off;
-								}
-								wpos=-1;
-							}
-						}
-					}
-				}
-				else{
-					wpos=-1;
-					match_offset=0;
-				}
-				if(match_offset==1)
-					col_pos=j;
-				if(match_offset>=match_len){
-					HWND hwnd_parent=ghwindow;
-					char *s=line;
-					int c,l,k,lb_index=-1;
-					c=start_pos;
-					l=j-start_pos+1;
-					//if(line_offset+start_pos==0x1461E5B)
-					//	l=l;
-					for(k=0;k<line_index+1;k++){
-						if(line[k]=='\t')
-							continue;
-						if(line[k]<' '||line[k]>0x7E)
-							line[k]='.';
-					}
-					if(start_pos+l>hit_line_len){
-						int x=l;
-						if(x>hit_line_len)
-							x=hit_line_len;
-						s=line+start_pos+x-hit_line_len;
-						c=hit_line_len-x;
-					}
-
-					if(matches_found==0){
-						add_listbox_str(hwnd_parent,"File %s",current_fname);
-						files_occured++;
-					}
-					if(binary){
-						line[line_index+1]=0;
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",line_offset+start_pos,line_num,c,l,s);
-					}
-					else
-						lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
-						line_num,total_col-line_index-1+col_pos+1,c,l,line_offset+start_pos,s);
-					if(do_replace)
-						replace_dlg(hwnd,lb_index);
-					match_offset=0;
-					matches_found++;
-					start_pos=wpos=-1;
-					
-				}
-			}//for(j=0;j<line_index+1;j++){
-			if(buf[i]=='\n'){
-				line_num++;
-				total_col=0;
-			}
-			if(line_index>=sizeof(line)-2 && match_offset>0 && start_pos>=0){
-				int start,len;
-				start=start_pos-hit_line_len;
-				if(start<=0){
-					goto reset;
-				}
-				else{
-					len=sizeof(line)-2-(start_pos-hit_line_len)+1;
-					if(len<0)
-						len=0;
-				}
-				memcpy(line,line+start,len);
-				total_col-=len;
-				line_index=len;
-				line_offset+=start;
-				match_offset=0;
-			}else{
-reset:
-				match_offset=0;
-				line_index=0;
-				memset(line,0,sizeof(line));
-			}
-		}//if(buf[i]=='\n' || line_index>=sizeof(line)-2){
-		else{
-			line_index++;
-			if(line_index>=sizeof(line))
-				line_index=0;
+			line_col++;
 		}
-		offset++;
+		_snprintf(str,sizeof(str),"%s",s);
+		str[sizeof(str)-1]=0;
+		hwnd_parent++;
+		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,s);
 	}
+
+	offset+=len;
 	return 0;
 }
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
@@ -506,8 +348,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static int sizeof_line=sizeof(line);
 	static int nibble=0;
 	int compare;
-	if(wildcard_search)
-		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
+	if(regex_search)
+		return search_buffer_regex(f,hwnd,init,buf,len,eof);
 	if(init){
 		binary=FALSE;
 		found=FALSE;
@@ -941,6 +783,7 @@ int search_thread(HWND hwnd)
 	unicode_search=is_button_checked(ghwindow,IDC_UNICODE);
 	search_sub_dirs=is_button_checked(ghwindow,IDC_SUBDIRS);
 	wildcard_search=is_button_checked(ghwindow,IDC_WILDCARD);
+	regex_search=is_button_checked(ghwindow,IDC_REGEX);
 	ignore_whitespace=is_button_checked(ghwindow,IDC_IGNOREWS);
 	match_whole=is_button_checked(ghwindow,IDC_WHOLEWORD);
 	hex_search=is_button_checked(ghwindow,IDC_HEX);

@@ -2789,124 +2789,58 @@ transit_state (struct dfa *d, int s, unsigned char const **pp)
    match needs to be verified by a backtracking matcher.  Otherwise
    we store a 0 in *backref. */
 size_t
-dfaexec (struct dfa *d, char const *begin, size_t size, int *backref)
+dfaexec (struct dfa *d, char const *begin, size_t size, int *backref, int *start_offset)
 {
 	register int s;	/* Current state. */
 	register unsigned char const *p; /* Current input character. */
 	register unsigned char const *end; /* One past the last input character.  */
-	register int **trans, *t;	/* Copy of d->trans so it can be optimized
-				   into a register. */
+	register int **trans, *t;	/* Copy of d->trans so it can be optimized into a register. */
 	register unsigned char eol = eolbyte;	/* Likewise for eolbyte.  */
 	static int sbit[NOTCHAR];	/* Table for anding with d->success. */
 	static int sbit_init;
+	char *start_pos;
 
 	if (! sbit_init)
 	{
 		int i;
-
+		
 		sbit_init = 1;
 		for (i = 0; i < NOTCHAR; ++i)
 			sbit[i] = (IS_WORD_CONSTITUENT(i)) ? 2 : 1;
 		sbit[eol] = 4;
 	}
-
+	
 	if (! d->tralloc)
 		build_state_zero(d);
-
+	
 	s = 0;
 	p = (unsigned char const *) begin;
 	end = p + size;
 	trans = d->trans;
-
-#ifdef MBS_SUPPORT
-	if (MB_CUR_MAX > 1)
-	{
-		int remain_bytes, i;
-		buf_begin = begin;
-		buf_end = end;
-
-		/* initialize mblen_buf, and inputwcs.  */
-		MALLOC(mblen_buf, unsigned char, end - (unsigned char const *)begin + 2);
-		MALLOC(inputwcs, wchar_t, end - (unsigned char const *)begin + 2);
-		memset(&mbs, 0, sizeof(mbstate_t));
-		remain_bytes = 0;
-		for (i = 0; i < end - (unsigned char const *)begin + 1; i++)
-		{
-			if (remain_bytes == 0)
-			{
-				remain_bytes
-					= mbrtowc(inputwcs + i, begin + i,
-							  end - (unsigned char const *)begin - i + 1, &mbs);
-				if (remain_bytes <= 1)
-				{
-					remain_bytes = 0;
-					inputwcs[i] = (wchar_t)begin[i];
-					mblen_buf[i] = 0;
-				}
-				else
-				{
-					mblen_buf[i] = remain_bytes;
-					remain_bytes--;
-				}
-			}
-			else
-			{
-				mblen_buf[i] = remain_bytes;
-				inputwcs[i] = 0;
-				remain_bytes--;
-			}
-		}
-		mblen_buf[i] = 0;
-		inputwcs[i] = 0; /* sentinel */
-	}
-#endif /* MBS_SUPPORT */
-
+	start_pos=0;
+	
 	for (;;)
 	{
-#ifdef MBS_SUPPORT
-		if (MB_CUR_MAX > 1)
-			while ((t = trans[s]))
-			{
-				if (d->states[s].mbps.nelem != 0)
-				{
-					/* Can match with a multibyte character( and multi character
-					   collating element).  */
-					unsigned char const *nextp;
-
-					SKIP_REMAINS_MB_IF_INITIAL_STATE(s, p);
-
-					nextp = p;
-					s = transit_state(d, s, &nextp);
-					p = nextp;
-
-					/* Trans table might be updated.  */
-					trans = d->trans;
-				}
-				else
-				{
-					SKIP_REMAINS_MB_IF_INITIAL_STATE(s, p);
-					s = t[*p++];
-				}
+		while ((t = trans[s])){
+			if (p >= end)
+				return -1;
+			s = t[*p++];
+			if(s>0){
+				if(start_pos==0)
+					start_pos=p-1;
 			}
-		else
-#endif /* MBS_SUPPORT */
-			while ((t = trans[s]))
-				s = t[*p++];
-
+			else
+				start_pos=0;
+		}
+		
 		if (s < 0)
 		{
 			if (p >= end)
 			{
-#ifdef MBS_SUPPORT
-				if (MB_CUR_MAX > 1)
-				{
-					free(mblen_buf);
-					free(inputwcs);
-				}
-#endif /* MBS_SUPPORT */
 				return (size_t) -1;
 			}
 			s = 0;
+			start_pos=0;
 		}
 		else if ((t = d->fails[s]))
 		{
@@ -2914,38 +2848,13 @@ dfaexec (struct dfa *d, char const *begin, size_t size, int *backref)
 			{
 				if (backref)
 					*backref = (d->states[s].backref != 0);
-#ifdef MBS_SUPPORT
-				if (MB_CUR_MAX > 1)
-				{
-					free(mblen_buf);
-					free(inputwcs);
-				}
-#endif /* MBS_SUPPORT */
+				if(start_pos==0)
+					start_pos=begin;
+				*start_offset=start_pos-begin;
 				return (char const *) p - begin;
 			}
-
-#ifdef MBS_SUPPORT
-			if (MB_CUR_MAX > 1)
-			{
-				SKIP_REMAINS_MB_IF_INITIAL_STATE(s, p);
-				if (d->states[s].mbps.nelem != 0)
-				{
-					/* Can match with a multibyte character( and multi
-					   character collating element).  */
-					unsigned char const *nextp;
-					nextp = p;
-					s = transit_state(d, s, &nextp);
-					p = nextp;
-
-					/* Trans table might be updated.  */
-					trans = d->trans;
-				}
-				else
-					s = t[*p++];
-			}
-			else
-#endif /* MBS_SUPPORT */
-				s = t[*p++];
+			s = t[*p++];
+			start_pos=0;
 		}
 		else
 		{

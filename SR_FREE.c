@@ -397,7 +397,7 @@ int is_button_checked(HWND hwnd,int control)
 	else
 		return FALSE;
 }
-int load_combo_box(HWND hwnd,int ctrl,char *keystart)
+int load_combo_box(HWND hwnd,int ctrl,const char *keystart)
 {
 	char str[1024];
 	char key[80];
@@ -414,49 +414,43 @@ int load_combo_box(HWND hwnd,int ctrl,char *keystart)
 	}
 	return TRUE;
 }
+struct CTRL_SETTING{
+	int ctrl;
+	const char *name;
+};
+static struct CTRL_SETTING combo_boxs[]={
+	{IDC_COMBO_SEARCH,"search"},
+	{IDC_COMBO_REPLACE,"replace"},
+	{IDC_COMBO_MASK,"mask"},
+	{IDC_COMBO_PATH,"path"}
+};
+static struct CTRL_SETTING pushbuttons[]={
+	{IDC_SUBDIRS,"search_subdirs"},
+	{IDC_UNICODE,"unicode"},
+	{IDC_CASE,"case"},
+	{IDC_WHOLEWORD,"wholeword"},
+	{IDC_HEX,"hex"},
+	{IDC_WILDCARD,"wildcard"},
+	{IDC_REGEX,"regex"},
+	{IDC_IGNOREWS,"ignore_whitespace"},
+	{IDC_ONTOP,"on_top"}
+};
 
 int get_ini_stuff(HWND hwnd)
 {
-	int val;
-	load_combo_box(hwnd,IDC_COMBO_SEARCH,"search");
-	load_combo_box(hwnd,IDC_COMBO_REPLACE,"replace");
-	load_combo_box(hwnd,IDC_COMBO_MASK,"mask");
-	load_combo_box(hwnd,IDC_COMBO_PATH,"path");
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","search_subdirs",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_SUBDIRS,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","unicode",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_UNICODE,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","case",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_CASE,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","wholeword",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_WHOLEWORD,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","hex",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_HEX,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","wildcard",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_WILDCARD,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","ignore_whitespace",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_IGNOREWS,BM_SETCHECK,BST_CHECKED,0);
-	val=FALSE;
-	get_ini_value("BUTTON_SETTINGS","on_top",&val);
-	if(val)
-		SendDlgItemMessage(hwnd,IDC_ONTOP,BM_SETCHECK,BST_CHECKED,0);
+	int i;
+	for(i=0;i<sizeof(combo_boxs)/sizeof(struct CTRL_SETTING);i++){
+		load_combo_box(hwnd,combo_boxs[i].ctrl,combo_boxs[i].name);
+	}
+	for(i=0;i<sizeof(pushbuttons)/sizeof(struct CTRL_SETTING);i++){
+		int val=FALSE;
+		get_ini_value("BUTTON_SETTINGS",pushbuttons[i].name,&val);
+		if(val)
+			SendDlgItemMessage(hwnd,pushbuttons[i].ctrl,BM_SETCHECK,BST_CHECKED,0);
+	}
 	return TRUE;
 }
-int save_combo_box(HWND hwnd,int ctrl,char *keystart)
+int save_combo_box(HWND hwnd,int ctrl,const char *keystart)
 {
 	char str[1024];
 	char key[80];
@@ -481,18 +475,13 @@ int save_combo_box(HWND hwnd,int ctrl,char *keystart)
 }
 int save_ini_stuff(HWND hwnd)
 {
-	write_ini_value("BUTTON_SETTINGS","search_subdirs",is_button_checked(hwnd,IDC_SUBDIRS));
-	write_ini_value("BUTTON_SETTINGS","unicode",is_button_checked(hwnd,IDC_UNICODE));
-	write_ini_value("BUTTON_SETTINGS","case",is_button_checked(hwnd,IDC_CASE));
-	write_ini_value("BUTTON_SETTINGS","wholeword",is_button_checked(hwnd,IDC_WHOLEWORD));
-	write_ini_value("BUTTON_SETTINGS","hex",is_button_checked(hwnd,IDC_HEX));
-	write_ini_value("BUTTON_SETTINGS","wildcard",is_button_checked(hwnd,IDC_WILDCARD));
-	write_ini_value("BUTTON_SETTINGS","ignore_whitespace",is_button_checked(hwnd,IDC_IGNOREWS));
-	write_ini_value("BUTTON_SETTINGS","on_top",is_button_checked(hwnd,IDC_ONTOP));
-	save_combo_box(hwnd,IDC_COMBO_SEARCH,"search");
-	save_combo_box(hwnd,IDC_COMBO_REPLACE,"replace");
-	save_combo_box(hwnd,IDC_COMBO_MASK,"mask");
-	save_combo_box(hwnd,IDC_COMBO_PATH,"path");
+	int i;
+	for(i=0;i<sizeof(combo_boxs)/sizeof(struct CTRL_SETTING);i++){
+		save_combo_box(hwnd,combo_boxs[i].ctrl,combo_boxs[i].name);
+	}
+	for(i=0;i<sizeof(pushbuttons)/sizeof(struct CTRL_SETTING);i++){
+		write_ini_value("BUTTON_SETTINGS",pushbuttons[i].name,is_button_checked(hwnd,pushbuttons[i].ctrl));
+	}
 	return TRUE;
 }
 int set_status_bar(HWND hwnd,char *fmt,...)
@@ -914,11 +903,12 @@ int exclude_buttons(HWND hwnd,int ctrl)
 		int list[5];
 	}EXCLUDE;
 	EXCLUDE exc[]={
-		{IDC_HEX,{IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,0}},
-		{IDC_UNICODE,{IDC_HEX,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,0}},
-		{IDC_WHOLEWORD,{IDC_HEX,IDC_UNICODE,IDC_WILDCARD,IDC_IGNOREWS,0}},
-		{IDC_WILDCARD,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,0}},
-		{IDC_IGNOREWS,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,0}},
+		{IDC_HEX,{IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
+		{IDC_UNICODE,{IDC_HEX,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
+		{IDC_WHOLEWORD,{IDC_HEX,IDC_UNICODE,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
+		{IDC_WILDCARD,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_REGEX}},
+		{IDC_REGEX,   {IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_WILDCARD}},
+		{IDC_IGNOREWS,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_REGEX}},
 	};
 	if(!IsDlgButtonChecked(hwnd,ctrl))
 		return FALSE;
@@ -1210,6 +1200,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		case IDC_HEX:
 		case IDC_UNICODE:
 		case IDC_WILDCARD:
+		case IDC_REGEX:
 		case IDC_IGNOREWS:
 			exclude_buttons(hwnd,LOWORD(wparam));
 			break;

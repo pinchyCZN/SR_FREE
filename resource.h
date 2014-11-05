@@ -72,18 +72,20 @@
 #define IDC_CHECK_DEPTH                 1064
 #define IDC_DEPTH_LEVEL                 1065
 #define IDC_INSTALL_INFO                1066
+#define IDC_REGEX                       1066
 #define IDC_USE_LOCAL                   1067
 #define IDC_USE_APPDATA                 1068
 #define IDC_NO_INI                      1069
 #define IDC_TXT_LOCAL                   1070
 #define IDC_TXT_APPDATA                 1071
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         40003
-#define _APS_NEXT_CONTROL_VALUE         1066
+#define _APS_NEXT_CONTROL_VALUE         1067
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

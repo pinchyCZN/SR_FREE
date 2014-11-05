@@ -340,14 +340,6 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 	int backref, start, len;
 	struct kwsmatch kwsm;
 	size_t i;
-#ifdef MBS_SUPPORT
-	char *mb_properties = NULL;
-#endif /* MBS_SUPPORT */
-
-#ifdef MBS_SUPPORT
-	if (MB_CUR_MAX > 1 && kwset)
-		mb_properties = check_multibyte_string(buf, size);
-#endif /* MBS_SUPPORT */
 
 	buflim = buf + size;
 
@@ -361,10 +353,6 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 				size_t offset = kwsexec (kwset, beg, buflim - beg, &kwsm);
 				if (offset == (size_t) -1)
 				{
-#ifdef MBS_SUPPORT
-					if (MB_CUR_MAX > 1)
-						free(mb_properties);
-#endif
 					return (size_t)-1;
 				}
 				beg += offset;
@@ -379,10 +367,6 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 					else
 						end = buflim;
 				}
-#ifdef MBS_SUPPORT
-				if (MB_CUR_MAX > 1 && mb_properties[beg - buf] == 0)
-					continue;
-#endif
 				while (beg > buf && beg[-1] != eol)
 					--beg;
 				if (kwsm.index < kwset_exact_matches){
@@ -390,11 +374,14 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 					goto success;
 				}
 				{
-					size_t offset=dfaexec (&dfa, beg, end - beg, &backref);
+					size_t end_offset,start_offset=0;
+					end_offset=dfaexec (&dfa, beg, end - beg, &backref,&start_offset);
 					if (offset == (size_t) -1)
 						continue;
-					else
-						end=beg+offset;
+					else{
+						end=beg+end_offset;
+						beg=beg+start_offset;
+					}
 				}
 			}
 			else
@@ -483,17 +470,9 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 			}
 		} /* for Regex patterns.  */
 	} /* for (beg = end ..) */
-#ifdef MBS_SUPPORT
-	if (MB_CUR_MAX > 1 && mb_properties)
-		free (mb_properties);
-#endif /* MBS_SUPPORT */
 	return (size_t) -1;
 
 success:
-#ifdef MBS_SUPPORT
-	if (MB_CUR_MAX > 1 && mb_properties)
-		free (mb_properties);
-#endif /* MBS_SUPPORT */
 	*match_size = end - beg;
 	return beg - buf;
 }
@@ -744,3 +723,18 @@ struct matcher const matchers[] = {
 	{ "perl", Pcompile, Pexecute },
 	{ "", 0, 0 },
 };
+
+int match_lines=0;
+int match_words=0;
+int match_icase=0;
+unsigned char eolbyte='\n';
+char *program_name="grep";
+
+int get_def_match(void **compile,void **execute)
+{
+	if(compile)
+		*compile=Gcompile;
+	if(execute)
+		*execute=EGexecute;
+	return 0;
+}
