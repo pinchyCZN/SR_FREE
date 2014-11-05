@@ -230,21 +230,21 @@ int convert_hex_str(char *str,int size)
 	str[index]=0;
 	return index;
 }
-int is_alphanumeric(char a)
+int is_alphanumeric(unsigned char a)
 {
 	if((a>='A' && a<='Z')||(a>='a' && a<='z')||(a>='0' && a<='9'))
 		return TRUE;
 	else
 		return FALSE;
 }
-int is_wordsubset(char a)
+int is_wordsubset(unsigned char a)
 {
 	if((a>='A' && a<='Z')||(a>='a' && a<='z')||(a>='0' && a<='9')||(a=='_'))
 		return TRUE;
 	else
 		return FALSE;
 }
-int convert_char(char a)
+int convert_char(unsigned char a)
 {
 	if(a=='\t' || a=='\r')
 		return ' ';
@@ -288,7 +288,7 @@ int fetch_more_data(FILE *f,char *buf,int len,int *binary)
 	_fseeki64(f,offset,SEEK_SET);
 	return i;
 }
-int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
+int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,int eof)
 {
 	static void (*compile)(char const *, size_t);
 	static size_t (*execute)(char const *, size_t, size_t *, int);
@@ -309,12 +309,12 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	if(pos>0){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
-		char str[512];
-		int i,counter=0;
-		char *s=buf+pos;
+		unsigned char str[512];
+		int i,len;
+		unsigned char *s=buf+pos;
 		for(i=pos;i>0;i--){
 			char a=buf[i];
-			if(a=='\r' || a=='\n' || (counter>hit_line_len)){
+			if(a=='\r' || a=='\n' || (line_col>hit_line_len)){
 				s=buf+i+1;
 				if(line_col>0)
 					line_col--;
@@ -330,7 +330,11 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 
 		_snprintf(str,sizeof(str),"%s",s);
 		str[sizeof(str)-1]=0;
-		lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,s);
+		i=0;
+		while(str[i++]){
+			str[i-1]=convert_char(str[i-1]);
+		}
+		lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
 	}
 
 	offset+=len;
