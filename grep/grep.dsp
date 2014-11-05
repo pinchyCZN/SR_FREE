@@ -48,8 +48,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
@@ -63,16 +63,16 @@ LINK32=link.exe
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ  /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I ".\\" /I ".\lib\\" /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "HAVE_CONFIG_H" /FR /YX /FD /GZ  /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I ".\\" /I ".\lib\\" /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "HAVE_CONFIG_H" /FR /YX /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -94,8 +94,6 @@ SOURCE=.\lib\alloca.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -106,8 +104,6 @@ SOURCE=.\lib\atexit.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -120,8 +116,6 @@ SOURCE=.\lib\closeout.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -132,8 +126,6 @@ SOURCE=.\lib\error.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -146,8 +138,6 @@ SOURCE=.\lib\exclude.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -158,8 +148,6 @@ SOURCE=.\lib\fnmatch.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -172,8 +160,6 @@ SOURCE=.\lib\getopt.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -184,8 +170,6 @@ SOURCE=.\lib\getopt1.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -198,8 +182,6 @@ SOURCE=".\lib\hard-locale.c"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -210,8 +192,6 @@ SOURCE=.\lib\isdir.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -224,8 +204,6 @@ SOURCE=.\lib\malloc.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -237,8 +215,6 @@ SOURCE=.\lib\memchr.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -249,8 +225,6 @@ SOURCE=.\lib\obstack.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -264,7 +238,6 @@ SOURCE=.\lib\quotearg.c
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
 # PROP Exclude_From_Build 1
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -277,8 +250,6 @@ SOURCE=.\lib\realloc.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -289,8 +260,6 @@ SOURCE=.\lib\regex.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -303,8 +272,6 @@ SOURCE=.\lib\savedir.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -315,8 +282,6 @@ SOURCE=.\lib\stpcpy.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -330,7 +295,6 @@ SOURCE=.\lib\strtol.c
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
 # PROP Exclude_From_Build 1
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -344,7 +308,6 @@ SOURCE=.\lib\strtoul.c
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
 # PROP Exclude_From_Build 1
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -358,7 +321,6 @@ SOURCE=.\lib\strtoull.c
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
 # PROP Exclude_From_Build 1
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -371,8 +333,6 @@ SOURCE=.\lib\strtoumax.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -383,8 +343,6 @@ SOURCE=.\lib\xmalloc.c
 !IF  "$(CFG)" == "grep - Win32 Release"
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
-
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
 
 !ENDIF 
 
@@ -397,8 +355,6 @@ SOURCE=.\lib\xstrtol.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
@@ -410,16 +366,10 @@ SOURCE=.\lib\xstrtoumax.c
 
 !ELSEIF  "$(CFG)" == "grep - Win32 Debug"
 
-# ADD CPP /I ".\lib\\" /D "HAVE_CONFIG_H"
-
 !ENDIF 
 
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\_search.c
-# End Source File
 # Begin Source File
 
 SOURCE=.\dfa.c
@@ -427,6 +377,10 @@ SOURCE=.\dfa.c
 # Begin Source File
 
 SOURCE=.\grep.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\grep_search.c
 # End Source File
 # Begin Source File
 
