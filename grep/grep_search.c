@@ -387,22 +387,13 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 			else
 			{
 				/* No good fixed strings; start with DFA. */
-				size_t offset = dfaexec (&dfa, beg, buflim - beg, &backref);
-				if (offset == (size_t) -1)
+				size_t end_offset,start_offset=0;
+				end_offset = dfaexec (&dfa, beg, buflim - beg, &backref, &start_offset);
+				if (end_offset == (size_t) -1)
 					break;
 				/* Narrow down to the line we've found. */
-				beg += offset;
-				{
-					void *p=memchr (beg, eol, buflim - beg);
-					if(p){
-						end = p;
-						end++;
-					}
-					else
-						end = buflim;
-				}
-				while (beg > buf && beg[-1] != eol)
-					--beg;
+				end=beg+end_offset;
+				beg=beg+start_offset;
 			}
 			/* Successful, no backreferences encountered! */
 			if (!backref){

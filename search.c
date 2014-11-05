@@ -187,7 +187,7 @@ int add_listbox_str(HWND hwnd,char *fmt,...)
 	va_start(args,fmt);
 	_vsnprintf(str,sizeof(str),fmt,args);
 	str[sizeof(str)-1]=0;
-//	return SendDlgItemMessage(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
+	return SendDlgItemMessage(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
 }
 int set_message_str(HWND hwnd,char *fmt,...)
 {
@@ -297,7 +297,6 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static unsigned __int64 total_col=0;
 	static int binary=FALSE;
 	int pos,match_size=0,line_col=0;
-	int i;
 	if(init){
 		line_num=total_col=line_offset=offset=0;
 		line_num=1;
@@ -310,7 +309,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	if(pos>0){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
-		char str[1024];
+		char str[512];
 		int i,counter=0;
 		char *s=buf+pos;
 		for(i=pos;i>0;i--){
@@ -323,10 +322,15 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			}
 			line_col++;
 		}
+		if(matches_found==0){
+			add_listbox_str(hwnd_parent,"File %s",current_fname);
+			files_occured++;
+		}
+		matches_found++;
+
 		_snprintf(str,sizeof(str),"%s",s);
 		str[sizeof(str)-1]=0;
-		hwnd_parent++;
-		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,s);
+		lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,s);
 	}
 
 	offset+=len;

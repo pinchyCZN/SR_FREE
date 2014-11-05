@@ -411,15 +411,7 @@ SOURCE=.\grep\dfa.c
 # Begin Source File
 
 SOURCE=.\grep\grep.c
-
-!IF  "$(CFG)" == "SR_FREE - Win32 Release"
-
 # PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
