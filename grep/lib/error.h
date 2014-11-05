@@ -47,11 +47,11 @@ extern "C" {
    If STATUS is nonzero, terminate the program with `exit (STATUS)'.  */
 
 extern void error (int status, int errnum, const char *format, ...)
-     __attribute__ ((__format__ (__printf__, 3, 4)));
+__attribute__ ((__format__ (__printf__, 3, 4)));
 
 extern void error_at_line (int status, int errnum, const char *fname,
-			   unsigned int lineno, const char *format, ...)
-     __attribute__ ((__format__ (__printf__, 5, 6)));
+						   unsigned int lineno, const char *format, ...)
+__attribute__ ((__format__ (__printf__, 5, 6)));
 
 /* If NULL, error will flush stdout, then print on stderr the program
    name, a colon and a space.  Otherwise, error will call this

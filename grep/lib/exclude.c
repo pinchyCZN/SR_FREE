@@ -37,92 +37,92 @@ void *xrealloc PARAMS ((void *, size_t));
 /* Keep track of excluded file name patterns.  */
 
 struct exclude
-  {
-    char const **exclude;
-    int exclude_alloc;
-    int exclude_count;
-  };
+{
+	char const **exclude;
+	int exclude_alloc;
+	int exclude_count;
+};
 
 struct exclude *
 new_exclude (void)
 {
-  struct exclude *ex = (struct exclude *) xmalloc (sizeof (struct exclude));
-  ex->exclude_count = 0;
-  ex->exclude_alloc = 64;
-  ex->exclude = (char const **) xmalloc (ex->exclude_alloc * sizeof (char *));
-  return ex;
+	struct exclude *ex = (struct exclude *) xmalloc (sizeof (struct exclude));
+	ex->exclude_count = 0;
+	ex->exclude_alloc = 64;
+	ex->exclude = (char const **) xmalloc (ex->exclude_alloc * sizeof (char *));
+	return ex;
 }
 
 int
 excluded_filename (struct exclude const *ex, char const *f, int options)
 {
-  char const * const *exclude = ex->exclude;
-  int exclude_count = ex->exclude_count;
-  int i;
+	char const * const *exclude = ex->exclude;
+	int exclude_count = ex->exclude_count;
+	int i;
 
-  for (i = 0;  i < exclude_count;  i++)
-    if (fnmatch (exclude[i], f, options) == 0)
-      return 1;
+	for (i = 0;  i < exclude_count;  i++)
+		if (fnmatch (exclude[i], f, options) == 0)
+			return 1;
 
-  return 0;
+	return 0;
 }
 
 void
 add_exclude (struct exclude *ex, char const *pattern)
 {
-  if (ex->exclude_alloc <= ex->exclude_count)
-    ex->exclude = (char const **) xrealloc (ex->exclude,
-					    ((ex->exclude_alloc *= 2)
-					     * sizeof (char *)));
+	if (ex->exclude_alloc <= ex->exclude_count)
+		ex->exclude = (char const **) xrealloc (ex->exclude,
+												((ex->exclude_alloc *= 2)
+														* sizeof (char *)));
 
-  ex->exclude[ex->exclude_count++] = pattern;
+	ex->exclude[ex->exclude_count++] = pattern;
 }
 
 int
 add_exclude_file (void (*add_func) PARAMS ((struct exclude *, char const *)),
-		  struct exclude *ex, char const *filename, char line_end)
+				  struct exclude *ex, char const *filename, char line_end)
 {
-  int use_stdin = filename[0] == '-' && !filename[1];
-  FILE *in;
-  char *buf;
-  char *p;
-  char const *pattern;
-  char const *lim;
-  size_t buf_alloc = 1024;
-  size_t buf_count = 0;
-  int c;
-  int e = 0;
+	int use_stdin = filename[0] == '-' && !filename[1];
+	FILE *in;
+	char *buf;
+	char *p;
+	char const *pattern;
+	char const *lim;
+	size_t buf_alloc = 1024;
+	size_t buf_count = 0;
+	int c;
+	int e = 0;
 
-  if (use_stdin)
-    in = stdin;
-  else if (! (in = fopen (filename, "r")))
-    return -1;
+	if (use_stdin)
+		in = stdin;
+	else if (! (in = fopen (filename, "r")))
+		return -1;
 
-  buf = xmalloc (buf_alloc);
+	buf = xmalloc (buf_alloc);
 
-  while ((c = getc (in)) != EOF)
-    {
-      buf[buf_count++] = c;
-      if (buf_count == buf_alloc)
-	buf = xrealloc (buf, buf_alloc *= 2);
-    }
+	while ((c = getc (in)) != EOF)
+	{
+		buf[buf_count++] = c;
+		if (buf_count == buf_alloc)
+			buf = xrealloc (buf, buf_alloc *= 2);
+	}
 
-  buf = xrealloc (buf, buf_count + 1);
+	buf = xrealloc (buf, buf_count + 1);
 
-  if (ferror (in))
-    e = errno;
+	if (ferror (in))
+		e = errno;
 
-  if (!use_stdin && fclose (in) != 0)
-    e = errno;
+	if (!use_stdin && fclose (in) != 0)
+		e = errno;
 
-  for (pattern = p = buf, lim = buf + buf_count;  p <= lim;  p++)
-    if (p < lim ? *p == line_end : buf < p && p[-1])
-      {
-	*p = '\0';
-	(*add_func) (ex, pattern);
-	pattern = p + 1;
-      }
+	for (pattern = p = buf, lim = buf + buf_count;  p <= lim;  p++)
+		if (p < lim ? *p == line_end : buf < p && p[-1])
+		{
+			*p = '\0';
+			(*add_func) (ex, pattern);
+			pattern = p + 1;
+		}
 
-  errno = e;
-  return e ? -1 : 0;
+	errno = e;
+	return e ? -1 : 0;
 }

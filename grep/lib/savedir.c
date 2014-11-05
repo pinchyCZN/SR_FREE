@@ -75,21 +75,21 @@ size_t pathlen;
 static int
 isdir1 (const char *dir, const char *file)
 {
-  int status;
-  int slash;
-  size_t dirlen = strlen (dir);
-  size_t filelen = strlen (file);
-  if ((dirlen + filelen + 2) > pathlen)
-    {
-      path = calloc (dirlen + 1 + filelen + 1, sizeof (*path));
-      pathlen = dirlen + filelen + 2;
-    }
-  strcpy (path, dir);
-  slash = (path[dirlen] != '/');
-  path[dirlen] = '/';
-  strcpy (path + dirlen + slash , file);
-  status  = isdir (path);
-  return status;
+	int status;
+	int slash;
+	size_t dirlen = strlen (dir);
+	size_t filelen = strlen (file);
+	if ((dirlen + filelen + 2) > pathlen)
+	{
+		path = calloc (dirlen + 1 + filelen + 1, sizeof (*path));
+		pathlen = dirlen + filelen + 2;
+	}
+	strcpy (path, dir);
+	slash = (path[dirlen] != '/');
+	path[dirlen] = '/';
+	strcpy (path + dirlen + slash , file);
+	status  = isdir (path);
+	return status;
 }
 
 /* Return a freshly allocated string containing the filenames
@@ -100,81 +100,81 @@ isdir1 (const char *dir, const char *file)
    Return NULL if DIR cannot be opened or if out of memory. */
 char *
 savedir (const char *dir, off_t name_size, struct exclude *included_patterns,
-	 struct exclude *excluded_patterns)
+		 struct exclude *excluded_patterns)
 {
-  DIR *dirp;
-  struct dirent *dp;
-  char *name_space;
-  char *namep;
+	DIR *dirp;
+	struct dirent *dp;
+	char *name_space;
+	char *namep;
 #if FALSE
-  dirp = opendir (dir);
-  if (dirp == NULL)
-    return NULL;
+	dirp = opendir (dir);
+	if (dirp == NULL)
+		return NULL;
 
-  /* Be sure name_size is at least `1' so there's room for
-     the final NUL byte.  */
-  if (name_size <= 0)
-    name_size = 1;
+	/* Be sure name_size is at least `1' so there's room for
+	   the final NUL byte.  */
+	if (name_size <= 0)
+		name_size = 1;
 
-  name_space = (char *) malloc (name_size);
-  if (name_space == NULL)
-    {
-      closedir (dirp);
-      return NULL;
-    }
-  namep = name_space;
-
-  while ((dp = readdir (dirp)) != NULL)
-    {
-      /* Skip "." and ".." (some NFS filesystems' directories lack them). */
-      if (dp->d_name[0] != '.'
-	  || (dp->d_name[1] != '\0'
-	      && (dp->d_name[1] != '.' || dp->d_name[2] != '\0')))
+	name_space = (char *) malloc (name_size);
+	if (name_space == NULL)
 	{
-	  off_t size_needed = (namep - name_space) + NAMLEN (dp) + 2;
-
-	  if ((included_patterns || excluded_patterns)
-	      && !isdir1 (dir, dp->d_name))
-	    {
-	      if (included_patterns
-		  && !excluded_filename (included_patterns, dp->d_name, 0))
-		continue;
-	      if (excluded_patterns
-		  && excluded_filename (excluded_patterns, dp->d_name, 0))
-		continue;
-	    }
-
-	  if (size_needed > name_size)
-	    {
-	      char *new_name_space;
-
-	      while (size_needed > name_size)
-		name_size += 1024;
-
-	      new_name_space = realloc (name_space, name_size);
-	      if (new_name_space == NULL)
-		{
-		  closedir (dirp);
-		  return NULL;
-		}
-	      namep += new_name_space - name_space;
-	      name_space = new_name_space;
-	    }
-	  namep = stpcpy (namep, dp->d_name) + 1;
+		closedir (dirp);
+		return NULL;
 	}
-    }
-  *namep = '\0';
-  if (CLOSEDIR (dirp))
-    {
-      free (name_space);
-      return NULL;
-    }
-  if (path)
-    {
-      free (path);
-      path = NULL;
-      pathlen = 0;
-    }
+	namep = name_space;
+
+	while ((dp = readdir (dirp)) != NULL)
+	{
+		/* Skip "." and ".." (some NFS filesystems' directories lack them). */
+		if (dp->d_name[0] != '.'
+				|| (dp->d_name[1] != '\0'
+					&& (dp->d_name[1] != '.' || dp->d_name[2] != '\0')))
+		{
+			off_t size_needed = (namep - name_space) + NAMLEN (dp) + 2;
+
+			if ((included_patterns || excluded_patterns)
+					&& !isdir1 (dir, dp->d_name))
+			{
+				if (included_patterns
+						&& !excluded_filename (included_patterns, dp->d_name, 0))
+					continue;
+				if (excluded_patterns
+						&& excluded_filename (excluded_patterns, dp->d_name, 0))
+					continue;
+			}
+
+			if (size_needed > name_size)
+			{
+				char *new_name_space;
+
+				while (size_needed > name_size)
+					name_size += 1024;
+
+				new_name_space = realloc (name_space, name_size);
+				if (new_name_space == NULL)
+				{
+					closedir (dirp);
+					return NULL;
+				}
+				namep += new_name_space - name_space;
+				name_space = new_name_space;
+			}
+			namep = stpcpy (namep, dp->d_name) + 1;
+		}
+	}
+	*namep = '\0';
+	if (CLOSEDIR (dirp))
+	{
+		free (name_space);
+		return NULL;
+	}
+	if (path)
+	{
+		free (path);
+		path = NULL;
+		pathlen = 0;
+	}
 #endif
-  return name_space;
+	return name_space;
 }

@@ -93,158 +93,158 @@ uintmax_t strtoumax ();
 static int
 bkm_scale (__strtol_t *x, int scale_factor)
 {
-  __strtol_t product = *x * scale_factor;
-  if (*x != product / scale_factor)
-    return 1;
-  *x = product;
-  return 0;
+	__strtol_t product = *x * scale_factor;
+	if (*x != product / scale_factor)
+		return 1;
+	*x = product;
+	return 0;
 }
 
 static int
 bkm_scale_by_power (__strtol_t *x, int base, int power)
 {
-  while (power--)
-    if (bkm_scale (x, base))
-      return 1;
+	while (power--)
+		if (bkm_scale (x, base))
+			return 1;
 
-  return 0;
+	return 0;
 }
 
 /* FIXME: comment.  */
 
 strtol_error
 __xstrtol (const char *s, char **ptr, int strtol_base,
-	   __strtol_t *val, const char *valid_suffixes)
+		   __strtol_t *val, const char *valid_suffixes)
 {
-  char *t_ptr;
-  char **p;
-  __strtol_t tmp;
+	char *t_ptr;
+	char **p;
+	__strtol_t tmp;
 
-  assert (0 <= strtol_base && strtol_base <= 36);
+	assert (0 <= strtol_base && strtol_base <= 36);
 
-  p = (ptr ? ptr : &t_ptr);
+	p = (ptr ? ptr : &t_ptr);
 
-  if (! TYPE_SIGNED (__strtol_t))
-    {
-      const char *q = s;
-      while (ISSPACE ((unsigned char) *q))
-	++q;
-      if (*q == '-')
-	return LONGINT_INVALID;
-    }
-
-  errno = 0;
-  tmp = __strtol (s, p, strtol_base);
-  if (errno != 0)
-    return LONGINT_OVERFLOW;
-  if (*p == s)
-    return LONGINT_INVALID;
-
-  /* Let valid_suffixes == NULL mean `allow any suffix'.  */
-  /* FIXME: update all callers except the ones that allow suffixes
-     after the number, changing last parameter NULL to `""'.  */
-  if (!valid_suffixes)
-    {
-      *val = tmp;
-      return LONGINT_OK;
-    }
-
-  if (**p != '\0')
-    {
-      int base = 1024;
-      int suffixes = 1;
-      int overflow;
-
-      if (!strchr (valid_suffixes, **p))
+	if (! TYPE_SIGNED (__strtol_t))
 	{
-	  *val = tmp;
-	  return LONGINT_INVALID_SUFFIX_CHAR;
+		const char *q = s;
+		while (ISSPACE ((unsigned char) *q))
+			++q;
+		if (*q == '-')
+			return LONGINT_INVALID;
 	}
 
-      if (strchr (valid_suffixes, '0'))
+	errno = 0;
+	tmp = __strtol (s, p, strtol_base);
+	if (errno != 0)
+		return LONGINT_OVERFLOW;
+	if (*p == s)
+		return LONGINT_INVALID;
+
+	/* Let valid_suffixes == NULL mean `allow any suffix'.  */
+	/* FIXME: update all callers except the ones that allow suffixes
+	   after the number, changing last parameter NULL to `""'.  */
+	if (!valid_suffixes)
 	{
-	  /* The ``valid suffix'' '0' is a special flag meaning that
-	     an optional second suffix is allowed, which can change
-	     the base, e.g. "100MD" for 100 megabytes decimal.  */
-
-	  switch (p[0][1])
-	    {
-	    case 'B':
-	      suffixes++;
-	      break;
-
-	    case 'D':
-	      base = 1000;
-	      suffixes++;
-	      break;
-	    }
+		*val = tmp;
+		return LONGINT_OK;
 	}
 
-      switch (**p)
+	if (**p != '\0')
 	{
-	case 'b':
-	  overflow = bkm_scale (&tmp, 512);
-	  break;
+		int base = 1024;
+		int suffixes = 1;
+		int overflow;
 
-	case 'B':
-	  overflow = bkm_scale (&tmp, 1024);
-	  break;
+		if (!strchr (valid_suffixes, **p))
+		{
+			*val = tmp;
+			return LONGINT_INVALID_SUFFIX_CHAR;
+		}
 
-	case 'c':
-	  overflow = 0;
-	  break;
+		if (strchr (valid_suffixes, '0'))
+		{
+			/* The ``valid suffix'' '0' is a special flag meaning that
+			   an optional second suffix is allowed, which can change
+			   the base, e.g. "100MD" for 100 megabytes decimal.  */
 
-	case 'E': /* Exa */
-	  overflow = bkm_scale_by_power (&tmp, base, 6);
-	  break;
+			switch (p[0][1])
+			{
+			case 'B':
+				suffixes++;
+				break;
 
-	case 'G': /* Giga */
-	  overflow = bkm_scale_by_power (&tmp, base, 3);
-	  break;
+			case 'D':
+				base = 1000;
+				suffixes++;
+				break;
+			}
+		}
 
-	case 'k': /* kilo */
-	  overflow = bkm_scale_by_power (&tmp, base, 1);
-	  break;
+		switch (**p)
+		{
+		case 'b':
+			overflow = bkm_scale (&tmp, 512);
+			break;
 
-	case 'M': /* Mega */
-	case 'm': /* 'm' is undocumented; for backward compatibility only */
-	  overflow = bkm_scale_by_power (&tmp, base, 2);
-	  break;
+		case 'B':
+			overflow = bkm_scale (&tmp, 1024);
+			break;
 
-	case 'P': /* Peta */
-	  overflow = bkm_scale_by_power (&tmp, base, 5);
-	  break;
+		case 'c':
+			overflow = 0;
+			break;
 
-	case 'T': /* Tera */
-	  overflow = bkm_scale_by_power (&tmp, base, 4);
-	  break;
+		case 'E': /* Exa */
+			overflow = bkm_scale_by_power (&tmp, base, 6);
+			break;
 
-	case 'w':
-	  overflow = bkm_scale (&tmp, 2);
-	  break;
+		case 'G': /* Giga */
+			overflow = bkm_scale_by_power (&tmp, base, 3);
+			break;
 
-	case 'Y': /* Yotta */
-	  overflow = bkm_scale_by_power (&tmp, base, 8);
-	  break;
+		case 'k': /* kilo */
+			overflow = bkm_scale_by_power (&tmp, base, 1);
+			break;
 
-	case 'Z': /* Zetta */
-	  overflow = bkm_scale_by_power (&tmp, base, 7);
-	  break;
+		case 'M': /* Mega */
+		case 'm': /* 'm' is undocumented; for backward compatibility only */
+			overflow = bkm_scale_by_power (&tmp, base, 2);
+			break;
 
-	default:
-	  *val = tmp;
-	  return LONGINT_INVALID_SUFFIX_CHAR;
-	  break;
+		case 'P': /* Peta */
+			overflow = bkm_scale_by_power (&tmp, base, 5);
+			break;
+
+		case 'T': /* Tera */
+			overflow = bkm_scale_by_power (&tmp, base, 4);
+			break;
+
+		case 'w':
+			overflow = bkm_scale (&tmp, 2);
+			break;
+
+		case 'Y': /* Yotta */
+			overflow = bkm_scale_by_power (&tmp, base, 8);
+			break;
+
+		case 'Z': /* Zetta */
+			overflow = bkm_scale_by_power (&tmp, base, 7);
+			break;
+
+		default:
+			*val = tmp;
+			return LONGINT_INVALID_SUFFIX_CHAR;
+			break;
+		}
+
+		if (overflow)
+			return LONGINT_OVERFLOW;
+
+		(*p) += suffixes;
 	}
 
-      if (overflow)
-	return LONGINT_OVERFLOW;
-
-      (*p) += suffixes;
-    }
-
-  *val = tmp;
-  return LONGINT_OK;
+	*val = tmp;
+	return LONGINT_OK;
 }
 
 #ifdef TESTING_XSTRTO
@@ -257,26 +257,26 @@ char *program_name;
 int
 main (int argc, char** argv)
 {
-  strtol_error s_err;
-  int i;
+	strtol_error s_err;
+	int i;
 
-  program_name = argv[0];
-  for (i=1; i<argc; i++)
-    {
-      char *p;
-      __strtol_t val;
+	program_name = argv[0];
+	for (i=1; i<argc; i++)
+	{
+		char *p;
+		__strtol_t val;
 
-      s_err = __xstrtol (argv[i], &p, 0, &val, "bckmw");
-      if (s_err == LONGINT_OK)
-	{
-	  printf ("%s->%lu (%s)\n", argv[i], val, p);
+		s_err = __xstrtol (argv[i], &p, 0, &val, "bckmw");
+		if (s_err == LONGINT_OK)
+		{
+			printf ("%s->%lu (%s)\n", argv[i], val, p);
+		}
+		else
+		{
+			STRTOL_FATAL_ERROR (argv[i], "arg", s_err);
+		}
 	}
-      else
-	{
-	  STRTOL_FATAL_ERROR (argv[i], "arg", s_err);
-	}
-    }
-  exit (0);
+	exit (0);
 }
 
 #endif /* TESTING_XSTRTO */

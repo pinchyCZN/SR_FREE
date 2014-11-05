@@ -26,9 +26,9 @@
 
 extern struct matcher
 {
-  char name[8];
-  void (*compile) PARAMS ((char const *, size_t));
-  size_t (*execute) PARAMS ((char const *, size_t, size_t *, int));
+	char name[8];
+	void (*compile) PARAMS ((char const *, size_t));
+	size_t (*execute) PARAMS ((char const *, size_t, size_t *, int));
 } const matchers[];
 
 /* Exported from fgrepmat.c, egrepmat.c, grepmat.c.  */

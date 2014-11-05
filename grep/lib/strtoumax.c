@@ -59,12 +59,12 @@ strtoumax (char const *ptr, char **endptr, int base)
       return function (ptr, endptr, base);
 
 #if HAVE_UNSIGNED_LONG_LONG
-    USE_IF_EQUIVALENT (strtoull)
+	USE_IF_EQUIVALENT (strtoull)
 #endif
 
-  USE_IF_EQUIVALENT (strtoul)
+	USE_IF_EQUIVALENT (strtoul)
 
-  abort ();
+	abort ();
 }
 
 #ifdef TESTING
@@ -72,10 +72,10 @@ strtoumax (char const *ptr, char **endptr, int base)
 int
 main ()
 {
-  char *p, *endptr;
-  printf ("sizeof uintmax_t: %d\n", sizeof (uintmax_t));
-  printf ("sizeof strtoull(): %d\n", sizeof strtoull(p, &endptr, 10));
-  printf ("sizeof strtoul(): %d\n", sizeof strtoul(p, &endptr, 10));
-  exit (0);
+	char *p, *endptr;
+	printf ("sizeof uintmax_t: %d\n", sizeof (uintmax_t));
+	printf ("sizeof strtoull(): %d\n", sizeof strtoull(p, &endptr, 10));
+	printf ("sizeof strtoul(): %d\n", sizeof strtoul(p, &endptr, 10));
+	exit (0);
 }
 #endif

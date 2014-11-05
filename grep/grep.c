@@ -1700,9 +1700,9 @@ int test_grep(char *file)
 	(*compile)(buf, strlen(buf));
 
 	memset(buf,0,sizeof(buf));
-	sprintf(buf,"123");
+	sprintf(buf,"123    123\n\n 123");
 
-	grepbuf(buf,buf+3);
+	grepbuf(buf,buf+300);
 	//grepbuf(buf+3,buf+3+3);
 	//grepfile(file,&stats_base);
 	/*

@@ -56,7 +56,7 @@ static const char *file_name;
 void
 close_stdout_set_status (int status)
 {
-  default_exit_status = status;
+	default_exit_status = status;
 }
 
 /* Set the file name to be reported in the event an error is detected
@@ -64,7 +64,7 @@ close_stdout_set_status (int status)
 void
 close_stdout_set_file_name (const char *file)
 {
-  file_name = file;
+	file_name = file;
 }
 
 /* Close standard output, exiting with status STATUS on failure.
@@ -93,29 +93,29 @@ close_stdout_set_file_name (const char *file)
 void
 close_stdout_status (int status)
 {
-  int e = ferror (stdout) ? 0 : -1;
+	int e = ferror (stdout) ? 0 : -1;
 
 #if 0
-  if (__fpending (stdout) == 0)
-    return;
+	if (__fpending (stdout) == 0)
+		return;
 #endif
 
-  if (fclose (stdout) != 0)
-    e = errno;
+	if (fclose (stdout) != 0)
+		e = errno;
 
-  if (0 < e)
-    {
-      char const *write_error = _("write error");
-      if (file_name)
-	error (status, e, "%s: %s", quotearg_colon (file_name), write_error);
-      else
-	error (status, e, "%s", write_error);
-    }
+	if (0 < e)
+	{
+		char const *write_error = _("write error");
+		if (file_name)
+			error (status, e, "%s: %s", quotearg_colon (file_name), write_error);
+		else
+			error (status, e, "%s", write_error);
+	}
 }
 
 /* Close standard output, exiting with status EXIT_FAILURE on failure.  */
 void
 close_stdout (void)
 {
-  close_stdout_status (default_exit_status);
+	close_stdout_status (default_exit_status);
 }

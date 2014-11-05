@@ -68,9 +68,9 @@ char *strerror_r ();
    function without parameters instead.  */
 void (*error_print_progname) (
 #if __STDC__ - 0
-			      void
+	void
 #endif
-			      );
+);
 
 /* This variable is incremented each time `error' is called.  */
 unsigned int error_message_count;
@@ -107,14 +107,14 @@ char *strerror ();
 #  else
 static char *
 private_strerror (errnum)
-     int errnum;
+int errnum;
 {
-  extern char *sys_errlist[];
-  extern int sys_nerr;
+	extern char *sys_errlist[];
+	extern int sys_nerr;
 
-  if (errnum > 0 && errnum <= sys_nerr)
-    return _(sys_errlist[errnum]);
-  return _("Unknown system error");
+	if (errnum > 0 && errnum <= sys_nerr)
+		return _(sys_errlist[errnum]);
+	return _("Unknown system error");
 }
 #   define strerror private_strerror
 #  endif /* HAVE_STRERROR */
@@ -132,57 +132,57 @@ void
 error (int status, int errnum, const char *message, ...)
 #else
 error (status, errnum, message, va_alist)
-     int status;
-     int errnum;
-     char *message;
-     va_dcl
+int status;
+int errnum;
+char *message;
+va_dcl
 #endif
 {
 #ifdef VA_START
-  va_list args;
+	va_list args;
 #endif
 
-  if (error_print_progname)
-    (*error_print_progname) ();
-  else
-    {
-      fflush (stdout);
-      fprintf (stderr, "%s: ", program_name);
-    }
+	if (error_print_progname)
+		(*error_print_progname) ();
+	else
+	{
+		fflush (stdout);
+		fprintf (stderr, "%s: ", program_name);
+	}
 
 #ifdef VA_START
-  VA_START (args, message);
+	VA_START (args, message);
 # if HAVE_VPRINTF || _LIBC
-  vfprintf (stderr, message, args);
+	vfprintf (stderr, message, args);
 # else
-  _doprnt (message, args, stderr);
+	_doprnt (message, args, stderr);
 # endif
-  va_end (args);
+	va_end (args);
 #else
-  fprintf (stderr, message, a1, a2, a3, a4, a5, a6, a7, a8);
+	fprintf (stderr, message, a1, a2, a3, a4, a5, a6, a7, a8);
 #endif
 
-  ++error_message_count;
-  if (errnum)
-    {
+	++error_message_count;
+	if (errnum)
+	{
 #if defined HAVE_STRERROR_R || _LIBC
-      char errbuf[1024];
+		char errbuf[1024];
 # if HAVE_WORKING_STRERROR_R || _LIBC
-      fprintf (stderr, ": %s", __strerror_r (errnum, errbuf, sizeof errbuf));
+		fprintf (stderr, ": %s", __strerror_r (errnum, errbuf, sizeof errbuf));
 # else
-      /* Don't use __strerror_r's return value because on some systems
-	 (at least DEC UNIX 4.0[A-D]) strerror_r returns `int'.  */
-      __strerror_r (errnum, errbuf, sizeof errbuf);
-      fprintf (stderr, ": %s", errbuf);
+		/* Don't use __strerror_r's return value because on some systems
+		(at least DEC UNIX 4.0[A-D]) strerror_r returns `int'.  */
+		__strerror_r (errnum, errbuf, sizeof errbuf);
+		fprintf (stderr, ": %s", errbuf);
 # endif
 #else
-      fprintf (stderr, ": %s", strerror (errnum));
+		fprintf (stderr, ": %s", strerror (errnum));
 #endif
-    }
-  putc ('\n', stderr);
-  fflush (stderr);
-  if (status)
-    exit (status);
+	}
+	putc ('\n', stderr);
+	fflush (stderr);
+	if (status)
+		exit (status);
 }
 
 /* Sometimes we want to have at most one error per line.  This
@@ -192,79 +192,79 @@ int error_one_per_line;
 void
 #if defined VA_START && __STDC__
 error_at_line (int status, int errnum, const char *file_name,
-	       unsigned int line_number, const char *message, ...)
+			   unsigned int line_number, const char *message, ...)
 #else
 error_at_line (status, errnum, file_name, line_number, message, va_alist)
-     int status;
-     int errnum;
-     const char *file_name;
-     unsigned int line_number;
-     char *message;
-     va_dcl
+int status;
+int errnum;
+const char *file_name;
+unsigned int line_number;
+char *message;
+va_dcl
 #endif
 {
 #ifdef VA_START
-  va_list args;
+	va_list args;
 #endif
 
-  if (error_one_per_line)
-    {
-      static const char *old_file_name;
-      static unsigned int old_line_number;
+	if (error_one_per_line)
+	{
+		static const char *old_file_name;
+		static unsigned int old_line_number;
 
-      if (old_line_number == line_number &&
-	  (file_name == old_file_name || !strcmp (old_file_name, file_name)))
-	/* Simply return and print nothing.  */
-	return;
+		if (old_line_number == line_number &&
+		(file_name == old_file_name || !strcmp (old_file_name, file_name)))
+			/* Simply return and print nothing.  */
+			return;
 
-      old_file_name = file_name;
-      old_line_number = line_number;
-    }
+		old_file_name = file_name;
+		old_line_number = line_number;
+	}
 
-  if (error_print_progname)
-    (*error_print_progname) ();
-  else
-    {
-      fflush (stdout);
-      fprintf (stderr, "%s:", program_name);
-    }
+	if (error_print_progname)
+		(*error_print_progname) ();
+	else
+	{
+		fflush (stdout);
+		fprintf (stderr, "%s:", program_name);
+	}
 
-  if (file_name != NULL)
-    fprintf (stderr, "%s:%d: ", file_name, line_number);
+	if (file_name != NULL)
+		fprintf (stderr, "%s:%d: ", file_name, line_number);
 
 #ifdef VA_START
-  VA_START (args, message);
+	VA_START (args, message);
 # if HAVE_VPRINTF || _LIBC
-  vfprintf (stderr, message, args);
+	vfprintf (stderr, message, args);
 # else
-  _doprnt (message, args, stderr);
+	_doprnt (message, args, stderr);
 # endif
-  va_end (args);
+	va_end (args);
 #else
-  fprintf (stderr, message, a1, a2, a3, a4, a5, a6, a7, a8);
+	fprintf (stderr, message, a1, a2, a3, a4, a5, a6, a7, a8);
 #endif
 
-  ++error_message_count;
-  if (errnum)
-    {
+	++error_message_count;
+	if (errnum)
+	{
 #if defined HAVE_STRERROR_R || _LIBC
-      char errbuf[1024];
+		char errbuf[1024];
 # if HAVE_WORKING_STRERROR_R || _LIBC
-      fprintf (stderr, ": %s", __strerror_r (errnum, errbuf, sizeof errbuf));
+		fprintf (stderr, ": %s", __strerror_r (errnum, errbuf, sizeof errbuf));
 # else
-      /* Don't use __strerror_r's return value because on some systems
-	 (at least DEC UNIX 4.0[A-D]) strerror_r returns `int'.  */
-      __strerror_r (errnum, errbuf, sizeof errbuf);
-      fprintf (stderr, ": %s", errbuf);
+		/* Don't use __strerror_r's return value because on some systems
+		(at least DEC UNIX 4.0[A-D]) strerror_r returns `int'.  */
+		__strerror_r (errnum, errbuf, sizeof errbuf);
+		fprintf (stderr, ": %s", errbuf);
 # endif
 #else
-      fprintf (stderr, ": %s", strerror (errnum));
+		fprintf (stderr, ": %s", strerror (errnum));
 #endif
-    }
-  putc ('\n', stderr);
-  fflush (stderr);
-  if (status)
-    exit (status);
+	}
+	putc ('\n', stderr);
+	fflush (stderr);
+	if (status)
+		exit (status);
 }
 
 #ifdef _LIBC

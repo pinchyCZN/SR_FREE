@@ -15,9 +15,9 @@
 
 # ifndef _STRTOL_ERROR
 enum strtol_error
-  {
-    LONGINT_OK, LONGINT_INVALID, LONGINT_INVALID_SUFFIX_CHAR, LONGINT_OVERFLOW
-  };
+{
+	LONGINT_OK, LONGINT_INVALID, LONGINT_INVALID_SUFFIX_CHAR, LONGINT_OVERFLOW
+};
 typedef enum strtol_error strtol_error;
 # endif
 

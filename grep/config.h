@@ -14,12 +14,12 @@
 #define HAVE_MEMMOVE 1
 
 typedef void  * DIR;
-struct dirent { 
- long d_ino; 
- int d_off; 
- unsigned short d_reclen; 
- char d_name[1]; 
- };
+struct dirent {
+	long d_ino;
+	int d_off;
+	unsigned short d_reclen;
+	char d_name[1];
+};
 
 typedef unsigned __int64 uintmax_t;
 #define _SIZE_T_DEFINED 1

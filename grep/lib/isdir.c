@@ -36,7 +36,7 @@
 int
 isdir (const char *path)
 {
-  struct stat stats;
+	struct stat stats;
 
-  return stat (path, &stats) == 0 && S_ISDIR (stats.st_mode);
+	return stat (path, &stats) == 0 && S_ISDIR (stats.st_mode);
 }

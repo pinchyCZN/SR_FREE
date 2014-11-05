@@ -20,13 +20,13 @@
 #if defined (__STDC__) && __STDC__
 # ifndef _PTR_T
 # define _PTR_T
-  typedef void * ptr_t;
+typedef void * ptr_t;
 # endif
 # define PARAMS(x) x
 #else
 # ifndef _PTR_T
 # define _PTR_T
-  typedef char * ptr_t;
+typedef char * ptr_t;
 # endif
 # define PARAMS(x) ()
 #endif

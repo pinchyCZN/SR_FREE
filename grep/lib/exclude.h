@@ -31,5 +31,5 @@ struct exclude;
 struct exclude *new_exclude PARAMS ((void));
 void add_exclude PARAMS ((struct exclude *, char const *));
 int add_exclude_file PARAMS ((void (*) (struct exclude *, char const *),
-			      struct exclude *, char const *, char));
+							  struct exclude *, char const *, char));
 int excluded_filename PARAMS ((struct exclude const *, char const *, int));

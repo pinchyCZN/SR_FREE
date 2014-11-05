@@ -20,13 +20,13 @@
 void *
 rpl_realloc(void *ptr, size_t size)
 {
-  if (!ptr)
-    return malloc(size);
-  if (!size)
-    {
-      if (ptr)
-        free(ptr);
-      return malloc(size);
-    }
-  return realloc(ptr, size);
+	if (!ptr)
+		return malloc(size);
+	if (!size)
+	{
+		if (ptr)
+			free(ptr);
+		return malloc(size);
+	}
+	return realloc(ptr, size);
 }

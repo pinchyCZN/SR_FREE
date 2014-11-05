@@ -24,7 +24,7 @@
 #  include <alloca.h>
 # else
 #  ifdef _AIX
- #  pragma alloca
+#  pragma alloca
 #  else
 #   ifdef _WIN32
 #    include <malloc.h>
@@ -52,34 +52,34 @@ int
 hard_locale (int category)
 {
 #if ! (defined ENABLE_NLS && HAVE_SETLOCALE)
-  return 0;
+	return 0;
 #else
 
-  int hard = 1;
-  char const *p = setlocale (category, 0);
+	int hard = 1;
+	char const *p = setlocale (category, 0);
 
-  if (p)
-    {
+	if (p)
+	{
 # if defined __GLIBC__ && __GLIBC__ >= 2
-      if (strcmp (p, "C") == 0 || strcmp (p, "POSIX") == 0)
-	hard = 0;
+		if (strcmp (p, "C") == 0 || strcmp (p, "POSIX") == 0)
+			hard = 0;
 # else
-      char *locale = alloca (strlen (p) + 1);
-      strcpy (locale, p);
+		char *locale = alloca (strlen (p) + 1);
+		strcpy (locale, p);
 
-      /* Temporarily set the locale to the "C" and "POSIX" locales to
-	 find their names, so that we can determine whether one or the
-	 other is the caller's locale.  */
-      if (((p = setlocale (category, "C")) && strcmp (p, locale) == 0)
-	  || ((p = setlocale (category, "POSIX")) && strcmp (p, locale) == 0))
-	hard = 0;
+		/* Temporarily set the locale to the "C" and "POSIX" locales to
+		find their names, so that we can determine whether one or the
+		 other is the caller's locale.  */
+		if (((p = setlocale (category, "C")) && strcmp (p, locale) == 0)
+				|| ((p = setlocale (category, "POSIX")) && strcmp (p, locale) == 0))
+			hard = 0;
 
-      /* Restore the caller's locale.  */
-      setlocale (category, locale);
+		/* Restore the caller's locale.  */
+		setlocale (category, locale);
 # endif
-    }
+	}
 
-  return hard;
+	return hard;
 
 #endif
 }

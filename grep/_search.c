@@ -5,12 +5,12 @@ Copyright 1992, 1998, 2000 Free Software Foundation, Inc.
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2, or (at your option)
   any later version.
-  
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	
+
 	  You should have received a copy of the GNU General Public License
 	  along with this program; if not, write to the Free Software
 	  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -94,13 +94,13 @@ kwsinit (void)
 {
 	static char trans[NCHAR];
 	int i;
-	
+
 	if (match_icase)
 		for (i = 0; i < NCHAR; ++i)
 			trans[i] = TOLOWER (i);
-		
-		if (!(kwset = kwsalloc (match_icase ? trans : (char *) 0)))
-			error (2, 0, _("memory exhausted"));
+
+	if (!(kwset = kwsalloc (match_icase ? trans : (char *) 0)))
+		error (2, 0, _("memory exhausted"));
 }
 
 /* If the DFA turns out to have some set of fixed strings one of
@@ -112,9 +112,9 @@ kwsmusts (void)
 {
 	struct dfamust const *dm;
 	char const *err;
-	
+
 	if (dfa.musts)
-    {
+	{
 		kwsinit ();
 		/* First, we compile in the substrings known to be exact
 		matches.  The kwset matcher will return the index
@@ -138,7 +138,7 @@ kwsmusts (void)
 		}
 		if ((err = kwsprep (kwset)) != 0)
 			error (2, 0, err);
-    }
+	}
 }
 
 #ifdef MBS_SUPPORT
@@ -155,20 +155,20 @@ check_multibyte_string(char const *buf, size_t size)
 	memset(&cur_state, 0, sizeof(mbstate_t));
 	memset(mb_properties, 0, sizeof(char)*size);
 	for (i = 0; i < size ;)
-    {
+	{
 		size_t mbclen;
 		mbclen = mbrlen(buf + i, size - i, &cur_state);
-		
+
 		if (mbclen == (size_t) -1 || mbclen == (size_t) -2 || mbclen == 0)
 		{
-		/* An invalid sequence, or a truncated multibyte character.
-			We treat it as a singlebyte character.  */
+			/* An invalid sequence, or a truncated multibyte character.
+				We treat it as a singlebyte character.  */
 			mbclen = 1;
 		}
 		mb_properties[i] = mbclen;
 		i += mbclen;
-    }
-	
+	}
+
 	return mb_properties;
 }
 #endif
@@ -180,16 +180,16 @@ Gcompile (char const *pattern, size_t size)
 	char const *sep;
 	size_t total = size;
 	char const *motif = pattern;
-	
+
 	re_set_syntax (RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE);
 	dfasyntax (RE_SYNTAX_GREP | RE_HAT_LISTS_NOT_NEWLINE, match_icase, eolbyte);
-	
+
 	/* For GNU regex compiler we have to pass the patterns separately to detect
 	errors like "[\nallo\n]\n".  The patterns here are "[", "allo" and "]"
 	GNU regex should have raise a syntax error.  The same for backref, where
 	the backref should have been local to each pattern.  */
 	do
-    {
+	{
 		size_t len;
 		sep = memchr (motif, '\n', total);
 		if (sep)
@@ -203,32 +203,32 @@ Gcompile (char const *pattern, size_t size)
 			len = total;
 			total = 0;
 		}
-		
+
 		patterns = realloc (patterns, (pcount + 1) * sizeof (*patterns));
 		if (patterns == NULL)
 			error (2, errno, _("memory exhausted"));
-		
+
 		patterns[pcount] = patterns0;
-		
+
 		if ((err = re_compile_pattern (motif, len,
-			&(patterns[pcount].regexbuf))) != 0)
+									   &(patterns[pcount].regexbuf))) != 0)
 			error (2, 0, err);
 		pcount++;
-		
+
 		motif = sep;
-    } while (sep && total != 0);
-	
+	} while (sep && total != 0);
+
 	/* In the match_words and match_lines cases, we use a different pattern
 	for the DFA matcher that will quickly throw out cases that won't work.
 	Then if DFA succeeds we do some hairy stuff using the regex matcher
 	to decide whether the match should really count. */
 	if (match_words || match_lines)
-    {
-	/* In the whole-word case, we use the pattern:
-	\(^\|[^[:alnum:]_]\)\(userpattern\)\([^[:alnum:]_]|$\).
-	In the whole-line case, we use the pattern:
-		^\(userpattern\)$.  */
-		
+	{
+		/* In the whole-word case, we use the pattern:
+		\(^\|[^[:alnum:]_]\)\(userpattern\)\([^[:alnum:]_]|$\).
+		In the whole-line case, we use the pattern:
+			^\(userpattern\)$.  */
+
 		static char const line_beg[] = "^\\(";
 		static char const line_end[] = "\\)$";
 		static char const word_beg[] = "\\(^\\|[^[:alnum:]_]\\)\\(";
@@ -243,8 +243,8 @@ Gcompile (char const *pattern, size_t size)
 		i += strlen (n + i);
 		pattern = n;
 		size = i;
-    }
-	
+	}
+
 	dfacomp (pattern, size, &dfa, 1);
 	kwsmusts ();
 }
@@ -256,24 +256,24 @@ Ecompile (char const *pattern, size_t size)
 	const char *sep;
 	size_t total = size;
 	char const *motif = pattern;
-	
+
 	if (strcmp (matcher, "awk") == 0)
-    {
+	{
 		re_set_syntax (RE_SYNTAX_AWK);
 		dfasyntax (RE_SYNTAX_AWK, match_icase, eolbyte);
-    }
+	}
 	else
-    {
+	{
 		re_set_syntax (RE_SYNTAX_POSIX_EGREP);
 		dfasyntax (RE_SYNTAX_POSIX_EGREP, match_icase, eolbyte);
-    }
-	
+	}
+
 	/* For GNU regex compiler we have to pass the patterns separately to detect
 	errors like "[\nallo\n]\n".  The patterns here are "[", "allo" and "]"
 	GNU regex should have raise a syntax error.  The same for backref, where
 	the backref should have been local to each pattern.  */
 	do
-    {
+	{
 		size_t len;
 		sep = memchr (motif, '\n', total);
 		if (sep)
@@ -287,31 +287,31 @@ Ecompile (char const *pattern, size_t size)
 			len = total;
 			total = 0;
 		}
-		
+
 		patterns = realloc (patterns, (pcount + 1) * sizeof (*patterns));
 		if (patterns == NULL)
 			error (2, errno, _("memory exhausted"));
 		patterns[pcount] = patterns0;
-		
+
 		if ((err = re_compile_pattern (motif, len,
-			&(patterns[pcount].regexbuf))) != 0)
+									   &(patterns[pcount].regexbuf))) != 0)
 			error (2, 0, err);
 		pcount++;
-		
+
 		motif = sep;
-    } while (sep && total != 0);
-	
+	} while (sep && total != 0);
+
 	/* In the match_words and match_lines cases, we use a different pattern
 	for the DFA matcher that will quickly throw out cases that won't work.
 	Then if DFA succeeds we do some hairy stuff using the regex matcher
 	to decide whether the match should really count. */
 	if (match_words || match_lines)
-    {
-	/* In the whole-word case, we use the pattern:
-	(^|[^[:alnum:]_])(userpattern)([^[:alnum:]_]|$).
-	In the whole-line case, we use the pattern:
-		^(userpattern)$.  */
-		
+	{
+		/* In the whole-word case, we use the pattern:
+		(^|[^[:alnum:]_])(userpattern)([^[:alnum:]_]|$).
+		In the whole-line case, we use the pattern:
+			^(userpattern)$.  */
+
 		static char const line_beg[] = "^(";
 		static char const line_end[] = ")$";
 		static char const word_beg[] = "(^|[^[:alnum:]_])(";
@@ -326,8 +326,8 @@ Ecompile (char const *pattern, size_t size)
 		i += strlen (n + i);
 		pattern = n;
 		size = i;
-    }
-	
+	}
+
 	dfacomp (pattern, size, &dfa, 1);
 	kwsmusts ();
 }
@@ -343,16 +343,16 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 #ifdef MBS_SUPPORT
 	char *mb_properties = NULL;
 #endif /* MBS_SUPPORT */
-	
+
 #ifdef MBS_SUPPORT
 	if (MB_CUR_MAX > 1 && kwset)
 		mb_properties = check_multibyte_string(buf, size);
 #endif /* MBS_SUPPORT */
-	
+
 	buflim = buf + size;
-	
+
 	for (beg = end = buf; end < buflim; beg = end)
-    {
+	{
 		if (!exact)
 		{
 			if (kwset)
@@ -414,15 +414,15 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 		}
 		else
 			end = beg + size;
-		
-			/* If we've made it to this point, this means DFA has seen
+
+		/* If we've made it to this point, this means DFA has seen
 		a probable match, and we need to run it through Regex. */
 		for (i = 0; i < pcount; i++)
 		{
 			patterns[i].regexbuf.not_eol = 0;
 			if (0 <= (start = re_search (&(patterns[i].regexbuf), beg,
-				end - beg - 1, 0,
-				end - beg - 1, &(patterns[i].regs))))
+										 end - beg - 1, 0,
+										 end - beg - 1, &(patterns[i].regs))))
 			{
 				len = patterns[i].regs.end[0] - start;
 				if (exact)
@@ -431,21 +431,21 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 					return start;
 				}
 				if ((!match_lines && !match_words)
-					|| (match_lines && len == end - beg - 1))
+						|| (match_lines && len == end - beg - 1))
 					goto success;
-					/* If -w, check if the match aligns with word boundaries.
-					We do this iteratively because:
-					(a) the line may contain more than one occurence of the
-					pattern, and
-					(b) Several alternatives in the pattern might be valid at a
-					given point, and we may need to consider a shorter one to
+				/* If -w, check if the match aligns with word boundaries.
+				We do this iteratively because:
+				(a) the line may contain more than one occurence of the
+				pattern, and
+				(b) Several alternatives in the pattern might be valid at a
+				given point, and we may need to consider a shorter one to
 				find a word boundary.  */
 				if (match_words)
 					while (start >= 0)
 					{
 						if ((start == 0 || !WCHAR ((unsigned char) beg[start - 1]))
-							&& (len == end - beg - 1
-							|| !WCHAR ((unsigned char) beg[start + len])))
+								&& (len == end - beg - 1
+									|| !WCHAR ((unsigned char) beg[start + len])))
 							goto success;
 						if (len > 0)
 						{
@@ -453,8 +453,8 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 							--len;
 							patterns[i].regexbuf.not_eol = 1;
 							len = re_match (&(patterns[i].regexbuf), beg,
-								start + len, start,
-								&(patterns[i].regs));
+											start + len, start,
+											&(patterns[i].regs));
 						}
 						if (len <= 0)
 						{
@@ -464,21 +464,21 @@ EGexecute (char const *buf, size_t size, size_t *match_size, int exact)
 							++start;
 							patterns[i].regexbuf.not_eol = 0;
 							start = re_search (&(patterns[i].regexbuf), beg,
-								end - beg - 1,
-								start, end - beg - 1 - start,
-								&(patterns[i].regs));
+											   end - beg - 1,
+											   start, end - beg - 1 - start,
+											   &(patterns[i].regs));
 							len = patterns[i].regs.end[0] - start;
 						}
 					}
 			}
 		} /* for Regex patterns.  */
-    } /* for (beg = end ..) */
+	} /* for (beg = end ..) */
 #ifdef MBS_SUPPORT
 	if (MB_CUR_MAX > 1 && mb_properties)
 		free (mb_properties);
 #endif /* MBS_SUPPORT */
 	return (size_t) -1;
-	
+
 success:
 #ifdef MBS_SUPPORT
 	if (MB_CUR_MAX > 1 && mb_properties)
@@ -492,11 +492,11 @@ static void
 Fcompile (char const *pattern, size_t size)
 {
 	char const *beg, *lim, *err;
-	
+
 	kwsinit ();
 	beg = pattern;
 	do
-    {
+	{
 		for (lim = beg; lim < pattern + size && *lim != '\n'; ++lim)
 			;
 		if ((err = kwsincr (kwset, beg, lim - beg)) != 0)
@@ -504,9 +504,9 @@ Fcompile (char const *pattern, size_t size)
 		if (lim < pattern + size)
 			++lim;
 		beg = lim;
-    }
+	}
 	while (beg < pattern + size);
-	
+
 	if ((err = kwsprep (kwset)) != 0)
 		error (2, 0, err);
 }
@@ -523,9 +523,9 @@ Fexecute (char const *buf, size_t size, size_t *match_size, int exact)
 	if (MB_CUR_MAX > 1)
 		mb_properties = check_multibyte_string (buf, size);
 #endif /* MBS_SUPPORT */
-	
+
 	for (beg = buf; beg <= buf + size; ++beg)
-    {
+	{
 		size_t offset = kwsexec (kwset, beg, buf + size - beg, &kwsmatch);
 		if (offset == (size_t) -1)
 		{
@@ -560,36 +560,36 @@ Fexecute (char const *buf, size_t size, size_t *match_size, int exact)
 		}
 		else if (match_words)
 			for (try = beg; len; )
-			{
-				if (try > buf && WCHAR((unsigned char) try[-1]))
-					break;
-				if (try + len < buf + size && WCHAR((unsigned char) try[len]))
 				{
-					offset = kwsexec (kwset, beg, --len, &kwsmatch);
-					if (offset == (size_t) -1)
-					{
+					if (try > buf && WCHAR((unsigned char) try[-1]))
+								break;
+					if (try + len < buf + size && WCHAR((unsigned char) try[len]))
+							{
+								offset = kwsexec (kwset, beg, --len, &kwsmatch);
+								if (offset == (size_t) -1)
+								{
 #ifdef MBS_SUPPORT
-						if (MB_CUR_MAX > 1)
-							free (mb_properties);
+									if (MB_CUR_MAX > 1)
+										free (mb_properties);
 #endif /* MBS_SUPPORT */
-						return offset;
-					}
-					try = beg + offset;
-					len = kwsmatch.size[0];
+									return offset;
+								}
+								try = beg + offset;
+								len = kwsmatch.size[0];
+							}
+					else
+						goto success;
 				}
-				else
-					goto success;
-			}
-			else
-				goto success;
-    }
-	
+		else
+			goto success;
+	}
+
 #ifdef MBS_SUPPORT
 	if (MB_CUR_MAX > 1)
 		free (mb_properties);
 #endif /* MBS_SUPPORT */
 	return -1;
-	
+
 success:
 	end = memchr (beg + len, eol, (buf + size) - (beg + len));
 	end++;
@@ -625,28 +625,28 @@ Pcompile (char const *pattern, size_t size)
 	char *n = re;
 	char const *p;
 	char const *pnul;
-	
+
 	/* FIXME: Remove this restriction.  */
 	if (eolbyte != '\n')
 		error (2, 0, _("The -P and -z options cannot be combined"));
-	
+
 	*n = '\0';
 	if (match_lines)
 		strcpy (n, "^(");
 	if (match_words)
 		strcpy (n, "\\b(");
 	n += strlen (n);
-	
+
 	/* The PCRE interface doesn't allow NUL bytes in the pattern, so
 	replace each NUL byte in the pattern with the four characters
 	"\000", removing a preceding backslash if there are an odd
 	number of backslashes before the NUL.
-	
+
 	  FIXME: This method does not work with some multibyte character
 	  encodings, notably Shift-JIS, where a multibyte character can end
 	in a backslash byte.  */
 	for (p = pattern; (pnul = memchr (p, '\0', patlim - p)); p = pnul + 1)
-    {
+	{
 		memcpy (n, p, pnul - p);
 		n += pnul - p;
 		for (p = pnul; pattern < p && p[-1] == '\\'; p--)
@@ -654,8 +654,8 @@ Pcompile (char const *pattern, size_t size)
 		n -= (pnul - p) & 1;
 		strcpy (n, "\\000");
 		n += 4;
-    }
-	
+	}
+
 	memcpy (n, p, patlim - p);
 	n += patlim - p;
 	*n = '\0';
@@ -663,15 +663,15 @@ Pcompile (char const *pattern, size_t size)
 		strcpy (n, ")\\b");
 	if (match_lines)
 		strcpy (n, ")$");
-	
+
 	cre = pcre_compile (re, flags, &ep, &e, pcre_maketables ());
 	if (!cre)
 		error (2, 0, ep);
-	
+
 	extra = pcre_study (cre, 0, &ep);
 	if (ep)
 		error (2, 0, ep);
-	
+
 	free (re);
 #endif
 }
@@ -686,26 +686,26 @@ Pexecute (char const *buf, size_t size, size_t *match_size, int exact)
 	/* This array must have at least two elements; everything after that
 	is just for performance improvement in pcre_exec.  */
 	int sub[300];
-	
+
 	int e = pcre_exec (cre, extra, buf, size, 0, 0,
-		sub, sizeof sub / sizeof *sub);
-	
+					   sub, sizeof sub / sizeof *sub);
+
 	if (e <= 0)
-    {
+	{
 		switch (e)
 		{
 		case PCRE_ERROR_NOMATCH:
 			return -1;
-			
+
 		case PCRE_ERROR_NOMEMORY:
 			error (2, 0, _("Memory exhausted"));
-			
+
 		default:
 			abort ();
 		}
-    }
+	}
 	else
-    {
+	{
 		/* Narrow down to the line we've found.  */
 		char const *beg = buf + sub[0];
 		char const *end = buf + sub[1];
@@ -718,10 +718,10 @@ Pexecute (char const *buf, size_t size, size_t *match_size, int exact)
 			while (buf < beg && beg[-1] != eol)
 				--beg;
 		}
-		
+
 		*match_size = end - beg;
 		return beg - buf;
-    }
+	}
 #endif
 }
 
