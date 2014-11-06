@@ -297,7 +297,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 	static unsigned __int64 offset=0;
 	static unsigned __int64 line_num=1;
 	static unsigned __int64 col_pos=1;
-	unsigned __int64 last_offset=0;
+	unsigned __int64 cur_offset=0;
 	static TRex *x=0;
 	const TRexChar *begin=0,*end=0;
 	if(init){
@@ -310,16 +310,16 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		return TRUE;
 	}
 //	pos=(*execute)(buf,len,&match_size,0);
-	while(trex_searchrange(x,buf+last_offset,buf+len,&begin,&end,&line_num,&col_pos)){
+	while(trex_searchrange(x,buf+cur_offset,buf+len-cur_offset,&begin,&end,&line_num,&col_pos)){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
 		unsigned char str[512];
-		int i,len,pos,match_size,line_col=0;
+		int i,pos,match_size,line_col=0;
 		unsigned char *s;
 		match_size=end-begin;
 		pos=begin-buf;
-		last_offset+=pos+match_size;
-		s=buf+pos;
+		cur_offset=pos+match_size;
+		s=begin;
 		for(i=pos;i>0;i--){
 			char a=buf[i];
 			if(a=='\r' || a=='\n' || (line_col>hit_line_len)){
@@ -336,19 +336,19 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		}
 		matches_found++;
 
-		_snprintf(str,sizeof(str),"%s",s);
-		str[sizeof(str)-1]=0;
-		i=0;
-		while(str[i++]){
-			char a=str[i-1];
+		for(i=0;i<sizeof(str);i++){
+			char a=s[i];
 			if(a=='\n'){
-				str[i-1]=0;
+				str[i]=0;
 				break;
 			}
-			str[i-1]=convert_char(a);
+			str[i]=convert_char(a);
 		}
+		str[sizeof(str)-1]=0;
 		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
 		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
+		if(stop_thread)
+			break;
 	}
 
 	offset+=len;
@@ -866,6 +866,7 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0,hbutton=0;
 	static void  *button_proc=0;
+	if(FALSE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT&&msg!=WM_CTLCOLORSTATIC)
 	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
