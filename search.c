@@ -288,30 +288,38 @@ int fetch_more_data(FILE *f,char *buf,int len,int *binary)
 	_fseeki64(f,offset,SEEK_SET);
 	return i;
 }
+#include "trex.h"
+
 int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,int eof)
 {
 	static void (*compile)(char const *, size_t);
 	static size_t (*execute)(char const *, size_t, size_t *, int);
-	static unsigned __int64 offset=0,line_offset=0;
+	static unsigned __int64 offset=0;
 	static unsigned __int64 line_num=1;
-	static unsigned __int64 total_col=0;
-	static int binary=FALSE;
-	int pos,match_size=0,line_col=0;
+	static unsigned __int64 col_pos=1;
+	unsigned __int64 last_offset=0;
+	static TRex *x=0;
+	const TRexChar *begin=0,*end=0;
 	if(init){
-		line_num=total_col=line_offset=offset=0;
-		line_num=1;
-		binary=FALSE;
-		get_def_match(&compile,&execute);
-		(*compile)(search_str,strlen_search_str);
+		const TRexChar *error = NULL;
+		offset=0;
+		col_pos=line_num=1;
+		if(x)
+			trex_free(x);
+		x=trex_compile(search_str,&error);
 		return TRUE;
 	}
-	pos=(*execute)(buf,len,&match_size,0);
-	if(pos>0){
+//	pos=(*execute)(buf,len,&match_size,0);
+	while(trex_searchrange(x,buf+last_offset,buf+len,&begin,&end,&line_num,&col_pos)){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
 		unsigned char str[512];
-		int i,len;
-		unsigned char *s=buf+pos;
+		int i,len,pos,match_size,line_col=0;
+		unsigned char *s;
+		match_size=end-begin;
+		pos=begin-buf;
+		last_offset+=pos+match_size;
+		s=buf+pos;
 		for(i=pos;i>0;i--){
 			char a=buf[i];
 			if(a=='\r' || a=='\n' || (line_col>hit_line_len)){
@@ -332,9 +340,15 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		str[sizeof(str)-1]=0;
 		i=0;
 		while(str[i++]){
-			str[i-1]=convert_char(str[i-1]);
+			char a=str[i-1];
+			if(a=='\n'){
+				str[i-1]=0;
+				break;
+			}
+			str[i-1]=convert_char(a);
 		}
-		lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
+		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
+		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
 	}
 
 	offset+=len;

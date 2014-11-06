@@ -595,7 +595,7 @@ TRexBool trex_match(TRex* exp,const TRexChar* text)
 	return TRex_True;
 }
 
-TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* text_end,const TRexChar** out_begin, const TRexChar** out_end)
+TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* text_end,const TRexChar** out_begin, const TRexChar** out_end, __int64 *line_count, __int64 *col_pos)
 {
 	const TRexChar *cur = NULL;
 	int node = exp->_first;
@@ -611,6 +611,12 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 				break;
 			node = exp->_nodes[node].next;
 		}
+		if(text_begin[0]=='\n'){
+			line_count[0]++;
+			col_pos[0]=0;
+		}
+		else
+			col_pos[0]++;
 		*text_begin++;
 	} while(cur == NULL && text_begin != text_end);
 
@@ -624,9 +630,10 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 	return TRex_True;
 }
 
-TRexBool trex_search(TRex* exp,const TRexChar* text, const TRexChar** out_begin, const TRexChar** out_end)
+TRexBool trex_search(TRex* exp,const TRexChar* text, const TRexChar** out_begin, const TRexChar** out_end, __int64 *line_count)
 {
-	return trex_searchrange(exp,text,text + scstrlen(text),out_begin,out_end);
+//	return trex_searchrange(exp,text,text + scstrlen(text),out_begin,out_end,line_count);
+	return 0;
 }
 
 int trex_getsubexpcount(TRex* exp)
