@@ -114,7 +114,6 @@ int populate_caption_open(HWND hwnd){
 int populate_options(HWND hwnd)
 {
 	int i;
-	char str[MAX_PATH*2];
 	char tmp[80];
 	SendDlgItemMessage(hwnd,IDC_SELECT_OPEN,CB_RESETCONTENT,0,0);
 	for(i=0;i<max_open_with;i++){
@@ -134,9 +133,9 @@ int populate_options(HWND hwnd)
 	add_fonts(hwnd,IDC_LISTBOX_FONT);
 	get_current_font(hwnd,IDC_LISTBOX_FONT);
 
-	str[0]=0;
-	get_ini_str("OPTIONS","hit_width",str,sizeof(str));
-	SetDlgItemText(hwnd,IDC_HIT_WIDTH,str);
+	i=20;
+	get_ini_value("OPTIONS","match_prefix_len",&i);
+	SetDlgItemInt(hwnd,IDC_MATCH_PREFIX_LEN,i,FALSE);
 	i=FALSE;
 	get_ini_value("OPTIONS","show_column",&i);
 	if(i!=0)
@@ -182,11 +181,11 @@ int save_options(HWND hwnd)
 	save_select_open(hwnd);
 
 	str[0]=0;
-	GetDlgItemText(hwnd,IDC_HIT_WIDTH,str,sizeof(str));
+	GetDlgItemText(hwnd,IDC_MATCH_PREFIX_LEN,str,sizeof(str));
 	val=atoi(str);
-	if(val<4)val=4;
+	if(val<0)val=0;
 	if(val>512)val=512;
-	write_ini_value("OPTIONS","hit_width",val);
+	write_ini_value("OPTIONS","match_prefix_len",val);
 
 	if(IsDlgButtonChecked(hwnd,IDC_SHOW_COLUMN)==BST_CHECKED)
 		val=1;
@@ -251,7 +250,7 @@ LRESULT CALLBACK options_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 	case WM_INITDIALOG:
 		grippy=create_grippy(hwnd);
-		SendDlgItemMessage(hwnd,IDC_HIT_WIDTH,EM_LIMITTEXT,4,0);
+		SendDlgItemMessage(hwnd,IDC_MATCH_PREFIX_LEN,EM_LIMITTEXT,4,0);
 		populate_options(hwnd);
 		//dump_options(hwnd);
 		return 0;

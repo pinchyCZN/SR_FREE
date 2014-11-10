@@ -49,7 +49,7 @@
 #define IDC_CAPTION                     1038
 #define IDC_COMBO_FONT                  1039
 #define IDC_LISTBOX_FONT                1040
-#define IDC_HIT_WIDTH                   1041
+#define IDC_MATCH_PREFIX_LEN            1041
 #define IDC_OPEN_INI                    1042
 #define IDC_SHOW_COLUMN                 1043
 #define IDC_CONTEXT_SCROLLBAR           1044

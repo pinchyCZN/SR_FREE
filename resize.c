@@ -318,7 +318,7 @@ short win_options_list[]={
 			SIZE_WIDTH_OFF,-96,HEIGHT,21, /*w.off=-96 h.off=-249*/
 			CONTROL_FINISH,-1,
 	RESIZE_FINISH,
-	CONTROL_ID,IDC_HIT_WIDTH,
+	CONTROL_ID,IDC_MATCH_PREFIX_LEN,
 			XPOS,104,YPOS,210, /*x.off=-283 y.off=-60*/
 			WIDTH,60,HEIGHT,23, /*w.off=-327 h.off=-247*/
 			CONTROL_FINISH,-1,

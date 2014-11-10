@@ -31,7 +31,7 @@ STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
 EXSTYLE WS_EX_ACCEPTFILES
 CAPTION "SR FREE"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Search",IDC_SEARCH,0,1,48,11
     PUSHBUTTON      "Replace",IDC_REPLACE,47,1,48,11
@@ -43,8 +43,8 @@ BEGIN
                     BS_PUSHLIKE | WS_TABSTOP,188,1,48,11
     CONTROL         "wildcard",IDC_WILDCARD,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,235,1,48,11
-    CONTROL         "regex",IDC_REGEX,"Button",BS_AUTOCHECKBOX | 
-                    BS_PUSHLIKE | WS_TABSTOP,235,12,48,11
+    CONTROL         "regex",IDC_REGEX,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | 
+                    WS_TABSTOP,235,12,48,11
     CONTROL         "ignore wspace",IDC_IGNOREWS,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,282,1,48,11
     CONTROL         "unicode",IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
@@ -126,8 +126,9 @@ BEGIN
     LTEXT           "Listbox Font:",IDC_STATIC,0,113,49,12
     COMBOBOX        IDC_LISTBOX_FONT,63,110,194,113,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Hit Width:",IDC_STATIC,11,135,40,8
-    EDITTEXT        IDC_HIT_WIDTH,69,129,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "match prefix length:",IDC_STATIC,1,132,62,8
+    EDITTEXT        IDC_MATCH_PREFIX_LEN,69,129,40,14,ES_AUTOHSCROLL | 
+                    ES_NUMBER
     CONTROL         "Show column",IDC_SHOW_COLUMN,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,123,130,60,10
     DEFPUSHBUTTON   "OK",IDOK,0,152,50,14

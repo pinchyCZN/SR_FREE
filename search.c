@@ -44,7 +44,7 @@ int files_occured=0;
 int matches_found=0;
 int total_matches=0;
 char current_fname[MAX_PATH]={0};
-int hit_line_len=128;
+int match_prefix_len=40;
 
 int set_replace_rest_file(int i)
 {	return replace_rest_file=i; }
@@ -289,25 +289,114 @@ int fetch_more_data(FILE *f,char *buf,int len,int *binary)
 	_fseeki64(f,offset,SEEK_SET);
 	return i;
 }
-int fill_eol(FILE *f,char *str,int str_size,int pos)
+int fetch_from_fpos(FILE *f,__int64 fpos,int len,char *buf)
 {
-	int len;
+	__int64 offset;
+	int read;
+	offset=_ftelli64(f);
+	_fseeki64(f,fpos,SEEK_SET);
+	read=fread(buf,1,len,f);
+	_fseeki64(f,offset,SEEK_SET);
+	return read;
+}
+
+int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int match_end)
+{
+	int len,eol=FALSE;
 	len=str_size-pos;
 	if(len>0){
-		char tmp[512];
-		int i,b=0;
-		if(len>sizeof(tmp))
-			len=sizeof(tmp);
-		len=fetch_more_data(f,tmp,len,&b);
-		for(i=0;i<len;i++){
-			if((pos+i)>=str_size)
-				break;
-			str[pos+i]=tmp[i];
+		int index=pos;
+		if(match_end<buf_len){
+			int i;
+			for(i=0;i<len;i++){
+				char a=buf[match_end+i];
+				if(a=='\n' || a=='\r'){
+					eol=TRUE;
+					break;
+				}
+				str[index++]=a;
+				if(index>=str_size)
+					break;
+			}
+			len-=i;
+			if(index<str_size)
+				str[index]=0;
 		}
-		if(i<str_size)
-			str[pos+i]=0;
+		if(!eol){
+			if(len>0){
+				char tmp[512];
+				int i,b=0;
+				if(len>sizeof(tmp))
+					len=sizeof(tmp);
+				len=fetch_more_data(f,tmp,len,&b);
+				for(i=0;i<len;i++){
+					if(index>=str_size)
+						break;
+					str[index++]=tmp[i];
+				}
+				if(index<str_size)
+					str[index]=0;
+			}
+		}
 	}
 	return 0;
+}
+int fill_begin_line(FILE *f,__int64 fpos,char *str,int str_size,char *buf,int pos,int match_size,int match_prefix_len,int *line_col)
+{
+	int i;
+	int index=0;
+	if(pos>=match_prefix_len){
+		for(i=0;i<match_prefix_len;i++){
+			char a=buf[pos-match_prefix_len+i];
+			if(a=='\n' || a=='\r')
+				index=0;
+			else
+				str[index++]=convert_char(a);
+			if(index>=str_size)
+				break;
+		}
+		if(index<str_size)
+			str[index]=0;
+	}else{
+		char tmp[512];
+		__int64 offset;
+		int len;
+		len=match_prefix_len-pos;
+		if(len>sizeof(tmp))
+			len=sizeof(tmp);
+		if((fpos-len)<0){
+			offset=0;
+			len=(int)fpos;
+		}
+		else
+			offset=fpos-len;
+		len=fetch_from_fpos(f,offset,len,tmp);
+		for(i=0;i<len+pos;i++){
+			char a;
+			if(i>=len)
+				a=buf[i-len];
+			else
+				a=tmp[i];
+			if(a=='\n' || a=='\r')
+				index=0;
+			else
+				str[index++]=convert_char(a);
+			if(index>=str_size)
+				break;
+		}
+		if(index<str_size)
+			str[index]=0;
+	}
+	line_col[0]=index;
+	for(i=0;i<match_size;i++){
+		char a=buf[pos+i];
+		if(index>=str_size)
+			break;
+		str[index++]=convert_char(a);
+	}
+	if(index<str_size)
+		str[index]=0;
+	return index;
 }
 
 int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,int eof)
@@ -333,7 +422,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 //	pos=(*execute)(buf,len,&match_size,0);
 	while(trex_searchrange(x,buf+cur_offset,buf+len-cur_offset,&begin,&end,&line_num,&col_pos,&partial_match)){
 		HWND hwnd_parent=ghwindow;
-		int lb_index,eol_found=FALSE;
+		int lb_index;
 		unsigned char str[512];
 		int i,pos,match_size,line_col=0;
 		unsigned char *s;
@@ -342,38 +431,13 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		pos=begin-buf;
 		cur_offset=pos+match_size;
 		s=(unsigned char*)begin;
-		for(i=1;i<pos;i++){
-			char a=buf[pos-i];
-			if(a=='\r' || a=='\n' || (line_col>hit_line_len)){
-				s=begin-i;
-				if(line_col>0)
-					line_col--;
-				break;
-			}
-			line_col++;
-		}
 		if(matches_found==0){
 			add_listbox_str(hwnd_parent,"File %s",current_fname);
 			files_occured++;
 		}
 		matches_found++;
-
-		for(i=0;i<sizeof(str);i++){
-			char a=s[i];
-			if(a=='\n'){
-				if((s+i)>=end)
-					eol_found=TRUE;
-			}
-			if((s+i)>=end){
-				if((a=='\n') || ((s+i)>=(buf+len))){
-					str[i]=0;
-					break;
-				}
-			}
-			str[i]=convert_char(a);
-		}
-		if(!eol_found)
-			fill_eol(f,str,sizeof(str),i);
+		i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_size,match_prefix_len,&line_col);
+		fill_eol(f,str,sizeof(str),i,buf,len,pos+match_size);
 		str[sizeof(str)-1]=0;
 		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
 		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
@@ -389,21 +453,23 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 	}
 	if(!eof){
 		if(partial_match>0){
-			int i,pos=partial_match;
-			for(i=pos;i<len;i++){
-				if(buf[len-i]=='\n'){
-					line_num--;
-					break;
+			int i;
+			if(partial_match>=len)
+				partial_match=len-1;
+			for(i=0;i<partial_match;i++){
+				char a=buf[len+i-1];
+				if(a=='\n' || a=='\r')
+					col_pos=1;
+				else{
+					col_pos--;
+					if(col_pos<=0){
+						col_pos=1;
+						break;
+					}
 				}
-				else if(partial_match<hit_line_len && i>hit_line_len)
-					break;
-				//else if(pos
-				pos++;
 			}
-			if(pos>=len)
-				pos=len-1;
-			fseek(f,-pos,SEEK_CUR);
-			offset-=pos;
+			fseek(f,-partial_match,SEEK_CUR);
+			offset-=partial_match;
 		}
 	}
 	offset+=len;
@@ -437,7 +503,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		total_col=1;
 		match_offset=0;
 		match_len=strlen_search_str;
-		sizeof_line=hit_line_len;
+		sizeof_line=match_prefix_len;
 		nibble=0;
 		if(sizeof_line>sizeof(line))
 			sizeof_line=sizeof(line);
@@ -753,8 +819,8 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	f=fopen(current_fname,"rb");
 	if(f!=0){
 		char *buf;
-		//int size=0x100000;
-		int size=5;
+		int size=0x100000;
+		//int size=5;
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){
@@ -869,7 +935,7 @@ int search_thread(HWND hwnd)
 		strlen_search_str=convert_hex_str(search_str,sizeof(search_str));
 		strlen_replace_str=convert_hex_str(replace_str,sizeof(replace_str));
 	}
-	get_ini_value("OPTIONS","hit_width",&hit_line_len);
+	get_ini_value("OPTIONS","match_prefix_len",&match_prefix_len);
 	i=1;
 	get_ini_value("OPTIONS","show_column",&i);
 	set_show_column(i);
