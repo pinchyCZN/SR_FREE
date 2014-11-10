@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <process.h>
 #include "resource.h"
+#include "trex.h"
 
 extern HWND ghwindow;
 static HWND modeless_search_hwnd=0;
@@ -288,7 +289,26 @@ int fetch_more_data(FILE *f,char *buf,int len,int *binary)
 	_fseeki64(f,offset,SEEK_SET);
 	return i;
 }
-#include "trex.h"
+int fill_eol(FILE *f,char *str,int str_size,int pos)
+{
+	int len;
+	len=str_size-pos;
+	if(len>0){
+		char tmp[512];
+		int i,b=0;
+		if(len>sizeof(tmp))
+			len=sizeof(tmp);
+		len=fetch_more_data(f,tmp,len,&b);
+		for(i=0;i<len;i++){
+			if((pos+i)>=str_size)
+				break;
+			str[pos+i]=tmp[i];
+		}
+		if(i<str_size)
+			str[pos+i]=0;
+	}
+	return 0;
+}
 
 int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,int eof)
 {
@@ -298,6 +318,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 	static unsigned __int64 line_num=1;
 	static unsigned __int64 col_pos=1;
 	unsigned __int64 cur_offset=0;
+	int partial_match=0;
 	static TRex *x=0;
 	const TRexChar *begin=0,*end=0;
 	if(init){
@@ -310,20 +331,21 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		return TRUE;
 	}
 //	pos=(*execute)(buf,len,&match_size,0);
-	while(trex_searchrange(x,buf+cur_offset,buf+len-cur_offset,&begin,&end,&line_num,&col_pos)){
+	while(trex_searchrange(x,buf+cur_offset,buf+len-cur_offset,&begin,&end,&line_num,&col_pos,&partial_match)){
 		HWND hwnd_parent=ghwindow;
-		int lb_index;
+		int lb_index,eol_found=FALSE;
 		unsigned char str[512];
 		int i,pos,match_size,line_col=0;
 		unsigned char *s;
+		partial_match=0;
 		match_size=end-begin;
 		pos=begin-buf;
 		cur_offset=pos+match_size;
-		s=begin;
-		for(i=pos;i>0;i--){
-			char a=buf[i];
+		s=(unsigned char*)begin;
+		for(i=1;i<pos;i++){
+			char a=buf[pos-i];
 			if(a=='\r' || a=='\n' || (line_col>hit_line_len)){
-				s=buf+i+1;
+				s=begin-i;
 				if(line_col>0)
 					line_col--;
 				break;
@@ -339,18 +361,51 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		for(i=0;i<sizeof(str);i++){
 			char a=s[i];
 			if(a=='\n'){
-				str[i]=0;
-				break;
+				if((s+i)>=end)
+					eol_found=TRUE;
+			}
+			if((s+i)>=end){
+				if((a=='\n') || ((s+i)>=(buf+len))){
+					str[i]=0;
+					break;
+				}
 			}
 			str[i]=convert_char(a);
 		}
+		if(!eol_found)
+			fill_eol(f,str,sizeof(str),i);
 		str[sizeof(str)-1]=0;
 		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
 		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
 		if(stop_thread)
 			break;
+		partial_match=0;
+		for(i=0;i<end-begin;i++){
+			if(begin[i]=='\n')
+				col_pos=1;
+			else
+				col_pos++;
+		}
 	}
-
+	if(!eof){
+		if(partial_match>0){
+			int i,pos=partial_match;
+			for(i=pos;i<len;i++){
+				if(buf[len-i]=='\n'){
+					line_num--;
+					break;
+				}
+				else if(partial_match<hit_line_len && i>hit_line_len)
+					break;
+				//else if(pos
+				pos++;
+			}
+			if(pos>=len)
+				pos=len-1;
+			fseek(f,-pos,SEEK_CUR);
+			offset-=pos;
+		}
+	}
 	offset+=len;
 	return 0;
 }
@@ -698,7 +753,8 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	f=fopen(current_fname,"rb");
 	if(f!=0){
 		char *buf;
-		int size=0x100000;
+		//int size=0x100000;
+		int size=5;
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){

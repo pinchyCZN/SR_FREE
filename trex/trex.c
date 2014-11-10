@@ -66,6 +66,7 @@ struct TRex{
 	const TRexChar *_eol;
 	const TRexChar *_bol;
 	const TRexChar *_p;
+	int _partial;
 	int _first;
 	int _op;
 	TRexNode *_nodes;
@@ -399,7 +400,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		else {
 			greedystop = next;
 		}
-
+		exp->_partial = 0;
 		while((nmaches == 0xFFFF || nmaches < p1)) {
 
 			const TRexChar *stop;
@@ -429,6 +430,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 				}
 			}
 			
+			exp->_partial++;
 			if(s >= exp->_eol)
 				break;
 		}
@@ -439,21 +441,38 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 	}
 	case OP_OR: {
 			const TRexChar *asd = str;
+			int partialL=0,partialR=0;
 			TRexNode *temp=&exp->_nodes[node->left];
+			exp->_partial=0;
 			while( (asd = trex_matchnode(exp,temp,asd,NULL)) ) {
-				if(temp->next != -1)
+				partialL++;
+				if(temp->next != -1){
 					temp = &exp->_nodes[temp->next];
-				else
+					if(asd >= exp->_eol)
+						break;
+				}
+				else{
+					exp->_partial += partialL;
 					return asd;
+				}
 			}
 			asd = str;
 			temp = &exp->_nodes[node->right];
 			while( (asd = trex_matchnode(exp,temp,asd,NULL)) ) {
-				if(temp->next != -1)
+				partialR++;
+				if(temp->next != -1){
 					temp = &exp->_nodes[temp->next];
-				else
+					if(asd >= exp->_eol)
+						break;
+				}
+				else{
+					exp->_partial += partialR;
 					return asd;
+				}
 			}
+			if(partialR > partialL)
+				partialL = partialR;
+			exp->_partial += partialL;
 			return NULL;
 			break;
 	}
@@ -467,7 +486,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 				exp->_matches[capture].begin = cur;
 				exp->_currsubexp++;
 			}
-			
+			exp->_partial = 0;
 			do {
 				TRexNode *subnext = NULL;
 				if(n->next != -1) {
@@ -482,6 +501,9 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 					}
 					return NULL;
 				}
+				exp->_partial++;
+				if(n->next != -1 && cur >= exp->_eol)
+					return NULL;
 			} while((n->next != -1) && (n = &exp->_nodes[n->next]));
 
 			if(capture != -1) 
@@ -595,14 +617,18 @@ TRexBool trex_match(TRex* exp,const TRexChar* text)
 	return TRex_True;
 }
 
-TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* text_end,const TRexChar** out_begin, const TRexChar** out_end, __int64 *line_count, __int64 *col_pos)
+TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* text_end,
+						const TRexChar** out_begin, const TRexChar** out_end,
+						__int64 *line_count, __int64 *col_pos, int *partial_match)
 {
 	const TRexChar *cur = NULL;
 	int node = exp->_first;
 	if(text_begin >= text_end) return TRex_False;
+	*partial_match = 0;
 	exp->_bol = text_begin;
 	exp->_eol = text_end;
 	do {
+		exp->_partial=0;
 		cur = text_begin;
 		while(node != -1) {
 			exp->_currsubexp = 0;
@@ -611,14 +637,19 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 				break;
 			node = exp->_nodes[node].next;
 		}
-		if(text_begin[0]=='\n'){
+		if(node != -1 && exp->_partial>=(text_end-text_begin))
+			break;
+		if(text_begin[0]=='\n')
 			line_count[0]++;
-			col_pos[0]=0;
-		}
-		else
+		if(text_begin[0]=='\n' || text_begin[0]=='\r')
+			col_pos[0]=1;
+		else if(cur == NULL)
 			col_pos[0]++;
+		//else if(cur != NULL)
+		//	col_pos[0]+=exp->_partial;
 		*text_begin++;
 	} while(cur == NULL && text_begin != text_end);
+	*partial_match = exp->_partial;
 
 	if(cur == NULL)
 		return TRex_False;
