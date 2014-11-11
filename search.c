@@ -420,7 +420,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		return TRUE;
 	}
 //	pos=(*execute)(buf,len,&match_size,0);
-	while(trex_searchrange(x,buf+cur_offset,buf+len-cur_offset,&begin,&end,&line_num,&col_pos,&partial_match)){
+	while(trex_searchrange(x,buf+cur_offset,buf+len,&begin,&end,&line_num,&col_pos,&partial_match)){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
 		unsigned char str[512];
@@ -820,7 +820,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	if(f!=0){
 		char *buf;
 		int size=0x100000;
-		//int size=5;
+//		int size=5;
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){

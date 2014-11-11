@@ -630,6 +630,7 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 	do {
 		exp->_partial=0;
 		cur = text_begin;
+
 		while(node != -1) {
 			exp->_currsubexp = 0;
 			cur = trex_matchnode(exp,&exp->_nodes[node],cur,NULL);
@@ -637,8 +638,6 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 				break;
 			node = exp->_nodes[node].next;
 		}
-		if(node != -1 && exp->_partial>=(text_end-text_begin))
-			break;
 		if(text_begin[0]=='\n')
 			line_count[0]++;
 		if(text_begin[0]=='\n' || text_begin[0]=='\r')
@@ -647,9 +646,13 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 			col_pos[0]++;
 		//else if(cur != NULL)
 		//	col_pos[0]+=exp->_partial;
+		if(node != -1 && exp->_partial>=(text_end-text_begin)){
+			*partial_match = exp->_partial;
+			col_pos[0]+=(text_end-text_begin)-1;
+			break;
+		}
 		*text_begin++;
 	} while(cur == NULL && text_begin != text_end);
-	*partial_match = exp->_partial;
 
 	if(cur == NULL)
 		return TRex_False;
@@ -659,12 +662,6 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 	if(out_begin) *out_begin = text_begin;
 	if(out_end) *out_end = cur;
 	return TRex_True;
-}
-
-TRexBool trex_search(TRex* exp,const TRexChar* text, const TRexChar** out_begin, const TRexChar** out_end, __int64 *line_count)
-{
-//	return trex_searchrange(exp,text,text + scstrlen(text),out_begin,out_end,line_count);
-	return 0;
 }
 
 int trex_getsubexpcount(TRex* exp)
