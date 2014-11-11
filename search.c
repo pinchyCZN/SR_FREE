@@ -46,6 +46,9 @@ int total_matches=0;
 char current_fname[MAX_PATH]={0};
 int match_prefix_len=40;
 
+TRex *trex_regx=0;
+
+
 int set_replace_rest_file(int i)
 {	return replace_rest_file=i; }
 int set_replace_all_remain(int i)
@@ -408,19 +411,14 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 	static unsigned __int64 col_pos=1;
 	unsigned __int64 cur_offset=0;
 	int partial_match=0;
-	static TRex *x=0;
 	const TRexChar *begin=0,*end=0;
 	if(init){
-		const TRexChar *error = NULL;
 		offset=0;
 		col_pos=line_num=1;
-		if(x)
-			trex_free(x);
-		x=trex_compile(search_str,&error);
 		return TRUE;
 	}
 //	pos=(*execute)(buf,len,&match_size,0);
-	while(trex_searchrange(x,buf+cur_offset,buf+len,&begin,&end,&line_num,&col_pos,&partial_match)){
+	while(trex_searchrange(trex_regx,buf+cur_offset,buf+len,&begin,&end,&line_num,&col_pos,&partial_match)){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
 		unsigned char str[512];
@@ -1170,6 +1168,18 @@ int start_search(HWND hwnd,int replace)
 		GetDlgItemText(hwnd,IDC_COMBO_REPLACE,replace_str,sizeof(replace_str));
 		strlen_replace_str=strlen(replace_str);
 	}
+	if(is_button_checked(ghwindow,IDC_REGEX)){
+		const TRexChar *error = NULL;
+		if(trex_regx)
+			trex_free(trex_regx);
+		trex_regx=trex_compile(search_str,&error);
+		if(trex_regx==NULL){
+			set_status_bar(hwnd,"Regex failed to compile:%s",error);
+			FlashWindow(hwnd,TRUE);
+			return 0;
+		}
+	}
+
 	get_leading_repeats(search_str,strlen_search_str);
 	search_str[sizeof(search_str)-1]=0;
 	replace_str[sizeof(replace_str)-1]=0;
