@@ -311,7 +311,7 @@ int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int ma
 		int index=pos;
 		if(match_end<buf_len){
 			int i;
-			for(i=0;i<len;i++){
+			for(i=0;i<buf_len-match_end;i++){
 				char a=buf[match_end+i];
 				if(a=='\n' || a=='\r'){
 					eol=TRUE;
@@ -818,7 +818,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	if(f!=0){
 		char *buf;
 		int size=0x100000;
-//		int size=5;
+//		int size=6;
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){
