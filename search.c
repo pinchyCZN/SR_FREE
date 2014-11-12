@@ -473,6 +473,197 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 	offset+=len;
 	return 0;
 }
+int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
+{
+	static char line[512];
+	static int line_index=0;
+	static __int64 offset=0,line_offset=0;
+	static __int64 line_num=1;
+	static __int64 total_col=0;
+	static int binary=FALSE;
+	static int match_offset=0,match_len=0;
+	int i;
+	if(init){
+		memset(line,0,sizeof(line));
+		line_num=1;
+		line_index=0;
+		match_offset=0;
+		match_len=strlen_search_str;
+		total_col=0;
+		line_offset=offset=0;
+		binary=FALSE;
+		return TRUE;
+	}
+	for(i=0;i<len;i++){
+		if(stop_thread)
+			break;
+		if(line_index==0)
+			line_offset=offset;
+		line[line_index]=buf[i];
+		if(buf[i]==0)
+			binary=TRUE;
+		if(buf[i]=='\n' || line_index>=sizeof(line)-2 || (eof && i==len-1)){
+			int j;
+			int start_pos=-1;
+			int col_pos=0;
+			int wpos=-1;
+			line[sizeof(line)-1]=0;
+			if(buf[i]=='\n'){
+				line[line_index]=0;
+				line_index--;
+				if(line_index>=0){
+					if(line[line_index]=='\r'){
+						line[line_index]=0;
+						line_index--;
+					}
+				}
+			}
+			total_col+=line_index+1;
+			for(j=0;j<line_index+1;j++){
+				char a,b;
+				if(stop_thread)
+					break;
+				if(case_sensitive){
+					a=search_str[match_offset];
+					b=line[j];
+				}else{
+					a=upper_case(search_str[match_offset]);
+					b=upper_case(line[j]);
+				}
+				if(a=='*'){
+					match_offset++;
+					if(start_pos<0)
+						start_pos=j;
+					wpos=start_pos+1;
+					if(j>0)
+						j--;
+				}
+				else if(a=='?' || a==b){
+					match_offset++;
+					if(start_pos<0)
+						start_pos=j;
+				}
+				else if(wpos<0){
+					if(leading_repeat>0){ //naive search
+						j-=match_offset;
+					}
+					start_pos=-1;
+					if(leading_repeat==0 && match_offset>0) //if target string has repeats
+						j--;
+					match_offset=0;
+				}
+				else if(wpos>=0){
+					if(search_str[match_offset-1]!='*'){
+						if(match_offset>0){
+							if(leading_repeat>0){ //naive search
+								if(j>match_offset && j>wpos){
+									int k=match_offset;
+									for( ;k>0;k--){
+										if(search_str[k]=='*'){
+											break;
+										}
+										else if(search_str[k]=='?'){
+											k--;
+											break;
+										}
+									}
+									if(k==0)
+										k=wpos;
+									j-=k;
+									match_offset-=k;
+								}
+							}
+							else{
+								match_offset--;
+								j--;
+							}
+						}
+					}
+				}
+				else{
+					wpos=-1;
+					match_offset=0;
+				}
+				if(match_offset==1)
+					col_pos=j;
+				if(match_offset>=match_len){
+					HWND hwnd_parent=ghwindow;
+					char *s=line;
+					int c,l,k,lb_index=-1;
+					c=start_pos;
+					l=j-start_pos+1;
+					//if(line_offset+start_pos==0x1461E5B)
+					//	l=l;
+					for(k=0;k<line_index+1;k++){
+						if(line[k]=='\t')
+							continue;
+						if(line[k]<' '||line[k]>0x7E)
+							line[k]='.';
+					}
+					if(start_pos+l>match_prefix_len){
+						int x=l;
+						if(x>match_prefix_len)
+							x=match_prefix_len;
+						s=line+start_pos+x-match_prefix_len;
+						c=match_prefix_len-x;
+					}
+
+					if(matches_found==0){
+						add_listbox_str(hwnd_parent,"File %s",current_fname);
+						files_occured++;
+					}
+					if(binary){
+						line[line_index+1]=0;
+						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",line_offset+start_pos,line_num,c,l,s);
+					}
+					else
+						lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
+						line_num,total_col-line_index-1+col_pos+1,c,l,line_offset+start_pos,s);
+					if(do_replace)
+						replace_dlg(hwnd,lb_index);
+					match_offset=0;
+					matches_found++;
+					start_pos=wpos=-1;
+					
+				}
+			}//for(j=0;j<line_index+1;j++){
+			if(buf[i]=='\n'){
+				line_num++;
+				total_col=0;
+			}
+			if(line_index>=sizeof(line)-2 && match_offset>0 && start_pos>=0){
+				int start,len;
+				start=start_pos-match_prefix_len;
+				if(start<=0){
+					goto reset;
+				}
+				else{
+					len=sizeof(line)-2-(start_pos-match_prefix_len)+1;
+					if(len<0)
+						len=0;
+				}
+				memcpy(line,line+start,len);
+				total_col-=len;
+				line_index=len;
+				line_offset+=start;
+				match_offset=0;
+			}else{
+reset:
+				match_offset=0;
+				line_index=0;
+				memset(line,0,sizeof(line));
+			}
+		}//if(buf[i]=='\n' || line_index>=sizeof(line)-2){
+		else{
+			line_index++;
+			if(line_index>=sizeof(line))
+				line_index=0;
+		}
+		offset++;
+	}
+	return 0;
+}
+
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
 	int i;
@@ -491,6 +682,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	int compare;
 	if(regex_search)
 		return search_buffer_regex(f,hwnd,init,buf,len,eof);
+	else if(wildcard_search)
+		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
 	if(init){
 		binary=FALSE;
 		found=FALSE;
