@@ -644,8 +644,7 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 			col_pos[0]=1;
 		else if(cur == NULL)
 			col_pos[0]++;
-		//else if(cur != NULL)
-		//	col_pos[0]+=exp->_partial;
+
 		if(node != -1 && exp->_partial>=(text_end-text_begin)){
 			*partial_match = exp->_partial;
 			col_pos[0]+=(text_end-text_begin)-1;

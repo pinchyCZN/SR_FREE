@@ -13,7 +13,6 @@ static HWND modeless_search_hwnd=0;
 
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
-//static HWND hwnd_parent;
 
 int thread_busy=FALSE;
 int stop_thread=FALSE;
@@ -417,37 +416,41 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		col_pos=line_num=1;
 		return TRUE;
 	}
-//	pos=(*execute)(buf,len,&match_size,0);
 	while(trex_searchrange(trex_regx,buf+cur_offset,buf+len,&begin,&end,&line_num,&col_pos,&partial_match)){
 		HWND hwnd_parent=ghwindow;
 		int lb_index;
 		unsigned char str[512];
 		int i,pos,match_size,line_col=0;
 		unsigned char *s;
-		partial_match=0;
+		
 		match_size=end-begin;
 		pos=begin-buf;
 		cur_offset=pos+match_size;
 		s=(unsigned char*)begin;
+		
 		if(matches_found==0){
 			add_listbox_str(hwnd_parent,"File %s",current_fname);
 			files_occured++;
 		}
 		matches_found++;
+
 		i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_size,match_prefix_len,&line_col);
 		fill_eol(f,str,sizeof(str),i,buf,len,pos+match_size);
 		str[sizeof(str)-1]=0;
 		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
-		//lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset+pos,line_num,line_col,match_size,str);
-		if(stop_thread)
-			break;
+		if(do_replace)
+			replace_dlg(hwnd,lb_index);
+
 		partial_match=0;
+
 		for(i=0;i<end-begin;i++){
 			if(begin[i]=='\n')
 				col_pos=1;
 			else
 				col_pos++;
 		}
+		if(stop_thread)
+			break;
 	}
 	if(!eof){
 		if(partial_match>0){
