@@ -161,6 +161,7 @@ int check_ext_favs(char *mask,int mask_size,char *ext)
 	int result=FALSE;
 	char *tmpstr=0;
 	int tmpsize=mask_size;
+	int max_favs;
 	int i;
 	if(mask_size<=2 || mask==0 || ext==0)
 		return result;
@@ -169,8 +170,9 @@ int check_ext_favs(char *mask,int mask_size,char *ext)
 	tmpstr=malloc(tmpsize);
 	if(tmpstr==0)
 		return result;
-#define MAX_FAVS 25
-	for(i=0;i<MAX_FAVS;i++){
+	max_favs=get_max_favs();
+
+	for(i=0;i<max_favs;i++){
 		char key[10]={0};
 		_snprintf(key,sizeof(key),"item%i",i);
 		tmpstr[0]=0;
@@ -900,15 +902,16 @@ int exclude_buttons(HWND hwnd,int ctrl)
 	int i;
 	typedef struct{
 		int ctrl;
-		int list[5];
+		int list[6];
 	}EXCLUDE;
 	EXCLUDE exc[]={
-		{IDC_HEX,{IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
-		{IDC_UNICODE,{IDC_HEX,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
-		{IDC_WHOLEWORD,{IDC_HEX,IDC_UNICODE,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX}},
-		{IDC_WILDCARD,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_REGEX}},
-		{IDC_REGEX,   {IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_WILDCARD}},
-		{IDC_IGNOREWS,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_REGEX}},
+		{IDC_HEX,{IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX,0}},
+		{IDC_UNICODE,{IDC_HEX,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX,0}},
+		{IDC_WHOLEWORD,{IDC_HEX,IDC_UNICODE,IDC_WILDCARD,IDC_IGNOREWS,IDC_REGEX,0}},
+		{IDC_WILDCARD,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_REGEX,0}},
+		{IDC_REGEX,   {IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_IGNOREWS,IDC_WILDCARD,IDC_CASE}},
+		{IDC_CASE ,   {0}},
+		{IDC_IGNOREWS,{IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_REGEX,0}},
 	};
 	if(!IsDlgButtonChecked(hwnd,ctrl))
 		return FALSE;
@@ -1202,6 +1205,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		case IDC_WILDCARD:
 		case IDC_REGEX:
 		case IDC_IGNOREWS:
+		case IDC_CASE:
 			exclude_buttons(hwnd,LOWORD(wparam));
 			break;
 		case IDC_DEPTH_LEVEL:

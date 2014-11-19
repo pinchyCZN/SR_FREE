@@ -13,6 +13,10 @@ extern HINSTANCE	ghinstance;
 int fav_type=0;
 HWND hwnd_parent=0;
 #define MAX_FAVS 50
+int get_max_favs()
+{
+	return MAX_FAVS;
+}
 int load_favs(HWND hwnd,int ctrl)
 {
 	int i;

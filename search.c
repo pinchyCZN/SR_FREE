@@ -1365,7 +1365,7 @@ int start_search(HWND hwnd,int replace)
 		const TRexChar *error = NULL;
 		if(trex_regx)
 			trex_free(trex_regx);
-		trex_regx=trex_compile(search_str,&error);
+		trex_regx=trex_compile(search_str,is_button_checked(ghwindow,IDC_CASE),&error);
 		if(trex_regx==NULL){
 			set_status_bar(hwnd,"Regex failed to compile:%s",error);
 			FlashWindow(hwnd,TRUE);

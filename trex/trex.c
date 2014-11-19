@@ -69,6 +69,7 @@ struct TRex{
 	int _partial;
 	int _first;
 	int _op;
+	int _incase_sense;
 	TRexNode *_nodes;
 	int _nallocated;
 	int _nsize;
@@ -382,6 +383,13 @@ static TRexBool trex_matchclass(TRex* exp,TRexNode *node,TRexChar c)
 	} while((node->next != -1) && (node = &exp->_nodes[node->next]));
 	return TRex_False;
 }
+static int makeupper(int a)
+{
+	if(((unsigned char)a)>='a' && ((unsigned char)a)<='z')
+		return a&(' '^0xFF);
+	else
+		return a;
+}
 
 static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *str,TRexNode *next)
 {
@@ -542,7 +550,10 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		}
 		return NULL;
 	default: /* char */
-		if(*str != node->type) return NULL;
+		if(exp->_incase_sense){
+			if(makeupper(*str)!=makeupper(node->type)) return NULL;
+		}
+		else if(*str != node->type) return NULL;
 		*str++;
 		return str;
 	}
@@ -550,7 +561,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 }
 
 /* public api */
-TRex *trex_compile(const TRexChar *pattern,const TRexChar **error)
+TRex *trex_compile(const TRexChar *pattern,int case_sensitive,const TRexChar **error)
 {
 	TRex *exp = (TRex *)malloc(sizeof(TRex));
 	exp->_eol = exp->_bol = NULL;
@@ -560,6 +571,7 @@ TRex *trex_compile(const TRexChar *pattern,const TRexChar **error)
 	exp->_nsize = 0;
 	exp->_matches = 0;
 	exp->_nsubexpr = 0;
+	exp->_incase_sense=!case_sensitive;
 	exp->_first = trex_newnode(exp,OP_EXPR);
 	exp->_error = error;
 	exp->_jmpbuf = malloc(sizeof(jmp_buf));
