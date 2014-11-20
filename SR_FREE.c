@@ -100,26 +100,76 @@ int show_main_help(HWND hwnd,HELPINFO *hi)
 	if(!help_active){
 		help_active=TRUE;
 		switch(hi->iCtrlId){
+		case IDC_COMBO_SEARCH:
+			if(is_button_checked(hwnd,IDC_REGEX)
+				&& (!(GetKeyState(VK_CONTROL)&0x8000)) ){
+				const char *msg=
+					"TRex implements the following expressions\r\n"
+					"\r\n"
+					"\\	Quote the next metacharacter\r\n"
+					"^	Match the beginning of the string\r\n"
+					".	Match any character\r\n"
+					"$	Match the end of the string\r\n"
+					"|	Alternation\r\n"
+					"()	Grouping (creates a capture)\r\n"
+					"[]	Character class  \r\n"
+					"\r\n"
+					"==GREEDY CLOSURES==\r\n"
+					"*	   Match 0 or more times\r\n"
+					"+	   Match 1 or more times\r\n"
+					"?	   Match 1 or 0 times\r\n"
+					"{n}    Match exactly n times\r\n"
+					"{n,}   Match at least n times\r\n"
+					"{n,m}  Match at least n but not more than m times  \r\n"
+					"\r\n"
+					"==ESCAPE CHARACTERS==\r\n"
+					"\\t		tab                   (HT, TAB)\r\n"
+					"\\n		newline               (LF, NL)\r\n"
+					"\\r		return                (CR)\r\n"
+					"\\f		form feed             (FF)\r\n"
+					"\r\n"
+					"==PREDEFINED CLASSES==\r\n"
+					"\\l		lowercase next char\r\n"
+					"\\u		uppercase next char\r\n"
+					"\\a		letters\r\n"
+					"\\A		non letters\r\n"
+					"\\w		alphanimeric [0-9a-zA-Z]\r\n"
+					"\\W		non alphanimeric\r\n"
+					"\\s		space\r\n"
+					"\\S		non space\r\n"
+					"\\d		digits\r\n"
+					"\\D		non nondigits\r\n"
+					"\\x		exadecimal digits\r\n"
+					"\\X		non exadecimal digits\r\n"
+					"\\c		control charactrs\r\n"
+					"\\C		non control charactrs\r\n"
+					"\\p		punctation\r\n"
+					"\\P		non punctation\r\n"
+					"\\b		word boundary\r\n"
+					"\\B		non word boundary";
+				MessageBox(hwnd,msg,"REGEXHELP",MB_OK);
+				break;
+			}
 		default:
 		case IDC_LIST1:
-			MessageBox(hwnd,
-				"F5=Search\r\n"
-				"F6=Replace\r\n"
-				"F9 / ctrl+o=open options\r\n"
-				"ALT+HOME = always on top\r\n"
-				"double click on line to open in context viewer\r\n"
-				"[1-9] open with app set in options\r\n"
-				"ctrl+a select all lines\r\n"
-				"ctrl+c copy lines\r\n"
-				"ctrl+shift+c copy lines with all info\r\n"
-				"ctrl+s=set search focus\r\n"
-				"ctrl+r=set replace focus\r\n"
-				"ctrl+f=set file mask focus\r\n"
-				"ctrl+p=set path focus\r\n\r\n"
-				"ctrl+drag=mask exact filenames\r\n"
-				"shift+drag=mask by *.*\r\n"
-				"ctrl+shift+drag=mask by *.ext\r\n"
-				,"HELP",MB_OK);
+				MessageBox(hwnd,
+					"F5=Search\r\n"
+					"F6=Replace\r\n"
+					"F9 / ctrl+o=open options\r\n"
+					"ALT+HOME = always on top\r\n"
+					"double click on line to open in context viewer\r\n"
+					"[1-9] open with app set in options\r\n"
+					"ctrl+a select all lines\r\n"
+					"ctrl+c copy lines\r\n"
+					"ctrl+shift+c copy lines with all info\r\n"
+					"ctrl+s=set search focus\r\n"
+					"ctrl+r=set replace focus\r\n"
+					"ctrl+f=set file mask focus\r\n"
+					"ctrl+p=set path focus\r\n\r\n"
+					"ctrl+drag=mask exact filenames\r\n"
+					"shift+drag=mask by *.*\r\n"
+					"ctrl+shift+drag=mask by *.ext\r\n"
+					,"HELP",MB_OK);
 			break;
 		case IDC_COMBO_PATH:
 			MessageBox(hwnd,
