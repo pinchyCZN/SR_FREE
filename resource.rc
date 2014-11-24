@@ -31,34 +31,33 @@ STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
 EXSTYLE WS_EX_ACCEPTFILES
 CAPTION "SR FREE"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     PUSHBUTTON      "Search",IDC_SEARCH,0,1,48,11
     PUSHBUTTON      "Replace",IDC_REPLACE,47,1,48,11
-    CONTROL         "case sense",IDC_CASE,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "&case sense",IDC_CASE,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,94,1,48,11
-    CONTROL         "search subdirs",IDC_SUBDIRS,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "&search subdirs",IDC_SUBDIRS,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,141,1,48,11
-    CONTROL         "whole word",IDC_WHOLEWORD,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "w&hole word",IDC_WHOLEWORD,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,188,1,48,11
-    CONTROL         "wildcard",IDC_WILDCARD,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "&wildcard",IDC_WILDCARD,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,235,1,48,11
-    CONTROL         "regex",IDC_REGEX,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | 
-                    WS_TABSTOP,235,12,48,11
     CONTROL         "ignore wspace",IDC_IGNOREWS,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,282,1,48,11
-    CONTROL         "unicode",IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "on top",IDC_ONTOP,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,329,1,48,11
+    CONTROL         "&unicode",IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,94,12,48,11
     CONTROL         "HEX",IDC_HEX,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | 
                     WS_TABSTOP,142,12,48,11
-    CONTROL         "on top",IDC_ONTOP,"Button",BS_AUTOCHECKBOX | 
-                    BS_PUSHLIKE | WS_TABSTOP,329,1,48,11
-    PUSHBUTTON      "OPTIONS",IDC_OPTIONS,329,12,48,11
+    CONTROL         "&regex",IDC_REGEX,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,235,12,48,11
+    PUSHBUTTON      "&OPTIONS",IDC_OPTIONS,329,12,48,11
     LTEXT           "Search for:",IDC_STATIC,0,30,39,11
     LTEXT           "Replace with:",IDC_STATIC,0,47,46,9
     LTEXT           "File Mask:",IDC_STATIC,0,63,36,10
     LTEXT           "Path:",IDC_STATIC,0,82,24,12
-    LTEXT           "Search Results:",IDC_STATIC,0,95,54,12
     COMBOBOX        IDC_COMBO_SEARCH,48,29,306,204,CBS_DROPDOWN | 
                     CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COMBO_REPLACE,48,45,306,193,CBS_DROPDOWN | 
@@ -71,16 +70,17 @@ BEGIN
     PUSHBUTTON      "...",IDC_REPLACE_OPTIONS,354,44,22,14
     PUSHBUTTON      "...",IDC_FILE_OPTIONS,354,59,23,14
     PUSHBUTTON      "...",IDC_PATH_OPTIONS,354,75,24,14
-    LISTBOX         IDC_LIST1,0,110,403,115,LBS_OWNERDRAWFIXED | 
-                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | 
-                    LBS_WANTKEYBOARDINPUT | LBS_EXTENDEDSEL | WS_VSCROLL | 
-                    WS_HSCROLL | WS_TABSTOP
-    LTEXT           "",IDC_STATUS,0,225,387,13,SS_SUNKEN
+    LTEXT           "Search Results:",IDC_STATIC,0,95,54,12
     PUSHBUTTON      "<",IDC_PATH_UPONE,30,74,14,14
     CONTROL         "Limit Depth",IDC_CHECK_DEPTH,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,85,94,51,10
     EDITTEXT        IDC_DEPTH_LEVEL,143,92,40,14,ES_AUTOHSCROLL | ES_NUMBER | 
                     NOT WS_VISIBLE
+    LISTBOX         IDC_LIST1,0,110,403,115,LBS_OWNERDRAWFIXED | 
+                    LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | 
+                    LBS_WANTKEYBOARDINPUT | LBS_EXTENDEDSEL | WS_VSCROLL | 
+                    WS_HSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_STATUS,0,225,387,13,SS_SUNKEN
 END
 
 IDD_SEARCH_PROGRESS DIALOG DISCARDABLE  0, 0, 186, 94
