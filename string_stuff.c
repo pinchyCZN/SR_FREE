@@ -55,7 +55,7 @@ int pipe_to_quote(char *str)
 	}
 	return TRUE;
 }
-int shell_execute(HWND hwnd,char *exestr)
+int shell_execute(HWND hwnd,char *exestr,char *path)
 {
 	int i,len,pos=0;
 	char exe[MAX_PATH]={0};
@@ -72,7 +72,7 @@ int shell_execute(HWND hwnd,char *exestr)
 		return FALSE;
 	strncpy(exe,exestr+1,pos);
 	exe[pos-1]=0;
-	ShellExecute(hwnd,"open",exe,exestr+pos+1,NULL,SW_SHOWNORMAL);
+	ShellExecute(hwnd,"open",exe,exestr+pos+1,path,SW_SHOWNORMAL);
 	return TRUE;
 }
 int path_up_level(HWND hwnd,int ctrl)

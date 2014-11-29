@@ -721,8 +721,13 @@ int open_with_cmd(HWND hwnd,char *fname,int index,int cmd)
 				_snprintf(tmp,sizeof(tmp),"%I64X",offset);
 				str_replace(str,"%OFFSET%",tmp,&out);
 				if(out!=0){free(str);str=out;out=0;}
-				if(str[0]!=0)
-					shell_execute(hwnd,str);
+				if(str[0]!=0){
+					char path[_MAX_PATH];
+					strncpy(path,fname,sizeof(path));
+					path[sizeof(path)-1]=0;
+					find_valid_path(path);
+					shell_execute(hwnd,str,path);
+				}
 				free(str);
 			}
 			free(buf);

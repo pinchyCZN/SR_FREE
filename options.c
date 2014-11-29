@@ -88,7 +88,10 @@ int get_current_font(HWND hwnd,int ctrl)
 	tmp[0]=0;
 	get_ini_str("OPTIONS",key,tmp,sizeof(tmp));
 	index=SendDlgItemMessage(hwnd,ctrl,CB_FINDSTRINGEXACT,-1,tmp);
-	if(index<0)index=0;
+	if(index<0){
+		int_to_fontname(DEFAULT_GUI_FONT,tmp,sizeof(tmp));
+		index=SendDlgItemMessage(hwnd,ctrl,CB_FINDSTRINGEXACT,-1,tmp);
+	}
 	SendDlgItemMessage(hwnd,ctrl,CB_SETCURSEL,index,0);
 	return TRUE;
 }
