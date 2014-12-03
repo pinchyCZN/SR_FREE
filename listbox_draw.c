@@ -128,10 +128,12 @@ int draw_item(DRAWITEMSTRUCT *di,char *list_string)
 
 		col=0,mlen=0;
 		if(is_line){
+							//       line      col   col|mlen|offset                
 							//"Line %I64i col %I64i = %i %i %I64X -%s"
 			sscanf(list_string,"%*s %*s %*s %*s %*s %i %i",&col,&mlen);
 		}
 		else{
+							//          offset  line col|mlen
 							//"Offset 0x%I64X = %I64i %i %i -%s"
 			sscanf(list_string,"%*s %*s %*s %*s %i %i",&col,&mlen);
 		}

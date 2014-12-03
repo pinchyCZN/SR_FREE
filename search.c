@@ -302,21 +302,36 @@ int fetch_from_fpos(FILE *f,__int64 fpos,int len,char *buf)
 	return read;
 }
 
-int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int match_end)
+int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int match_end,
+			 int binary,int match_prefix_len)
 {
 	int len,eol=FALSE;
 	len=str_size-pos;
 	if(len>0){
 		int index=pos;
+		int count=0;
+		int non_alpha_found=FALSE;
 		if(match_end<buf_len){
 			int i;
 			for(i=0;i<buf_len-match_end;i++){
-				char a=buf[match_end+i];
-				if(a=='\n' || a=='\r'){
+				unsigned char a=buf[match_end+i];
+				if(binary){
+					count++;
+					if(a<' ')
+						non_alpha_found=TRUE;
+					if(non_alpha_found && (count>match_prefix_len)){
+						eol=TRUE;
+						break;
+					}
+				}
+				else if(a=='\n' || a=='\r'){
 					eol=TRUE;
 					break;
 				}
-				str[index++]=a;
+				else if(a<' ')
+					binary=TRUE;
+
+				str[index++]=convert_char(a);
 				if(index>=str_size)
 					break;
 			}
@@ -330,11 +345,25 @@ int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int ma
 				int i,b=0;
 				if(len>sizeof(tmp))
 					len=sizeof(tmp);
+
 				len=fetch_more_data(f,tmp,len,&b);
 				for(i=0;i<len;i++){
+					unsigned char a;
 					if(index>=str_size)
 						break;
-					str[index++]=tmp[i];
+					if(binary){
+						count++;
+						if(a<' ')
+							non_alpha_found=TRUE;
+						if(non_alpha_found && (count>match_prefix_len)){
+							break;
+						}
+					}
+					else if(a=='\n' || a=='\r')
+						break;
+					a=tmp[i];
+					str[index++]=a;
+
 				}
 				if(index<str_size)
 					str[index]=0;
@@ -343,14 +372,15 @@ int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int ma
 	}
 	return 0;
 }
-int fill_begin_line(FILE *f,__int64 fpos,char *str,int str_size,char *buf,int pos,int match_size,int match_prefix_len,int *line_col)
+int fill_begin_line(FILE *f,__int64 fpos,char *str,int str_size,char *buf,int pos,int match_size,int match_prefix_len,int *line_col,
+					int binary)
 {
 	int i;
 	int index=0;
 	if(pos>=match_prefix_len){
 		for(i=0;i<match_prefix_len;i++){
 			char a=buf[pos-match_prefix_len+i];
-			if(a=='\n' || a=='\r')
+			if((!binary) && (a=='\n' || a=='\r'))
 				index=0;
 			else
 				str[index++]=convert_char(a);
@@ -379,7 +409,7 @@ int fill_begin_line(FILE *f,__int64 fpos,char *str,int str_size,char *buf,int po
 				a=buf[i-len];
 			else
 				a=tmp[i];
-			if(a=='\n' || a=='\r')
+			if((!binary) && (a=='\n' || a=='\r'))
 				index=0;
 			else
 				str[index++]=convert_char(a);
@@ -434,8 +464,8 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		}
 		matches_found++;
 
-		i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_size,match_prefix_len,&line_col);
-		fill_eol(f,str,sizeof(str),i,buf,len,pos+match_size);
+		i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_size,match_prefix_len,&line_col,0);
+		fill_eol(f,str,sizeof(str),i,buf,len,pos+match_size,0,match_prefix_len);
 		str[sizeof(str)-1]=0;
 		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
 		if(do_replace)
@@ -666,335 +696,87 @@ reset:
 	}
 	return 0;
 }
-
+int add_line_match(HWND hwnd,__int64 *offset,__int64 *line,__int64 *col,int match_pos,int match_len,char *str)
+{
+	return add_listbox_str(hwnd,"Line %I64i col %I64i = %i %i %I64X -%s",*line,*col,match_pos,match_len,*offset,str);
+}
+int add_binary_match(HWND hwnd,__int64 *offset,__int64 *line,int match_pos,int match_len,char *str)
+{
+	return add_listbox_str(hwnd,"Offset 0x%I64X = %I64i %i %i -%s",*offset,*line,match_pos,match_len,str);
+}
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
-	int i;
-	static char line[512]={0};
-	static int line_pos=0;
-	static int line_col=0;
-	static __int64 offset;
+	static int binary=0;
+	static __int64 offset=0;
 	static __int64 line_num=0;
-	static __int64 total_col=0;
-	static int match_offset=0;
-	static int match_len=0;
-	static int found=FALSE;
-	static int binary=FALSE;
-	static int sizeof_line=sizeof(line);
-	static int nibble=0;
-	int compare;
+	static __int64 col=0;
+	int pos;
+
 	if(regex_search)
 		return search_buffer_regex(f,hwnd,init,buf,len,eof);
 	else if(wildcard_search)
 		return search_buffer_wildcard(f,hwnd,init,buf,len,eof);
 	if(init){
 		binary=FALSE;
-		found=FALSE;
-		line_pos=0;
-		line_num=1;
 		offset=0;
-		line_col=1;
-		total_col=1;
-		match_offset=0;
-		match_len=strlen_search_str;
-		sizeof_line=match_prefix_len;
-		nibble=0;
-		if(sizeof_line>sizeof(line))
-			sizeof_line=sizeof(line);
-		memset(line,0,sizeof(line));
+		line_num=0;
+		col=0;
 		return 0;
 	}
-	for(i=0;i<len;i++){
+	pos=0;
+	while(pos<len){
+		int i;
+		int found=TRUE;
 		if(stop_thread)
 			break;
-		if(buf[i]==0)
-			binary=TRUE;
-		if(match_offset<sizeof_line)
-			line[line_pos]=buf[i];
-		if(buf[i]=='\n'){
-			line_num++;
-			total_col=1;
-		}
-		else
-			total_col++;
-		if(unicode_search){
-			if(nibble==1){
-				nibble=0;
-				if(buf[i]!=0){
-					found=FALSE;
-					match_offset=0;
-					goto check_nibble;
-				}
+		for(i=0;i<strlen_search_str;i++){
+			char a,b;
+			a=buf[pos+i];
+			b=search_str[i];
+			if(a==0 || b==0)
+				binary=TRUE;
+			if(!case_sensitive){
+				a=upper_case(a);
+				b=upper_case(b);
 			}
-			else{
-check_nibble:
-				//if(match_offset==match_len-1)
-				//;//	printf("%s\n",line);
-				if(case_sensitive)
-					compare=(search_str[match_offset]==buf[i]);
-				else
-					compare=(upper_case(search_str[match_offset])==upper_case(buf[i]));
-
-				if(compare){
-					match_offset++;
-					nibble=1;
-				}
-				else if(match_offset>0){
-					if(leading_repeat>0){ //naive search
-						int delta=match_offset;
-						if(delta==0)
-							;
-						else{
-							delta--;
-							delta*=2;
-						}
-						i-=delta;
-						line_pos-=delta;
-						total_col-=delta;
-						offset-=delta;
-					}
-					if(case_sensitive)
-						compare=(search_str[0]==buf[i]);
-					else
-						compare=(upper_case(search_str[0])==upper_case(buf[i]));
-
-					if(compare){
-						line_col=line_pos;
-						match_offset=1;
-					}
-					else{
-						found=FALSE;
-						if(match_offset>0){
-							int delta=match_offset;
-							delta*=2;
-							i-=delta;
-							line_pos-=delta;
-							total_col-=delta;
-							offset-=delta;
-						}
-
-						match_offset=0;
-						nibble=0;
-					}
-				}
+			if(a!=b){
+				found=FALSE;
+				break;
 			}
 		}
-		else{
-			/*---------NON unicode------------------*/
-			if(case_sensitive)
-				compare=(search_str[match_offset]==buf[i]);
+		if(found){
+			HWND hwnd_parent=ghwindow;
+			int match_len=strlen_search_str;
+			int line_col=0;
+			int lb_index=-1;
+			char str[512];
+			__int64 c_offset;
+			c_offset=offset+pos;
+			if(matches_found==0){
+				add_listbox_str(hwnd_parent,"File %s",current_fname);
+				files_occured++;
+			}
+			i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_len,match_prefix_len,&line_col,binary);
+			fill_eol(f,str,sizeof(str),i,buf,len,pos+match_len,binary,match_prefix_len);
+			str[sizeof(str)-1]=0;
+			if(binary){
+				lb_index=add_binary_match(hwnd_parent,&c_offset,&line_num,line_col,match_len,str);
+			}
 			else
-				compare=(upper_case(search_str[match_offset])==upper_case(buf[i]));
-
-			if(compare)
-				match_offset++;
-			else if(match_offset>0){
-				if(leading_repeat>0){ //naive search
-					i-=match_offset-1;
-					line_pos-=match_offset-1;
-					total_col-=match_offset-1;
-					offset-=match_offset-1;
-				}
-				if(case_sensitive)
-					compare=(search_str[0]==buf[i]);
-				else
-					compare=(upper_case(search_str[0])==upper_case(buf[i]));
-
-				if(compare){
-					line_col=line_pos;
-					match_offset=1;
-				}
-				else{
-					found=FALSE;
-					match_offset=0;
-				}
-			}
-			if(match_whole){
-				if(match_offset==1 && offset>0){
-					if(is_alphanumeric(buf[i])){
-						int j=line_pos-1;
-						if(j<0)
-							j=sizeof_line-1;
-						if(is_wordsubset(line[j])){
-							found=FALSE;
-							match_offset=0;
-						}
-					}
-				}
-				if(match_offset==match_len){
-					if(is_alphanumeric(buf[i])){
-						if(i+1>=len){
-							char a=0;
-							//if(FALSE)
-							if(fetch_next_byte(f,&a)){
-								if(is_wordsubset(a)){
-									found=FALSE;
-									match_offset=0;
-								}
-							}
-						}
-						else if(i+1<len && is_wordsubset(buf[i+1])){
-							found=FALSE;
-							match_offset=0;
-						}
-					}
-				}
-			}
-			/*--------------------------------------*/
-		}
-		if(match_offset>0){
-			if(!found){
-				line_col=line_pos;
-				found=TRUE;
-			}
-		}
-		if(match_offset>=match_len){
-			char str[sizeof(line)*2]={0};
-			int sizeof_str=sizeof_line*2;
-			//if(line_num==480 && total_col-match_len==1)
-			//	line_num=line_num;
-			//if(offset==0x2503)
-			//	offset=offset;
-			if((offset>=sizeof_line-1) && line_pos<sizeof_line){
-				int j,k,l,m;
-				k=0;l=line_pos+1;m=0;
-				memset(str,0,sizeof_str);
-				//copy previous bytes
-				for(j=line_pos+1;j<sizeof_line;j++){
-					if(!binary)
-					if(line[j]=='\n'){
-						k=0;l=j+1;m=0;
-						continue;
-					}
-					str[k++]=convert_char(line[j]);
-					m++;
-				}
-				str[k]=0;
-				//copy match part
-				for(j=0;j<=line_pos;j++){
-					if(!binary)
-					if(line[j]=='\n'){
-						k=0;l=j+1;
-						continue;
-					}
-					str[k++]=convert_char(line[j]);
-				}
-				str[k]=0;
-				if(k<sizeof_str-1 && match_len<sizeof_line){
-					int t;
-					int end_found=FALSE;
-					//copy rest of line if any
-					for(t=1;t<len-i;t++){
-						if(!binary){
-							if(buf[i+t]==0)
-								binary=TRUE;
-							if(buf[i+t]=='\r'||buf[i+t]=='\n'){
-								end_found=TRUE;
-								break;
-							}
-						}
-						str[k++]=convert_char(buf[i+t]);
-						if(k>=sizeof_str-1)
-							break;
-					}
-					if(k<sizeof_str-1){
-						if(binary)
-							k+=fetch_more_data(f,str+k,sizeof_str-k,&binary);
-						else if(!end_found)
-							k+=fetch_more_data(f,str+k,sizeof_str-k,&binary);
-					}
-					str[k]=0;
-				}
-				if(l<=line_col)
-					line_col=line_col-l;
-				else
-					line_col=line_col+m;
-				if(line_col<0)
-					line_col=0;
-			}
-			else{
-				int k,t,spot=-1,limit;
-				k=0;
-				if(offset<sizeof_line-1)
-					limit=line_pos+1;
-				else
-					limit=sizeof_line;
-				//copy start of line
-				for(t=0;t<limit;t++){
-					if(!binary){
-						if(line[t]==0)
-							binary=TRUE;
-						else if(line[t]=='\n'){
-							if(t<line_col){
-								spot=t;
-								k=0;
-								continue;
-							}
-							else
-								break;
-						}
-					}
-					str[k++]=convert_char(line[t]);
-					if(k>=sizeof_str-1)
-						break;
-				}
-				if(spot>=0)
-					line_col-=spot+1;
-				str[k]=0;
-				if(k<sizeof_str-1){
-					int end_found=FALSE;
-					//fill up rest of string
-					for(t=1;t<len-i;t++){
-						if(!binary){
-							if(buf[i+t]==0)
-								binary=TRUE;
-							if(buf[i+t]=='\r'||buf[i+t]=='\n'){
-								end_found=TRUE;
-								break;
-							}
-						}
-						str[k++]=convert_char(buf[i+t]);
-						if(k>=sizeof_str-1)
-							break;
-					}
-					if(k<sizeof_str-1){
-						if(binary)
-							k+=fetch_more_data(f,str+k,sizeof_str-k,&binary);
-						else if(!end_found)
-							k+=fetch_more_data(f,str+k,sizeof_str-k,&binary);
-					}
-					str[k]=0;
-				}
-			}
-			{
-				HWND hwnd_parent=ghwindow;
-				int lb_index=-1;
-				if(matches_found==0){
-					add_listbox_str(hwnd_parent,"File %s",current_fname);
-					files_occured++;
-				}
-				if(binary){
-					if(unicode_search)
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset-match_len*2+2,line_num,line_col,match_len*2,str);
-					else
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",offset-match_len+1,line_num,line_col,match_len,str);
-					
-				}
-				else
-					lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,total_col-match_len,line_col,match_len,offset-match_len+1,str);
-				if(do_replace)
-					replace_dlg(hwnd,lb_index);
-			}
-			match_offset=0;
+				lb_index=add_line_match(hwnd_parent,&c_offset,&line_num,&col,line_col,match_len,str);
+			if(do_replace)
+				replace_dlg(hwnd,lb_index);
 			matches_found++;
-			found=FALSE;
 		}
-		if(match_offset<sizeof_line)
-			line_pos++;
-		if(line_pos>=sizeof_line)
-			line_pos=0;
-		offset++;
+		if(buf[pos]=='\n'){
+			line_num++;
+			col=0;
+		}else{
+			col++;
+		}
+		pos++;
 	}
+	offset+=len;
 	return 0;
 }
 int search_replace_file(HWND hwnd,char *fname,char *path)
