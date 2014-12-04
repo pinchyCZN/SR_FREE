@@ -510,7 +510,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 					return NULL;
 				}
 				exp->_partial++;
-				if(n->next != -1 && cur >= exp->_eol)
+				if(n->next != -1 && cur > exp->_eol)
 					return NULL;
 			} while((n->next != -1) && (n = &exp->_nodes[n->next]));
 
@@ -527,10 +527,11 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		}
 		return (node->left == 'b')?NULL:str;
 	case OP_BOL:
-		if(str == exp->_bol) return str;
+		if(str==exp->_bol) 
+			return str;
 		return NULL;
 	case OP_EOL:
-		if(str[0]=='\r' || str[0]=='\n')
+		if(str==exp->_eol) 
 			return str;
 		return NULL;
 	case OP_DOT:{
@@ -639,7 +640,15 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 	if(text_begin >= text_end) return TRex_False;
 	*partial_match = 0;
 	exp->_bol = text_begin;
-	exp->_eol = text_end;
+	//exp->_eol = text_end;
+	exp->_eol = text_begin+1;
+	while(exp->_eol<text_end){
+		char a=exp->_eol[0];
+		if(a=='\r' || a=='\n'){
+			break;
+		}
+		exp->_eol++;
+	}
 	do {
 		exp->_partial=0;
 		cur = text_begin;
@@ -666,6 +675,18 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 			break;
 		}
 		*text_begin++;
+		if(text_begin==exp->_eol){
+			if(exp->_eol<text_end)
+				exp->_eol++;
+			while(exp->_eol<text_end){
+				char a=exp->_eol[0];
+				if(a=='\r' || a=='\n'){
+					break;
+				}
+				exp->_eol++;
+			}
+		}
+
 	} while(cur == NULL && text_begin != text_end);
 
 	if(cur == NULL)
