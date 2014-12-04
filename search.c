@@ -670,9 +670,13 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		for(i=0;i<strlen_search_str;i++){
 			char a,b;
 			if(unicode_search){
-				if((pos+i*2)>=len)
+				if((pos+i*2+1)>=len)
 					break;
 				a=buf[pos+i*2];
+				if(buf[pos+i*2+1]!=0){
+					found=FALSE;
+					break;
+				}
 			}else{
 				if((pos+i)>=len)
 					break;
