@@ -21,7 +21,6 @@ char search_str[0x10000];
 int strlen_search_str=0;
 char replace_str[0x10000];
 int strlen_replace_str=0;
-int leading_repeat=0;
 
 int replace_rest_file=FALSE;
 int replace_all_remain=FALSE;
@@ -430,6 +429,14 @@ int fill_begin_line(FILE *f,__int64 fpos,char *str,int str_size,char *buf,int po
 		str[index]=0;
 	return index;
 }
+int add_line_match(HWND hwnd,__int64 *offset,__int64 *line,__int64 *col,int match_pos,int match_len,char *str)
+{
+	return add_listbox_str(hwnd,"Line %I64i col %I64i = %i %i %I64X -%s",*line,*col,match_pos,match_len,*offset,str);
+}
+int add_binary_match(HWND hwnd,__int64 *offset,__int64 *line,int match_pos,int match_len,char *str)
+{
+	return add_listbox_str(hwnd,"Offset 0x%I64X = %I64i %i %i -%s",*offset,*line,match_pos,match_len,str);
+}
 
 int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,int eof)
 {
@@ -467,7 +474,10 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_size,match_prefix_len,&line_col,0);
 		fill_eol(f,str,sizeof(str),i,buf,len,pos+match_size,0,match_prefix_len);
 		str[sizeof(str)-1]=0;
-		lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",line_num,col_pos,line_col,match_size,offset+pos,str);
+		{
+			__int64 tmp=offset+pos;
+			lb_index=add_line_match(hwnd_parent,&tmp,&line_num,&col_pos,line_col,match_size,str);
+		}
 		if(do_replace)
 			replace_dlg(hwnd,lb_index);
 
@@ -508,201 +518,113 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 }
 int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
-	static char line[512];
-	static int line_index=0;
-	static __int64 offset=0,line_offset=0;
-	static __int64 line_num=1;
-	static __int64 total_col=0;
-	static int binary=FALSE;
-	static int match_offset=0,match_len=0;
-	int i;
+	static int binary=0;
+	static __int64 offset=0;
+	static __int64 line_num=0;
+	static __int64 col=0;
+	int pos,partial_match=0;
+
 	if(init){
-		memset(line,0,sizeof(line));
-		line_num=1;
-		line_index=0;
-		match_offset=0;
-		match_len=strlen_search_str;
-		total_col=0;
-		line_offset=offset=0;
 		binary=FALSE;
-		return TRUE;
+		offset=0;
+		line_num=1;
+		col=1;
+		return 0;
 	}
-	for(i=0;i<len;i++){
+	pos=0;
+	while(pos<len){
+		int found=FALSE;
+		int match_len=0;
 		if(stop_thread)
 			break;
-		if(line_index==0)
-			line_offset=offset;
-		line[line_index]=buf[i];
-		if(buf[i]==0)
-			binary=TRUE;
-		if(buf[i]=='\n' || line_index>=sizeof(line)-2 || (eof && i==len-1)){
-			int j;
-			int start_pos=-1;
-			int col_pos=0;
-			int wpos=-1;
-			line[sizeof(line)-1]=0;
-			if(buf[i]=='\n'){
-				line[line_index]=0;
-				line_index--;
-				if(line_index>=0){
-					if(line[line_index]=='\r'){
-						line[line_index]=0;
-						line_index--;
-					}
-				}
-			}
-			total_col+=line_index+1;
-			for(j=0;j<line_index+1;j++){
-				char a,b;
+		{
+			char *str,*match;
+			const char *mp;
+			const char *cp = NULL;
+			str=buf+pos;
+			match=search_str;
+			partial_match=0;
+			while (*str){
 				if(stop_thread)
+					goto EXIT;
+				if((pos+match_len)>len){
+					partial_match=match_len-1;
+					goto EXIT2;
+				}
+				if (*match == '*'){
+					if (!*++match){
+						found=TRUE;
+						goto EXIT;
+					}
+					mp = match;
+					cp = str + 1;
+				}
+				else if (*match == '?' || upper_case(*match) == upper_case(*str)){
+					match++;
+					str++;
+				}
+				else if (!cp)
+					goto EXIT;
+				else{
+					match = mp;
+					str = cp++;
+				}
+				match_len++;
+				if(match_len>1024)
 					break;
-				if(case_sensitive){
-					a=search_str[match_offset];
-					b=line[j];
-				}else{
-					a=upper_case(search_str[match_offset]);
-					b=upper_case(line[j]);
-				}
-				if(a=='*'){
-					match_offset++;
-					if(start_pos<0)
-						start_pos=j;
-					wpos=start_pos+1;
-					if(j>0)
-						j--;
-				}
-				else if(a=='?' || a==b){
-					match_offset++;
-					if(start_pos<0)
-						start_pos=j;
-				}
-				else if(wpos<0){
-					if(leading_repeat>0){ //naive search
-						j-=match_offset;
-					}
-					start_pos=-1;
-					if(leading_repeat==0 && match_offset>0) //if target string has repeats
-						j--;
-					match_offset=0;
-				}
-				else if(wpos>=0){
-					if(search_str[match_offset-1]!='*'){
-						if(match_offset>0){
-							if(leading_repeat>0){ //naive search
-								if(j>match_offset && j>wpos){
-									int k=match_offset;
-									for( ;k>0;k--){
-										if(search_str[k]=='*'){
-											break;
-										}
-										else if(search_str[k]=='?'){
-											k--;
-											break;
-										}
-									}
-									if(k==0)
-										k=wpos;
-									j-=k;
-									match_offset-=k;
-								}
-							}
-							else{
-								match_offset--;
-								j--;
-							}
-						}
-					}
-				}
-				else{
-					wpos=-1;
-					match_offset=0;
-				}
-				if(match_offset==1)
-					col_pos=j;
-				if(match_offset>=match_len){
-					HWND hwnd_parent=ghwindow;
-					char *s=line;
-					int c,l,k,lb_index=-1;
-					c=start_pos;
-					l=j-start_pos+1;
-					//if(line_offset+start_pos==0x1461E5B)
-					//	l=l;
-					for(k=0;k<line_index+1;k++){
-						if(line[k]=='\t')
-							continue;
-						if(line[k]<' '||line[k]>0x7E)
-							line[k]='.';
-					}
-					if(start_pos+l>match_prefix_len){
-						int x=l;
-						if(x>match_prefix_len)
-							x=match_prefix_len;
-						s=line+start_pos+x-match_prefix_len;
-						c=match_prefix_len-x;
-					}
-
-					if(matches_found==0){
-						add_listbox_str(hwnd_parent,"File %s",current_fname);
-						files_occured++;
-					}
-					if(binary){
-						line[line_index+1]=0;
-						lb_index=add_listbox_str(hwnd_parent,"Offset 0x%I64X = %I64i %i %i -%s",line_offset+start_pos,line_num,c,l,s);
-					}
-					else
-						lb_index=add_listbox_str(hwnd_parent,"Line %I64i col %I64i = %i %i %I64X -%s",
-						line_num,total_col-line_index-1+col_pos+1,c,l,line_offset+start_pos,s);
-					if(do_replace)
-						replace_dlg(hwnd,lb_index);
-					match_offset=0;
-					matches_found++;
-					start_pos=wpos=-1;
-					
-				}
-			}//for(j=0;j<line_index+1;j++){
-			if(buf[i]=='\n'){
-				line_num++;
-				total_col=0;
 			}
-			if(line_index>=sizeof(line)-2 && match_offset>0 && start_pos>=0){
-				int start,len;
-				start=start_pos-match_prefix_len;
-				if(start<=0){
-					goto reset;
+			while (*match == '*')
+				match++;
+			found=!*match;
+			if(!found){
+				if(match_len>(len-pos)){
+					partial_match=len-pos;
+					goto EXIT2;
 				}
-				else{
-					len=sizeof(line)-2-(start_pos-match_prefix_len)+1;
-					if(len<0)
-						len=0;
-				}
-				memcpy(line,line+start,len);
-				total_col-=len;
-				line_index=len;
-				line_offset+=start;
-				match_offset=0;
-			}else{
-reset:
-				match_offset=0;
-				line_index=0;
-				memset(line,0,sizeof(line));
+				match_len=0;
 			}
-		}//if(buf[i]=='\n' || line_index>=sizeof(line)-2){
-		else{
-			line_index++;
-			if(line_index>=sizeof(line))
-				line_index=0;
 		}
-		offset++;
+EXIT:
+		if(found){
+			HWND hwnd_parent=ghwindow;
+			int i,line_col=0;
+			int lb_index=-1;
+			char str[512];
+			__int64 c_offset;
+			c_offset=offset+pos;
+			if(matches_found==0){
+				add_listbox_str(hwnd_parent,"File %s",current_fname);
+				files_occured++;
+			}
+			i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_len,match_prefix_len,&line_col,binary);
+			fill_eol(f,str,sizeof(str),i,buf,len,pos+match_len,binary,match_prefix_len);
+			str[sizeof(str)-1]=0;
+			if(binary){
+				lb_index=add_binary_match(hwnd_parent,&c_offset,&line_num,line_col,match_len,str);
+			}
+			else
+				lb_index=add_line_match(hwnd_parent,&c_offset,&line_num,&col,line_col,match_len,str);
+			if(do_replace)
+				replace_dlg(hwnd,lb_index);
+			matches_found++;
+		}
+		if(buf[pos]=='\n'){
+			line_num++;
+			col=1;
+		}else{
+			col++;
+		}
+		pos++;
+	}
+EXIT2:
+	offset+=len;
+	if((!eof) && (partial_match>0)){
+		if(partial_match>=len)
+			partial_match=len-1;
+		fseek(f,-partial_match,SEEK_CUR);
+		offset-=partial_match;
 	}
 	return 0;
-}
-int add_line_match(HWND hwnd,__int64 *offset,__int64 *line,__int64 *col,int match_pos,int match_len,char *str)
-{
-	return add_listbox_str(hwnd,"Line %I64i col %I64i = %i %i %I64X -%s",*line,*col,match_pos,match_len,*offset,str);
-}
-int add_binary_match(HWND hwnd,__int64 *offset,__int64 *line,int match_pos,int match_len,char *str)
-{
-	return add_listbox_str(hwnd,"Offset 0x%I64X = %I64i %i %i -%s",*offset,*line,match_pos,match_len,str);
 }
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
@@ -731,9 +653,15 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			break;
 		for(i=0;i<strlen_search_str;i++){
 			char a,b;
-			if((pos+i)>=len)
-				break;
-			a=buf[pos+i];
+			if(unicode_search){
+				if((pos+i*2)>=len)
+					break;
+				a=buf[pos+i*2];
+			}else{
+				if((pos+i)>=len)
+					break;
+				a=buf[pos+i];
+			}
 			b=search_str[i];
 			if(a==0 || b==0)
 				binary=TRUE;
@@ -762,6 +690,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				add_listbox_str(hwnd_parent,"File %s",current_fname);
 				files_occured++;
 			}
+			if(unicode_search)
+				match_len*=2;
 			i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_len,match_prefix_len,&line_col,binary);
 			fill_eol(f,str,sizeof(str),i,buf,len,pos+match_len,binary,match_prefix_len);
 			str[sizeof(str)-1]=0;
@@ -806,10 +736,16 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 		return FALSE;
 	}
 	f=fopen(current_fname,"rb");
+#ifdef _DEBUG
+//	#define _TEST 1
+#endif
 	if(f!=0){
 		char *buf;
-//		int size=0x100000;
-		int size=4;
+#if _TEST
+		int size=21;
+#else
+		int size=0x100000;
+#endif
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){
@@ -828,6 +764,9 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 				__int64 fpos;
 				if(stop_thread || skip_rest_file)
 					break;
+#if _TEST
+buf[read-1]=0;
+#endif
 				fpos=_ftelli64(f);
 				search_buffer(f,hwnd,FALSE,buf,read,fpos>=flen);
 				if((GetTickCount()-t1)>500){
@@ -1114,29 +1053,6 @@ int create_search_win(HWND hwnd,void *sproc,HWND *out)
 	return result;
 }
 
-int get_leading_repeats(char *str,int len)
-{
-	int i;
-	char a;
-	leading_repeat=0;
-	if(len>0)
-		a=str[0];
-	for(i=1;i<len;i++){
-		int compare=FALSE;
-		if(case_sensitive)
-			compare=(a==str[i]);
-		else
-			compare=(upper_case(a)==upper_case(str[i]));
-
-		if(wildcard_search && ((str[i]=='?') || (str[i]=='*')))
-			leading_repeat++;
-		else if(compare)
-			leading_repeat++;
-		else
-			break;
-	}
-	return leading_repeat;
-}
 int start_search(HWND hwnd,int replace)
 {
 	extern HINSTANCE	ghinstance;
@@ -1171,7 +1087,6 @@ int start_search(HWND hwnd,int replace)
 		}
 	}
 
-	get_leading_repeats(search_str,strlen_search_str);
 	search_str[sizeof(search_str)-1]=0;
 	replace_str[sizeof(replace_str)-1]=0;
 	save_combo_edit_ctrl(hwnd);
