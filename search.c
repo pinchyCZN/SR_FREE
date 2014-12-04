@@ -545,11 +545,18 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			match=search_str;
 			partial_match=0;
 			while (*str){
+				char a,b;
+				a=*match;
+				b=*str;
 				if(stop_thread)
 					goto EXIT;
 				if((pos+match_len)>len){
 					partial_match=match_len-1;
 					goto EXIT2;
+				}
+				if(!case_sensitive){
+					a=upper_case(a);
+					b=upper_case(b);
 				}
 				if (*match == '*'){
 					if (!*++match){
@@ -559,13 +566,18 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 					mp = match;
 					cp = str + 1;
 				}
-				else if (*match == '?' || upper_case(*match) == upper_case(*str)){
+				else if (*match == '?' || a == b){
 					match++;
 					str++;
 				}
 				else if (!cp)
 					goto EXIT;
 				else{
+					if(*match==0){
+						found=TRUE;
+						match_len-=2;
+						goto EXIT;
+					}
 					match = mp;
 					str = cp++;
 				}
@@ -737,7 +749,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	}
 	f=fopen(current_fname,"rb");
 #ifdef _DEBUG
-//	#define _TEST 1
+	#define _TEST 1
 #endif
 	if(f!=0){
 		char *buf;
