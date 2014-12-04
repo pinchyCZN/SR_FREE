@@ -530,7 +530,8 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		if(str == exp->_bol) return str;
 		return NULL;
 	case OP_EOL:
-		if(str == exp->_eol) return str;
+		if(str[0]=='\r' || str[0]=='\n')
+			return str;
 		return NULL;
 	case OP_DOT:{
 		*str++;
@@ -650,8 +651,10 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 				break;
 			node = exp->_nodes[node].next;
 		}
-		if(text_begin[0]=='\n')
+		if(text_begin[0]=='\n'){
 			line_count[0]++;
+			exp->_bol=text_begin+1;
+		}
 		if(text_begin[0]=='\n' || text_begin[0]=='\r')
 			col_pos[0]=1;
 		else if(cur == NULL)
