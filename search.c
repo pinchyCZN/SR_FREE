@@ -710,7 +710,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	static __int64 offset=0;
 	static __int64 line_num=0;
 	static __int64 col=0;
-	int pos;
+	int pos,partial_match=0;
 
 	if(regex_search)
 		return search_buffer_regex(f,hwnd,init,buf,len,eof);
@@ -719,8 +719,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 	if(init){
 		binary=FALSE;
 		offset=0;
-		line_num=0;
-		col=0;
+		line_num=1;
+		col=1;
 		return 0;
 	}
 	pos=0;
@@ -731,6 +731,8 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			break;
 		for(i=0;i<strlen_search_str;i++){
 			char a,b;
+			if((pos+i)>=len)
+				break;
 			a=buf[pos+i];
 			b=search_str[i];
 			if(a==0 || b==0)
@@ -743,6 +745,10 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				found=FALSE;
 				break;
 			}
+		}
+		if(i<strlen_search_str && found){
+			partial_match=i;
+			break;
 		}
 		if(found){
 			HWND hwnd_parent=ghwindow;
@@ -770,13 +776,20 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		}
 		if(buf[pos]=='\n'){
 			line_num++;
-			col=0;
+			col=1;
 		}else{
 			col++;
 		}
 		pos++;
 	}
 	offset+=len;
+	if((!eof) && (partial_match>0)){
+		if(partial_match<len){
+			fseek(f,-partial_match,SEEK_CUR);
+			offset-=partial_match;
+		}
+	}
+
 	return 0;
 }
 int search_replace_file(HWND hwnd,char *fname,char *path)
@@ -795,8 +808,8 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	f=fopen(current_fname,"rb");
 	if(f!=0){
 		char *buf;
-		int size=0x100000;
-//		int size=6;
+//		int size=0x100000;
+		int size=4;
 		int read=0;
 		buf=malloc(size);
 		if(buf!=0){
