@@ -550,10 +550,6 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				b=*str;
 				if(stop_thread)
 					goto EXIT;
-				if((pos+match_len)>len){
-					partial_match=match_len-1;
-					goto EXIT2;
-				}
 				if(!case_sensitive){
 					a=upper_case(a);
 					b=upper_case(b);
@@ -575,15 +571,23 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				else{
 					if(*match==0){
 						found=TRUE;
-						match_len-=2;
 						goto EXIT;
 					}
 					match = mp;
 					str = cp++;
 				}
-				match_len++;
-				if(match_len>1024)
+				if(*match==0){
 					break;
+				}
+				if(str>=(buf+len)){
+					partial_match=str-(buf+pos);
+					goto EXIT2;
+				}
+				if(*str=='\n')
+					break;
+				if(str>=(buf+pos+512)){
+					break;
+				}
 			}
 			while (*match == '*')
 				match++;
@@ -593,10 +597,10 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 					partial_match=len-pos;
 					goto EXIT2;
 				}
-				match_len=0;
 			}
-		}
 EXIT:
+		match_len=str-(buf+pos);
+		}
 		if(found){
 			HWND hwnd_parent=ghwindow;
 			int i,line_col=0;
@@ -749,7 +753,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	}
 	f=fopen(current_fname,"rb");
 #ifdef _DEBUG
-	#define _TEST 1
+//	#define _TEST 1
 #endif
 	if(f!=0){
 		char *buf;
@@ -759,7 +763,11 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 		int size=0x100000;
 #endif
 		int read=0;
+#if _TEST
+		buf=malloc(size+1);
+#else
 		buf=malloc(size);
+#endif
 		if(buf!=0){
 			unsigned long t1=GetTickCount();
 			__int64 flen=0;
@@ -777,7 +785,7 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 				if(stop_thread || skip_rest_file)
 					break;
 #if _TEST
-buf[read-1]=0;
+buf[read]=0;
 #endif
 				fpos=_ftelli64(f);
 				search_buffer(f,hwnd,FALSE,buf,read,fpos>=flen);
