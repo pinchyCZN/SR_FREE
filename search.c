@@ -642,6 +642,47 @@ EXIT2:
 	}
 	return 0;
 }
+int _isalnum(unsigned char a)
+{
+	if((a>='0' && a<='9') || (a>='a' && a<='z') || (a>='A' && a<='Z'))
+		return TRUE;
+	else
+		return FALSE;
+}
+int _isspace(unsigned char a)
+{
+	if(a==' ' || a=='\t' || a=='\r' || a=='\n')
+		return TRUE;
+	else 
+		return FALSE;
+}
+int verify_whole_word(char *str,int pos,int match_len,int str_len)
+{
+	int a,b;
+	if(pos>0){
+		a=_isalnum(str[pos-1]);
+		b=_isalnum(str[pos]);
+		if(a==b){
+			a=_isspace(str[pos-1]);
+			b=_isspace(str[pos]);
+			if(a==b)
+				return FALSE;
+		}
+	}
+	if((pos+match_len)<str_len){
+		int c;
+		a=_isalnum(str[pos+match_len-1]);
+		b=_isalnum(str[pos+match_len]);
+		c=str[pos+match_len];
+		if(a==b && c!=0){
+			a=_isspace(str[pos+match_len-1]);
+			b=_isspace(str[pos+match_len]);
+			if(a==b)
+				return FALSE;
+		}
+	}
+	return TRUE;
+}
 int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 {
 	static int binary=0;
@@ -706,23 +747,27 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			char str[512];
 			__int64 c_offset;
 			c_offset=offset+pos;
-			if(matches_found==0){
-				add_listbox_str(hwnd_parent,"File %s",current_fname);
-				files_occured++;
-			}
 			if(unicode_search)
 				match_len*=2;
 			i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_len,match_prefix_len,&line_col,binary);
 			fill_eol(f,str,sizeof(str),i,buf,len,pos+match_len,binary,match_prefix_len);
 			str[sizeof(str)-1]=0;
-			if(binary){
-				lb_index=add_binary_match(hwnd_parent,&c_offset,&line_num,line_col,match_len,str);
+			if(match_whole)
+				found=verify_whole_word(str,line_col,match_len,sizeof(str));
+			if(found){
+				if(matches_found==0){
+					add_listbox_str(hwnd_parent,"File %s",current_fname);
+					files_occured++;
+				}
+				if(binary){
+					lb_index=add_binary_match(hwnd_parent,&c_offset,&line_num,line_col,match_len,str);
+				}
+				else
+					lb_index=add_line_match(hwnd_parent,&c_offset,&line_num,&col,line_col,match_len,str);
+				if(do_replace)
+					replace_dlg(hwnd,lb_index);
+				matches_found++;
 			}
-			else
-				lb_index=add_line_match(hwnd_parent,&c_offset,&line_num,&col,line_col,match_len,str);
-			if(do_replace)
-				replace_dlg(hwnd,lb_index);
-			matches_found++;
 		}
 		if(buf[pos]=='\n'){
 			line_num++;
