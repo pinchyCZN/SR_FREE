@@ -399,7 +399,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 	case OP_GREEDY: {
 		//TRexNode *greedystop = (node->next != -1) ? &exp->_nodes[node->next] : NULL;
 		TRexNode *greedystop = NULL;
-		int p0 = (node->right >> 16)&0x0000FFFF, p1 = node->right&0x0000FFFF, nmaches = 0;
+		int p0 = (node->right >> 16)&0x0000FFFF, p1 = node->right&0x0000FFFF, nmatches = 0;
 		const TRexChar *s=str, *good = str;
 
 		if(node->next != -1) {
@@ -409,18 +409,19 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 			greedystop = next;
 		}
 		exp->_partial = 0;
-		while((nmaches == 0xFFFF || nmaches < p1)) {
+		while((nmatches == 0xFFFF || nmatches < p1)) {
 
 			const TRexChar *tmp;
 			if(!(tmp = trex_matchnode(exp,&exp->_nodes[node->left],s,greedystop)))
 				break;
-			nmaches++;
+			nmatches++;
 
 			if(greedystop) {
 				//checks that 0 matches satisfy the expression(if so skips)
 				//if not would always stop(for instance if is a '?')
-				if(greedystop->type != OP_GREEDY ||
-				(greedystop->type == OP_GREEDY && ((greedystop->right >> 16)&0x0000FFFF) != 0))
+				if((nmatches>1 && greedystop->type != OP_GREEDY) ||
+				(nmatches==1 && node->type == OP_GREEDY && 
+					((node->right >> 16)&0x0000FFFF) == 0))
 				{
 					const TRexChar *stop;
 					TRexNode *gnext = NULL;
@@ -432,9 +433,9 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 					stop = trex_matchnode(exp,greedystop,s,gnext);
 					if(stop) {
 						//if satisfied stop it
-						if(p0 == p1 && p0 == nmaches) break;
-						else if(nmaches >= p0 && p1 == 0xFFFF) break;
-						else if(nmaches >= p0 && nmaches <= p1) break;
+						if(p0 == p1 && p0 == nmatches) break;
+						else if(nmatches >= p0 && p1 == 0xFFFF) break;
+						else if(nmatches >= p0 && nmatches <= p1) break;
 					}
 				}
 			}
@@ -444,9 +445,9 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 			if(s >= exp->_eol)
 				break;
 		}
-		if(p0 == p1 && p0 == nmaches) return good;
-		else if(nmaches >= p0 && p1 == 0xFFFF) return good;
-		else if(nmaches >= p0 && nmaches <= p1) return good;
+		if(p0 == p1 && p0 == nmatches) return good;
+		else if(nmatches >= p0 && p1 == 0xFFFF) return good;
+		else if(nmatches >= p0 && nmatches <= p1) return good;
 		return NULL;
 	}
 	case OP_OR: {
@@ -598,7 +599,7 @@ TRex *trex_compile(const TRexChar *pattern,int case_sensitive,const TRexChar **e
 					scprintf(_SC("[%02d] %10s "),i,g_nnames[exp->_nodes[i].type-MAX_CHAR]);
 				else
 					scprintf(_SC("[%02d] %10c "),i,exp->_nodes[i].type);
-				scprintf(_SC("left %02d right %02d next %02d\n"),exp->_nodes[i].left,exp->_nodes[i].right,exp->_nodes[i].next);
+				scprintf(_SC("left %08X right %08X next %02d\n"),exp->_nodes[i].left,exp->_nodes[i].right,exp->_nodes[i].next);
 			}
 			scprintf(_SC("\n"));
 		}
@@ -680,8 +681,12 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 		}
 		*text_begin++;
 		if(text_begin==exp->_eol){
-			if(exp->_eol<text_end)
-				exp->_eol++;
+			if(exp->_eol<text_end){
+				if(exp->_eol[0]=='\r' && exp->_eol[0]=='\n')
+					exp->_eol+=2;
+				else
+					exp->_eol++;
+			}
 			while(exp->_eol<text_end){
 				char a=exp->_eol[0];
 				if(a=='\r' || a=='\n'){

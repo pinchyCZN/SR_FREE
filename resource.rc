@@ -53,7 +53,7 @@ BEGIN
                     WS_TABSTOP,142,12,48,11
     CONTROL         "&regex",IDC_REGEX,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,235,12,48,11
-    PUSHBUTTON      "&OPTIONS",IDC_OPTIONS,329,12,48,11
+    PUSHBUTTON      "OPTIONS",IDC_OPTIONS,329,12,48,11
     LTEXT           "Search for:",IDC_STATIC,0,30,39,11
     LTEXT           "Replace with:",IDC_STATIC,0,47,46,9
     LTEXT           "File Mask:",IDC_STATIC,0,63,36,10
