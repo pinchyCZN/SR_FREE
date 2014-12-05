@@ -411,17 +411,18 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		exp->_partial = 0;
 		while((nmaches == 0xFFFF || nmaches < p1)) {
 
-			const TRexChar *stop;
-			if(!(s = trex_matchnode(exp,&exp->_nodes[node->left],s,greedystop)))
+			const TRexChar *tmp;
+			if(!(tmp = trex_matchnode(exp,&exp->_nodes[node->left],s,greedystop)))
 				break;
 			nmaches++;
-			good=s;
+
 			if(greedystop) {
 				//checks that 0 matches satisfy the expression(if so skips)
 				//if not would always stop(for instance if is a '?')
 				if(greedystop->type != OP_GREEDY ||
 				(greedystop->type == OP_GREEDY && ((greedystop->right >> 16)&0x0000FFFF) != 0))
 				{
+					const TRexChar *stop;
 					TRexNode *gnext = NULL;
 					if(greedystop->next != -1) {
 						gnext = &exp->_nodes[greedystop->next];
@@ -437,7 +438,8 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 					}
 				}
 			}
-			
+			s=tmp;
+			good=s;
 			exp->_partial++;
 			if(s >= exp->_eol)
 				break;
@@ -553,9 +555,11 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 		return NULL;
 	default: /* char */
 		if(exp->_incase_sense){
-			if(makeupper(*str)!=makeupper(node->type)) return NULL;
+			if(makeupper(*str)!=makeupper(node->type))
+				return NULL;
 		}
-		else if(*str != node->type) return NULL;
+		else if(*str != node->type)
+			return NULL;
 		*str++;
 		return str;
 	}
@@ -640,7 +644,7 @@ TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* t
 	if(text_begin >= text_end) return TRex_False;
 	*partial_match = 0;
 	exp->_bol = text_begin;
-	//exp->_eol = text_end;
+//	exp->_eol = text_end;
 	exp->_eol = text_begin+1;
 	while(exp->_eol<text_end){
 		char a=exp->_eol[0];

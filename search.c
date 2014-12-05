@@ -802,12 +802,12 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 	}
 	f=fopen(current_fname,"rb");
 #ifdef _DEBUG
-//	#define _TEST 1
+	#define _TEST 1
 #endif
 	if(f!=0){
 		char *buf;
 #if _TEST
-		int size=21;
+		int size=0x100000;
 #else
 		int size=0x100000;
 #endif
