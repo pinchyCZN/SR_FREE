@@ -29,7 +29,6 @@
 #define IDC_WHOLEWORD                   1013
 #define IDC_WILDCARD                    1014
 #define IDC_ONTOP                       1015
-#define IDC_IGNOREWS                    1016
 #define IDC_UNICODE                     1017
 #define IDC_HEX                         1018
 #define IDC_LIST1                       1019

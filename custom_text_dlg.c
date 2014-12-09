@@ -19,7 +19,7 @@ int custom_type=0;
 
 int disable_options(HWND hwnd)
 {
-	int list[5]={IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD,IDC_IGNOREWS};
+	int list[5]={IDC_HEX,IDC_UNICODE,IDC_WHOLEWORD,IDC_WILDCARD};
 	int i;
 	for(i=0;i<sizeof(list);i++){
 		if(list[i]!=0)

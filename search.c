@@ -30,7 +30,6 @@ int cancel_all=FALSE;
 int do_replace=FALSE;
 int case_sensitive=FALSE;
 int match_whole=FALSE;
-int ignore_whitespace=FALSE;
 int unicode_search=FALSE;
 int wildcard_search=FALSE;
 int regex_search=FALSE;
@@ -925,7 +924,6 @@ int search_thread(HWND hwnd)
 	search_sub_dirs=is_button_checked(ghwindow,IDC_SUBDIRS);
 	wildcard_search=is_button_checked(ghwindow,IDC_WILDCARD);
 	regex_search=is_button_checked(ghwindow,IDC_REGEX);
-	ignore_whitespace=is_button_checked(ghwindow,IDC_IGNOREWS);
 	match_whole=is_button_checked(ghwindow,IDC_WHOLEWORD);
 	hex_search=is_button_checked(ghwindow,IDC_HEX);
 	if(hex_search){

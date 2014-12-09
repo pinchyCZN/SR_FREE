@@ -43,8 +43,6 @@ BEGIN
                     BS_PUSHLIKE | WS_TABSTOP,188,1,48,11
     CONTROL         "&wildcard",IDC_WILDCARD,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,235,1,48,11
-    CONTROL         "ignore wspace",IDC_IGNOREWS,"Button",BS_AUTOCHECKBOX | 
-                    BS_PUSHLIKE | WS_TABSTOP,282,1,48,11
     CONTROL         "on top",IDC_ONTOP,"Button",BS_AUTOCHECKBOX | 
                     BS_PUSHLIKE | WS_TABSTOP,329,1,48,11
     CONTROL         "&unicode",IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
