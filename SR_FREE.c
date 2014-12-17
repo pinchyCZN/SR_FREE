@@ -260,7 +260,7 @@ int check_ext_favs(char *mask,int mask_size,char *ext)
 		free(tmpstr);
 	return result;
 }
-int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
+int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift,int alt)
 {
 	int i,count;
 	char str[MAX_PATH];
@@ -296,7 +296,9 @@ int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 					strcat(paths,fpath);
 				}
 			}
-			if(shift && (!ctrl)){
+			if(alt)
+				; //dont alter mask
+			else if(shift && (!ctrl)){
 				if(strlen(mask)<(sizeof(mask)-5)){
 					if(strstr(mask,"*.*")==0){
 						if(mask[0]!=0)
@@ -1093,7 +1095,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_DROPFILES:
 		process_drop(hwnd,(HANDLE)wparam,GetKeyState(VK_CONTROL)&0x8000,
-			GetKeyState(VK_SHIFT)&0x8000);
+			GetKeyState(VK_SHIFT)&0x8000,GetKeyState(VK_MENU)&0x8000);
 		break;
 	case WM_CONTEXTMENU:
 		if(wparam==GetDlgItem(hwnd,IDC_LIST1)){

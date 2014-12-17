@@ -55,21 +55,25 @@ int destroy_tooltip()
 }
 int get_correct_msg(char *msg,int len)
 {
-	int shift=FALSE,ctrl=FALSE;
+	int shift=FALSE,ctrl=FALSE,alt=FALSE;
 	static char *cmsg="CTRL=mask exact filename";
 	static char *smsg="SHIFT=mask *.*";
-	static char *csmsg="CTRL+SHIFT mask by *.ext";
+	static char *csmsg="CTRL+SHIFT=mask by *.ext";
+	static char *amsg="ALT=do not alter mask";
 
 	if(msg==0 || len<=0)
 		return FALSE;
 	shift=GetKeyState(VK_SHIFT)&0x8000;
 	ctrl=GetKeyState(VK_CONTROL)&0x8000;
-	if(ctrl==FALSE && shift==FALSE)
-		_snprintf(msg,len,"%s\r\n%s\r\n%s",cmsg,smsg,csmsg);
+	alt=GetKeyState(VK_MENU)&0x8000;
+	if(ctrl==FALSE && shift==FALSE && alt==FALSE)
+		_snprintf(msg,len,"%s\r\n%s\r\n%s\r\n%s",cmsg,smsg,csmsg,amsg);
 	else if(ctrl && shift==FALSE)
 		_snprintf(msg,len,"%s",cmsg);
 	else if(shift && ctrl==FALSE)
 		_snprintf(msg,len,"%s",smsg);
+	else if(alt)
+		_snprintf(msg,len,"%s",amsg);
 	else
 		_snprintf(msg,len,"%s",csmsg);
 	msg[len-1]=0;
@@ -136,7 +140,7 @@ static HRESULT STDMETHODCALLTYPE idroptarget_drop(IDropTarget* This, IDataObject
 	//printf("drag drop\n");
 	if(S_OK==pDataObject->lpVtbl->GetData(pDataObject,&fmtetc,&stg)){
 			process_drop(ghwnd,(HANDLE)stg.hGlobal,GetKeyState(VK_CONTROL)&0x8000,
-				GetKeyState(VK_SHIFT)&0x8000);
+				GetKeyState(VK_SHIFT)&0x8000,GetKeyState(VK_MENU)&0x8000);
 
 	}
 	destroy_tooltip();
