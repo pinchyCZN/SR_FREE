@@ -902,6 +902,29 @@ int load_window_pos_relative(HWND hparent,HWND hwnd,char *section)
 		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
 	return result;
 }
+int clamp_window_size(int *x,int *y,int *width,int *height,RECT *monitor)
+{
+	int mwidth,mheight;
+	mwidth=monitor->right-monitor->left;
+	mheight=monitor->bottom-monitor->top;
+	if(mwidth<=0)
+		return FALSE;
+	if(mheight<=0)
+		return FALSE;
+	if(*x<monitor->left)
+		*x=monitor->left;
+	if(*width>mwidth)
+		*width=mwidth;
+	if(*x+*width>monitor->right)
+		*x=monitor->right-*width;
+	if(*y<monitor->top)
+		*y=monitor->top;
+	if(*height>mheight)
+		*height=mheight;
+	if(*y+*height>monitor->bottom)
+		*y=monitor->bottom-*height;
+	return TRUE;
+}
 int load_window_size(HWND hwnd,char *section)
 {
 	RECT rect={0};
@@ -918,10 +941,8 @@ int load_window_size(HWND hwnd,char *section)
 			if(width<50 || height<50){
 				flags|=SWP_NOSIZE;
 			}
-			if(x>(rect.right-25) || x<(rect.left-25)
-				|| y<(rect.top-25) || y>(rect.bottom-25)){
+			if(!clamp_window_size(&x,&y,&width,&height,&rect))
 				flags|=SWP_NOMOVE;
-			}
 			if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
 				result=TRUE;
 		}
