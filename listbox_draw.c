@@ -46,8 +46,9 @@ int load_bitmaps(HINSTANCE ghinstance)
 	hcontinue=LoadBitmap(ghinstance,MAKEINTRESOURCE(IDB_CONTINUE));
 	return TRUE;
 }
-int draw_item(DRAWITEMSTRUCT *di,char *list_string)
+int draw_item(DRAWITEMSTRUCT *di,char *input_string)
 {
+	char list_string[1024];
 	int style;
 	RECT rect;
 	SIZE size;
@@ -56,6 +57,20 @@ int draw_item(DRAWITEMSTRUCT *di,char *list_string)
 	int bgcolor=COLOR_BACKGROUND;
 	int is_file=FALSE,is_line=FALSE,is_offset=FALSE;
 
+	{
+		int i,index=0;
+		for(i=0;i<sizeof(list_string);i++){
+			char a=input_string[i];
+			if(a==0)
+				break;
+			else if(a=='\t')
+				a=' ';
+			list_string[index++]=a;
+			if(index>=(sizeof(list_string)-1))
+				break;
+		}
+		list_string[index]=0;
+	}
 
 	hdcMem=CreateCompatibleDC(di->hDC);
 	if(strnicmp(list_string,"file",sizeof("file")-1)==0)

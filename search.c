@@ -247,7 +247,9 @@ int is_wordsubset(unsigned char a)
 }
 int convert_char(unsigned char a)
 {
-	if(a=='\t' || a=='\r')
+	if(a=='\t')
+		return a;
+	if(a=='\r')
 		return ' ';
 	else if(a<' '  || a>0x7E)
 		return '.';
