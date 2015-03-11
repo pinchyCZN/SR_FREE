@@ -821,7 +821,6 @@ int search_replace_file(HWND hwnd,char *fname,char *path)
 		if(buf!=0){
 			unsigned long t1=GetTickCount();
 			__int64 flen=0;
-			set_message_str(hwnd,"%s",current_fname);
 			matches_found=0;
 			search_buffer(0,0,TRUE,0,0,0);
 //			while((read=fread(buf,1,1+(rand()%12),f))!=0){
@@ -840,7 +839,7 @@ buf[read]=0;
 				fpos=_ftelli64(f);
 				search_buffer(f,hwnd,FALSE,buf,read,fpos>=flen);
 				if((GetTickCount()-t1)>500){
-					//set_message_str(hwnd,"%%%.1f",100*(double)tmp/(double)flen);
+					set_message_str(hwnd,"%s",current_fname);
 					set_progress_bar(hwnd,100*(double)fpos/(double)flen);
 					t1=GetTickCount();
 				}
@@ -880,11 +879,17 @@ int find_files(HWND hwnd,char *path,char *filemask,int *total,
 
 	fhandle=FindFirstFile(search_path,&fd);
 	if(fhandle!=INVALID_HANDLE_VALUE){
+		DWORD tick=0,delta;
 		do{
 			int result;
 			if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)){
 				result=does_file_match(filemask,fd.cFileName,path);
 				if(result){
+					delta=GetTickCount();
+					if((delta-tick)>150){
+						set_message_str(hwnd,"%s\\%s",path,fd.cFileName);
+						tick=delta;
+					}
 					search_replace_file(hwnd,fd.cFileName,path);
 					files_searched++;
 					total[0]++;
