@@ -166,6 +166,7 @@ int show_main_help(HWND hwnd,HELPINFO *hi)
 					"ctrl+r=set replace focus\r\n"
 					"ctrl+f=set file mask focus\r\n"
 					"ctrl+p=set path focus\r\n\r\n"
+					"ctrl+backspace=move up dir\r\n"
 					"ctrl+drag=mask exact filenames\r\n"
 					"shift+drag=mask by *.*\r\n"
 					"ctrl+shift+drag=mask by *.ext\r\n"
@@ -1249,6 +1250,8 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			replace_options(hwnd);
 			break;
 		case IDC_PATH_UPONE:
+			if((1==HIWORD(wparam)) && GetFocus()!=GetDlgItem(hwnd,IDC_LIST1))
+				break;
 			path_up_level(hwnd,IDC_COMBO_PATH);
 			break;
 		case IDC_FILE_OPTIONS:
