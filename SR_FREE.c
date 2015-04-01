@@ -1062,7 +1062,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	static HWND grippy=0;
 
 #ifdef _DEBUG
-	if(FALSE)
+	//if(FALSE)
 //	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
 	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
 		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
@@ -1128,45 +1128,33 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		}
 		break;
 	case WM_VKEYTOITEM:
-		switch(LOWORD(wparam)){
-		case '0':case '1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
-			{
-				int index=CMD_OPENWITH+LOWORD(wparam)-'1';
-			if(LOWORD(wparam)=='0')
-				index=CMD_OPENASSOC;
-			handle_context_open(hwnd,index);
+		{
+			int ctrl,shift,key;
+			ctrl=GetKeyState(VK_CONTROL)&0x8000;
+			shift=GetKeyState(VK_SHIFT)&0x8000;
+			key=LOWORD(wparam);
+			switch(key){
+			case '0':case '1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
+				{
+					int index=CMD_OPENWITH+LOWORD(wparam)-'1';
+				if(LOWORD(wparam)=='0')
+					index=CMD_OPENASSOC;
+				handle_context_open(hwnd,index);
+				}
+				break;
+			case 'C':
+				{
+					if(ctrl)
+						copy_items_clip(hwnd,shift);
+				}
+				break;
+			case 'A':
+				if(ctrl)
+					SendDlgItemMessage(hwnd,IDC_LIST1,LB_SELITEMRANGEEX,0,0xFFFF);
+				break;
 			}
-			break;
-		case 'C':
-			{
-				int all=GetKeyState(VK_SHIFT)&0x8000;
-				if(GetKeyState(VK_CONTROL)&0x8000)
-					copy_items_clip(hwnd,all);
-			}
-			break;
-		case 'A':
-			if(GetKeyState(VK_CONTROL)&0x8000)
-				SendDlgItemMessage(hwnd,IDC_LIST1,LB_SELITEMRANGEEX,0,0xFFFF);
-			break;
-		case 'S':
-			if(GetKeyState(VK_CONTROL)&0x8000)
-				PostMessage(GetDlgItem(hwnd,IDC_COMBO_SEARCH),WM_SETFOCUS,GetDlgItem(hwnd,IDC_LIST1),0);
-			break;
-		case 'R':
-			if(GetKeyState(VK_CONTROL)&0x8000)
-				PostMessage(GetDlgItem(hwnd,IDC_COMBO_REPLACE),WM_SETFOCUS,GetDlgItem(hwnd,IDC_LIST1),0);
-			break;
-
 		}
 		return -1;
-		break;
-	case WM_CHARTOITEM:
-		switch(wparam){
-		case 'z':
-			break;
-		case 'x':
-			break;
-		}
 		break;
 	case WM_COMMAND:
 		switch(LOWORD(wparam)){
@@ -1192,7 +1180,6 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 				SetDlgItemText(hwnd,IDC_DEPTH_LEVEL,"0");
 			cancel_search();
 			}
-		//	PostQuitMessage(0);
 			break;
 		default:
 		case CMD_OPENWITH:
@@ -1203,7 +1190,8 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		case IDC_LIST1:
 			switch(HIWORD(wparam)){
 			case 1:
-				SetFocus(GetDlgItem(hwnd,LOWORD(wparam)));
+				if(lparam==0)
+					SetFocus(GetDlgItem(hwnd,LOWORD(wparam)));
 				break;
 			case LBN_DBLCLK:
 				if((GetKeyState(VK_CONTROL)&0x8000) || (GetKeyState(VK_SHIFT)&0x8000) || (GetKeyState(VK_MENU)&0x8000))
