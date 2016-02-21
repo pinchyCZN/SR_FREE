@@ -328,8 +328,10 @@ int fill_eol(FILE *f,char *str,int str_size,int pos,char *buf,int buf_len,int ma
 					eol=TRUE;
 					break;
 				}
-				else if(a<' ')
-					binary=TRUE;
+				else if(a<' '){
+					if(a!='\t')
+						binary=TRUE;
+				}
 
 				str[index++]=convert_char(a);
 				if(index>=str_size)
