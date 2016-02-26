@@ -11,6 +11,7 @@
 extern HINSTANCE	ghinstance;
 HWND main_hwnd=0;
 
+#define SR_MAX_PATH 4096
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
 
@@ -93,28 +94,30 @@ int create_new_replace_str(char *str,int size,__int64 offset)
 	}
 	return TRUE;
 }
-int create_tmp_fname(char *path,char *tmp,int len)
+int create_tmp_fname(WCHAR *path,WCHAR *tmp,int len)
 {
-	char drive[4];
-	char dir[255];
-	char name[255];
-	char ext[255];
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char name[_MAX_FNAME];
+	char ext[_MAX_EXT];
 	int num=0;
 	FILE *f=-1;
-	_splitpath(path,drive,dir,name,ext);
+	_wsplitpath(path,drive,dir,name,ext);
 	do{
-		_snprintf(tmp,len,"%s%s%010i%s%s",drive,dir,num,name,ext);
+		_snwprintf(tmp,len,L"\\\\?\\%s%s%010i%s%s",drive,dir,num,name,ext);
+		if(len>0)
+			tmp[len-1]=0;
 		if(num>100000){
 			tmp[0]=0;
 			break;
 		}
-		f=fopen(tmp,"rb");
+		f=_wfopen(tmp,L"rb");
 		if(f!=0)
 			fclose(f);
 		num++;
 	}while(f!=0);
 	if(f==0)
-	printf("tmpfname=%s\n",tmp);
+		wprintf(L"tmpfname=%s\n",tmp);
 	return TRUE;
 
 }
@@ -151,8 +154,8 @@ int move_file_data(FILE *fin,FILE *fout,__int64 len,__int64 *moved)
 int replace_in_file(HWND hwnd,char *info,int close_file)
 {
 	static FILE *fin=0,*fout=0;
-	static char fname[MAX_PATH]={0};
-	static char tmp[MAX_PATH]={0};
+	static WCHAR fname[SR_MAX_PATH]={0};
+	static WCHAR tmp[SR_MAX_PATH]={0};
 	static __int64 offset,write_offset,read_offset;
 	int is_line=FALSE,match_len=0;
 	static int state=0;
@@ -170,8 +173,8 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 			fclose(fin);
 		if(fin!=0 && fout!=0){
 			if(!move_file(tmp,fname)){
-				char err[MAX_PATH*2+80];
-				_snprintf(err,sizeof(err),"failed to move:\r\n%s\r\nto\r\n%s",tmp,fname);
+				WCHAR err[MAX_PATH*2+80];
+				_snwprintf(err,sizeof(err)/sizeof(WCHAR),L"failed to move:\r\n%s\r\nto\r\n%s",tmp,fname);
 				if(MessageBox(hwnd,err,"File moved failed",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL)
 					set_replace_all_remain(FALSE);
 			}
@@ -187,10 +190,10 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 		return FALSE;
 	switch(state){
 	case 0:
-		get_current_fname(fname,sizeof(fname));
-		create_tmp_fname(fname,tmp,sizeof(tmp));
-		fout=fopen(tmp,"wb");
-		fin=fopen(fname,"rb");
+		get_current_fname(fname,sizeof(fname)/sizeof(WCHAR));
+		create_tmp_fname(fname,tmp,sizeof(tmp)/sizeof(WCHAR));
+		fout=_wfopen(tmp,L"wb");
+		fin=_wfopen(fname,L"rb");
 		read_offset=write_offset=0;
 		state=1;
 		break;
@@ -237,8 +240,8 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 			return TRUE;
 		}
 		else{
-			char err[MAX_PATH+80];
-			_snprintf(err,sizeof(err),"file data error:\r\n%s",tmp);
+			WCHAR err[MAX_PATH+80];
+			_snwprintf(err,sizeof(err)/sizeof(WCHAR),L"file data error:\r\n%s",tmp);
 			if(MessageBox(hwnd,err,"read_offset!=offset",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL){
 				set_replace_all_remain(FALSE);
 				set_cancel_all(TRUE);
@@ -256,17 +259,17 @@ LRESULT CALLBACK replace_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 	case WM_INITDIALOG:
 		{
-			char fname[MAX_PATH]={0};
+			WCHAR fname[MAX_PATH*2]={0};
 			char *rstr=0,*sstr=0;
 			char str[80*3]={0};
 			get_replace_str(&rstr,0);
 			get_search_str(&sstr,0);
 			_snprintf(str,sizeof(str),"Replace [%.80s] with [%.80s]",sstr,rstr);
 			SetWindowText(hwnd,str);
-			get_current_fname(fname,sizeof(fname));
+			get_current_fname(fname,sizeof(fname)/sizeof(WCHAR));
 			grippy=create_grippy(hwnd);
 			SetFocus(GetDlgItem(hwnd,IDC_REPLACE_THIS));
-			add_listbox_str(hwnd,"File %s",fname);
+			add_listbox_str_wc(hwnd,"File %s",fname);
 			add_listbox_str(hwnd,"%s",lb_str);
 			add_listbox_str(hwnd,"Replace with");
 			add_listbox_str(hwnd,"%s",replaced_str);

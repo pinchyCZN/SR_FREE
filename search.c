@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "trex.h"
 
+#define SR_MAX_PATH 4096
 extern HWND ghwindow;
 static HWND modeless_search_hwnd=0;
 
@@ -40,7 +41,7 @@ int files_searched=0;
 int files_occured=0;
 int matches_found=0;
 int total_matches=0;
-char current_fname[MAX_PATH]={0};
+WCHAR current_fname[SR_MAX_PATH]={0};
 int match_prefix_len=40;
 
 TRex *trex_regx=0;
@@ -65,9 +66,9 @@ int set_cancel_all(int i)
 	if(i)stop_thread=TRUE;
 	return cancel_all=i;
 }
-int get_current_fname(char *fname,int len)
+int get_current_fname(WCHAR *fname,int len)
 {
-	return strncpy(fname,current_fname,len);
+	return wcsncpy(fname,current_fname,len);
 }
 int get_search_str(char **sstr,int *slen)
 {
@@ -121,6 +122,42 @@ int wild_card_match(const char *match,const char *str)
 
 	return !*match;
 }
+int upper_case_wc(WCHAR a)
+{
+	if((a>=L'a') && (a<=L'z'))
+		return a&(L' '^0xFF);
+	else
+		return a;
+}
+int wild_card_match_wc(const WCHAR *match,const WCHAR *str)
+{
+	const WCHAR *mp;
+	const WCHAR *cp = NULL;
+
+	while (*str){
+		if (*match == L'*'){
+			if (!*++match)
+				return TRUE;
+			mp = match;
+			cp = str + 1;
+		}
+		else if (*match == L'?' || upper_case_wc(*match) == upper_case_wc(*str)){
+			match++;
+			str++;
+		}
+		else if (!cp)
+			return FALSE;
+		else{
+			match = mp;
+			str = cp++;
+		}
+	}
+
+	while (*match == L'*')
+		match++;
+
+	return !*match;
+}
 int str_trim_right(char *s)
 {
 	int i,len=strlen(s);
@@ -132,30 +169,30 @@ int str_trim_right(char *s)
 	}
 	return TRUE;
 }
-int does_file_match(char *mask,char *fname,char *path)
+int does_file_match(WCHAR *mask,WCHAR *fname,WCHAR *path)
 {
-	char m1[MAX_PATH]={0};
+	WCHAR m1[SR_MAX_PATH]={0};
 	int i,len,index=0;
 	int fmatch=FALSE,pmatch=TRUE;
-	len=strlen(mask);
+	len=wcslen(mask);
 	for(i=0;i<len;i++){
 		int exclude=FALSE;
-		if(mask[i]==';' || index>=(MAX_PATH-1) || i>=(len-1)){
-			char *m;
-			if(i>=(len-1) && mask[i]!=';')
+		if(mask[i]==L';' || index>=(sizeof(m1)/sizeof(WCHAR)-1) || i>=(len-1)){
+			WCHAR *m;
+			if(i>=(len-1) && mask[i]!=L';')
 				m1[index++]=mask[i];
 			m1[index++]=0;
 			index=0;
-			if(strlen(m1)==0)
+			if(wcslen(m1)==0)
 				continue;
 			m=m1;
-			if(m[0]=='~'){
+			if(m[0]==L'~'){
 				exclude=TRUE;
 				m++;
 			}
-			if(m[0]=='\\'){
+			if(m[0]==L'\\'){
 				m++;
-				if(wild_card_match(m,path)){
+				if(wild_card_match_wc(m,path)){
 					if(exclude)
 						pmatch=FALSE;
 					else
@@ -164,7 +201,7 @@ int does_file_match(char *mask,char *fname,char *path)
 				else if(!exclude)
 					pmatch=FALSE;
 			}
-			else if(wild_card_match(m,fname)){
+			else if(wild_card_match_wc(m,fname)){
 				if(exclude)
 					fmatch=FALSE;
 				else
@@ -190,14 +227,23 @@ int add_listbox_str(HWND hwnd,char *fmt,...)
 	str[sizeof(str)-1]=0;
 	return SendDlgItemMessage(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
 }
-int set_message_str(HWND hwnd,char *fmt,...)
+int add_listbox_str_wc(HWND hwnd,WCHAR *fmt,...)
 {
-	char str[MAX_PATH*2]={0};
+	WCHAR str[1024]={0};
 	va_list args;
 	va_start(args,fmt);
-	_vsnprintf(str,sizeof(str),fmt,args);
-	str[sizeof(str)-1]=0;
-	SetDlgItemText(hwnd,IDC_SEARCH_STATUS,str);
+	_vsnwprintf(str,sizeof(str)/sizeof(WCHAR),fmt,args);
+	str[sizeof(str)/sizeof(WCHAR)-1]=0;
+	return SendDlgItemMessageW(hwnd,IDC_LIST1,LB_ADDSTRING,0,str);
+}
+int set_message_str_wc(HWND hwnd,WCHAR *fmt,...)
+{
+	WCHAR str[MAX_PATH*2]={0};
+	va_list args;
+	va_start(args,fmt);
+	_vsnwprintf(str,sizeof(str)/sizeof(WCHAR),fmt,args);
+	str[sizeof(str)/sizeof(WCHAR)-1]=0;
+	SetDlgItemTextW(hwnd,IDC_SEARCH_STATUS,str);
 	return TRUE;
 }
 int convert_hex_str(char *str,int size)
@@ -469,7 +515,7 @@ int search_buffer_regex(FILE *f,HWND hwnd,int init,unsigned char *buf,int len,in
 		s=(unsigned char*)begin;
 		
 		if(matches_found==0){
-			add_listbox_str(hwnd_parent,"File %s",current_fname);
+			add_listbox_str_wc(hwnd_parent,L"File %s",current_fname);
 			files_occured++;
 		}
 		matches_found++;
@@ -612,7 +658,7 @@ EXIT:
 			__int64 c_offset;
 			c_offset=offset+pos;
 			if(matches_found==0){
-				add_listbox_str(hwnd_parent,"File %s",current_fname);
+				add_listbox_str_wc(hwnd_parent,L"File %s",current_fname);
 				files_occured++;
 			}
 			i=fill_begin_line(f,offset,str,sizeof(str),buf,pos,match_len,match_prefix_len,&line_col,binary);
@@ -759,7 +805,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 				found=verify_whole_word(str,line_col,match_len,sizeof(str));
 			if(found){
 				if(matches_found==0){
-					add_listbox_str(hwnd_parent,"File %s",current_fname);
+					add_listbox_str_wc(hwnd_parent,L"File %s",current_fname);
 					files_occured++;
 				}
 				if(binary){
@@ -790,20 +836,21 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 
 	return 0;
 }
-int search_replace_file(HWND hwnd,char *fname,char *path)
+int search_replace_file(HWND hwnd,WCHAR *fname,WCHAR *path)
 {
 	FILE *f;
-	strncpy(current_fname,path,sizeof(current_fname));
-	current_fname[sizeof(current_fname)-1]=0;
-	if(current_fname[strlen(current_fname)-1]!='\\')
-		_snprintf(current_fname,sizeof(current_fname),"%s\\",current_fname);
-	_snprintf(current_fname,sizeof(current_fname),"%s%s",current_fname,fname);
-	current_fname[sizeof(current_fname)-1]=0;
+	static WCHAR full_path[SR_MAX_PATH];
+	_snwprintf(full_path,sizeof(full_path)/sizeof(WCHAR),L"\\\\?\\%s\\%s",path,fname);
+	full_path[sizeof(full_path)/sizeof(WCHAR)-1]=0;
+
+	_snwprintf(current_fname,sizeof(current_fname)/sizeof(WCHAR),L"%s\\%s",path,fname);
+	current_fname[sizeof(current_fname)/sizeof(WCHAR)-1]=0;
+
 	if(strlen_search_str==0){
-		add_listbox_str(ghwindow,"File %s",current_fname);
+		add_listbox_str_wc(ghwindow,L"File %s",current_fname);
 		return FALSE;
 	}
-	f=fopen(current_fname,"rb");
+	f=_wfopen(full_path,L"rb");
 #ifdef _DEBUG
 	#define _TEST 1
 #endif
@@ -841,7 +888,7 @@ buf[read]=0;
 				fpos=_ftelli64(f);
 				search_buffer(f,hwnd,FALSE,buf,read,fpos>=flen);
 				if((GetTickCount()-t1)>500){
-					set_message_str(hwnd,"%s",current_fname);
+					set_message_str_wc(hwnd,L"%s",current_fname);
 					set_progress_bar(hwnd,100*(double)fpos/(double)flen);
 					t1=GetTickCount();
 				}
@@ -858,28 +905,24 @@ buf[read]=0;
 	}
 	return TRUE;
 }
-int combine_path(char *path,char *extra) //assumes path MAX_PATH len
-{
-	if(path[strlen(path)-1]!='\\')
-		_snprintf(path,MAX_PATH,"%s\\",path);
-	_snprintf(path,MAX_PATH,"%s%s",path,extra);
-	path[MAX_PATH-1]=0;
-	return TRUE;
-}
-int find_files(HWND hwnd,char *path,char *filemask,int *total,
+int find_files(HWND hwnd,WCHAR *path,WCHAR *filemask,int *total,
 			   int search_sub_dirs,unsigned int max_depth,unsigned int current_depth)
 {
-	char search_path[MAX_PATH]={0};
-	WIN32_FIND_DATA fd;
+	int result=FALSE;
+	WCHAR *search_path=0;
+	int search_path_size=SR_MAX_PATH;
+	WIN32_FIND_DATAW fd;
 	HANDLE fhandle;
 	if(stop_thread)
-		return FALSE;
+		return result;
 	if(current_depth>max_depth)
-		return FALSE;
-	strncpy(search_path,path,sizeof(search_path));
-	combine_path(search_path,"*.*");
-
-	fhandle=FindFirstFile(search_path,&fd);
+		return result;
+	search_path=malloc(search_path_size*sizeof(WCHAR));
+	if(search_path==0)
+		return result;
+	_snwprintf(search_path,search_path_size,L"\\\\?\\%s\\*.*",path);
+	search_path[search_path_size-1]=0;
+	fhandle=FindFirstFileW(search_path,&fd);
 	if(fhandle!=INVALID_HANDLE_VALUE){
 		DWORD tick=0,delta;
 		do{
@@ -889,7 +932,7 @@ int find_files(HWND hwnd,char *path,char *filemask,int *total,
 				if(result){
 					delta=GetTickCount();
 					if((delta-tick)>150){
-						set_message_str(hwnd,"%s\\%s",path,fd.cFileName);
+						set_message_str_wc(hwnd,L"%s\\%s",path,fd.cFileName);
 						tick=delta;
 					}
 					search_replace_file(hwnd,fd.cFileName,path);
@@ -898,32 +941,45 @@ int find_files(HWND hwnd,char *path,char *filemask,int *total,
 				}
 			}
 			else if(search_sub_dirs){
-				if(fd.cFileName[0]!='.'){
-					strncpy(search_path,path,sizeof(search_path));
-					combine_path(search_path,fd.cFileName);
+				if((0==wcscmp(fd.cFileName,L"."))
+					|| (0==wcscmp(fd.cFileName,L".."))){
+					;
+				}else{
+					_snwprintf(search_path,search_path_size,L"%s\\%s",path,fd.cFileName);
+					search_path[search_path_size-1]=0;
 					find_files(hwnd,search_path,filemask,total,search_sub_dirs,max_depth,current_depth+1);
 				}
 			}
 			if(stop_thread)
 				break;
-		}while(FindNextFile(fhandle,&fd)!=0);
+		}while(FindNextFileW(fhandle,&fd)!=0);
 		FindClose(fhandle);
-		return TRUE;
+		result=TRUE;
 	}
-	return FALSE;
+	if(search_path!=0)
+		free(search_path);
+	return result;
+}
+int normalize_path(WCHAR *path,int path_size)
+{
+	int len=wcslen(path);
+	if(len>0 && len<=path_size)
+		if(path[len-1]==L'\\')
+			path[len-1]=0;
+	return 0;
 }
 int search_thread(HWND hwnd)
 {
-	char filemask[1024]={0};
-	char all_paths[1024]={0};
-	char path[MAX_PATH]={0};
-	WIN32_FIND_DATA fd;
+	static WCHAR filemask[MAX_PATH]={0};
+	static WCHAR all_paths[SR_MAX_PATH]={0};
+	static WCHAR path[SR_MAX_PATH]={0};
+	WIN32_FIND_DATAW fd;
 	int i,len,index,total=0;
 	int search_sub_dirs=TRUE;
 	thread_busy=TRUE;
 	memset(&fd,0,sizeof(fd));
-	GetDlgItemText(ghwindow,IDC_COMBO_PATH,all_paths,sizeof(all_paths));
-	GetDlgItemText(ghwindow,IDC_COMBO_MASK,filemask,sizeof(filemask));
+	GetDlgItemTextW(ghwindow,IDC_COMBO_PATH,all_paths,sizeof(all_paths)/sizeof(WCHAR));
+	GetDlgItemTextW(ghwindow,IDC_COMBO_MASK,filemask,sizeof(filemask)/sizeof(WCHAR));
 
 	SendDlgItemMessage(ghwindow,IDC_LIST1,LB_RESETCONTENT,0,0);
 	reset_line_width();
@@ -953,21 +1009,22 @@ int search_thread(HWND hwnd)
 	files_searched=0;
 	files_occured=0;
 	total_matches=0;
-	len=strlen(all_paths);
+	len=wcslen(all_paths);
 	index=0;
 	for(i=0;i<len;i++){
 		path[index++]=all_paths[i];
-		if(path[index-1]==';' || index>=(MAX_PATH-1) || i>=(len-1)){
+		if(path[index-1]==';' || index>=(sizeof(path)-1) || i>=(len-1)){
 			if(path[index-1]==';')
 				path[index-1]=0;
 			path[index++]=0;
 			index=0;
-			if(strlen(path)==0)
+			if(wcslen(path)==0)
 				continue;
-			if(!is_path_directory(path)){
-				add_listbox_str(ghwindow,"Invalid directory:%s",path);
+			if(!is_path_directory_wc(path)){
+				add_listbox_str_wc(ghwindow,L"Invalid directory:%s",path);
 				continue;
 			}
+			normalize_path(path,sizeof(path)/sizeof(WCHAR));
 			find_files(hwnd,path,filemask,&total,search_sub_dirs,depth_limit,0);
 			add_listbox_str(ghwindow,"Searched %i file(s), found %i occurrences in %i file(s)",
 				files_searched,total_matches,files_occured);

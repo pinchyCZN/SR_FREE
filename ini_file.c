@@ -8,6 +8,15 @@
 #define APP_NAME "SR_FREE"
 #include "ram_ini_file.h"
 char ini_file[MAX_PATH]={0};
+int is_path_directory_wc(WCHAR *path)
+{
+	int attrib;
+	attrib=GetFileAttributesW(path);
+	if((attrib!=0xFFFFFFFF) && (attrib&FILE_ATTRIBUTE_DIRECTORY))
+		return TRUE;
+	else
+		return FALSE;
+}
 int is_path_directory(char *path)
 {
 	int attrib;
