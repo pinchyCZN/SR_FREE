@@ -901,7 +901,7 @@ buf[read]=0;
 			free(buf);
 		}
 		fclose(f);
-		replace_in_file(0,TRUE);
+		replace_in_file(0,0,TRUE);
 	}
 	return TRUE;
 }

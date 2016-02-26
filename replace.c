@@ -94,12 +94,23 @@ int create_new_replace_str(char *str,int size,__int64 offset)
 	}
 	return TRUE;
 }
+int splitpath_long(WCHAR *fullpath,WCHAR *path,int path_size,WCHAR *fname,int fname_size)
+{
+	int fpath_len;
+	int i,index;
+	fpath_len=wcslen(fullpath);
+	for(i=fpath_len-1;i>=0;i--){
+		WCHAR a=fullpath[i];
+		if(a==L'\\'){
+		}
+	}
+}
 int create_tmp_fname(WCHAR *path,WCHAR *tmp,int len)
 {
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char name[_MAX_FNAME];
-	char ext[_MAX_EXT];
+	WCHAR drive[_MAX_DRIVE];
+	WCHAR dir[_MAX_DIR];
+	WCHAR name[_MAX_FNAME];
+	WCHAR ext[_MAX_EXT];
 	int num=0;
 	FILE *f=-1;
 	_wsplitpath(path,drive,dir,name,ext);
@@ -121,9 +132,10 @@ int create_tmp_fname(WCHAR *path,WCHAR *tmp,int len)
 	return TRUE;
 
 }
-int move_file(char *src,char *dest)
+int move_file(WCHAR *src,WCHAR *dest)
 {
-	return MoveFileEx(src,dest,MOVEFILE_REPLACE_EXISTING);
+	return FALSE;
+	return MoveFileExW(src,dest,MOVEFILE_REPLACE_EXISTING);
 }
 int move_file_data(FILE *fin,FILE *fout,__int64 len,__int64 *moved)
 {
@@ -175,7 +187,7 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 			if(!move_file(tmp,fname)){
 				WCHAR err[MAX_PATH*2+80];
 				_snwprintf(err,sizeof(err)/sizeof(WCHAR),L"failed to move:\r\n%s\r\nto\r\n%s",tmp,fname);
-				if(MessageBox(hwnd,err,"File moved failed",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL)
+				if(MessageBoxW(hwnd,err,L"File move failed",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL)
 					set_replace_all_remain(FALSE);
 			}
 		}

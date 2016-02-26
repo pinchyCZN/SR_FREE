@@ -104,8 +104,6 @@ SOURCE=.\trex\trex.c
 
 !IF  "$(CFG)" == "SR_FREE - Win32 Release"
 
-# ADD CPP /I ".\trex\\"
-
 !ELSEIF  "$(CFG)" == "SR_FREE - Win32 Debug"
 
 !ENDIF 
