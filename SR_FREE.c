@@ -10,7 +10,6 @@
 #include <Shlobj.h>
 #include "resource.h"
 
-#define SR_MAX_PATH 4096
 HWND		ghwindow;
 HINSTANCE	ghinstance;
 int _fseeki64(FILE *stream,__int64 offset,int origin);

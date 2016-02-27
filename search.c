@@ -8,7 +8,6 @@
 #include "resource.h"
 #include "trex.h"
 
-#define SR_MAX_PATH 4096
 extern HWND ghwindow;
 static HWND modeless_search_hwnd=0;
 

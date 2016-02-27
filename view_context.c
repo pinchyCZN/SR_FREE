@@ -11,7 +11,6 @@
 #include "resource.h"
 extern HINSTANCE	ghinstance;
 
-#define SR_MAX_PATH 4096
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
 
