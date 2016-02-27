@@ -10,6 +10,7 @@
 #include <Shlobj.h>
 #include "resource.h"
 
+#define SR_MAX_PATH 4096
 HWND		ghwindow;
 HINSTANCE	ghinstance;
 int _fseeki64(FILE *stream,__int64 offset,int origin);
@@ -81,17 +82,6 @@ void hide_console()
 		ShowWindow(hcon,SW_HIDE);
 		SetForegroundWindow(hcon);
 	}
-}
-
-int get_filename(char *path,char *fname,int size)
-{
-	char drive[4];
-	char dir[255];
-	char name[255];
-	char ext[255];
-	_splitpath(path,drive,dir,name,ext);
-	_snprintf(fname,size,"%s%s",name,ext);
-	return TRUE;
 }
 
 int show_main_help(HWND hwnd,HELPINFO *hi)
@@ -737,23 +727,23 @@ int open_with_cmd(HWND hwnd,char *fname,int index,int cmd)
 	}
 	return TRUE;
 }
-int get_nearest_filename(HWND hwnd,char *fname,int flen)
+int get_nearest_filename(HWND hwnd,WCHAR *fname,int flen)
 {
 	int index,fitem=-1;
-	index=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETCARETINDEX,0,0);
+	index=SendDlgItemMessageW(hwnd,IDC_LIST1,LB_GETCARETINDEX,0,0);
 	if(index>=0){
 		int i;
 		for(i=index;i>=0;i--){
 			int len;
-			char *buf=0;
-			len=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETTEXTLEN,i,0);
+			WCHAR *buf=0;
+			len=SendDlgItemMessageW(hwnd,IDC_LIST1,LB_GETTEXTLEN,i,0);
 			if(len>0){
-				buf=malloc(len+1);
+				buf=malloc((len+1)*sizeof(WCHAR));
 				if(buf!=0){
 					buf[0]=0;
-					SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETTEXT,i,buf);
-					if(strnicmp(buf,"file",sizeof("file")-1)==0){
-						strncpy(fname,buf+sizeof("file ")-1,flen);
+					SendDlgItemMessageW(hwnd,IDC_LIST1,LB_GETTEXT,i,buf);
+					if(wcsnicmp(buf,L"file",sizeof(L"file")/sizeof(WCHAR)-1)==0){
+						wcsncpy(fname,buf+sizeof(L"file ")/sizeof(WCHAR)-1,flen);
 						fname[flen-1]=0;
 						fitem=i;
 					}
@@ -768,58 +758,77 @@ int get_nearest_filename(HWND hwnd,char *fname,int flen)
 }
 int handle_context_open(HWND hwnd,int cmd)
 {
-	char fname[MAX_PATH]={0};
+	WCHAR fname[SR_MAX_PATH];
 	int index;
 	if(cmd==CMD_SEARCH_ALL_FILE){
 		SetDlgItemText(hwnd,IDC_COMBO_MASK,"*.*");
 		return TRUE;
 	}
-	get_nearest_filename(hwnd,fname,sizeof(fname));
+	fname[0]=0;
+	get_nearest_filename(hwnd,fname,sizeof(fname)/sizeof(WCHAR));
 	index=SendDlgItemMessage(hwnd,IDC_LIST1,LB_GETCARETINDEX,0,0);
 	if(fname[0]!=0 && index>=0){
-		if(strlen(fname)>0){
-			switch(cmd){
-			default:
-				open_with_cmd(hwnd,fname,index,cmd);
-				break;
-			case CMD_SEARCH_THIS_FOLDER:
-				{
-					char drive[_MAX_DRIVE]={0},dir[_MAX_DIR],path[_MAX_PATH];
-					_splitpath(fname,drive,dir,NULL,NULL);
-					_snprintf(path,sizeof(path),"%s%s",drive,dir);
-					if(strlen(path)>0)
-						SetDlgItemText(hwnd,IDC_COMBO_PATH,path);
-				}
-				break;
-			case CMD_SEARCH_THIS_FILE_TYPE:
-				{
-					char ext[_MAX_PATH]={0},mask[MAX_PATH];
-					_splitpath(fname,NULL,NULL,NULL,ext);
-					if(strlen(ext)>0){
-						_snprintf(mask,sizeof(mask),"*%s",ext);
-						SetDlgItemText(hwnd,IDC_COMBO_MASK,mask);
+		switch(cmd){
+		default:
+			{
+				char tmp[MAX_PATH];
+				wcstombs(tmp,fname,sizeof(tmp));
+				tmp[sizeof(tmp)-1]=0;
+				open_with_cmd(hwnd,tmp,index,cmd);
+			}
+			break;
+		case CMD_SEARCH_THIS_FOLDER:
+			{
+				WCHAR path[SR_MAX_PATH];
+				path[0]=0;
+				splitpath_long(fname,path,sizeof(path)/sizeof(WCHAR),0,0);
+				if(path[0]!=0)
+					SetDlgItemTextW(hwnd,IDC_COMBO_PATH,path);
+			}
+			break;
+		case CMD_SEARCH_THIS_FILE_TYPE:
+			{
+				WCHAR ext[SR_MAX_PATH];
+				ext[0]=0;
+				splitpath_long(fname,0,0,ext,sizeof(ext)/sizeof(WCHAR));
+				if(ext[0]!=0){
+					int i,index=0,start=FALSE;
+					WCHAR mask[MAX_PATH];
+					mask[index++]=L'*';
+					for(i=0;i<SR_MAX_PATH;i++){
+						WCHAR a=ext[i];
+						if(a==L'.')
+							start=TRUE;
+						if(start){
+							if(index>=(sizeof(mask)/sizeof(WCHAR)-1))
+								break;
+							mask[index++]=a;
+						}
 					}
+					if(index<sizeof(mask)/sizeof(WCHAR))
+						mask[index]=0;
+					if(start)
+						SetDlgItemTextW(hwnd,IDC_COMBO_MASK,mask);
 				}
-				break;
-			case CMD_SEARCH_THIS_FILE:
-				{
-					char f[MAX_PATH]={0};
-					char drive[_MAX_DRIVE]={0},dir[_MAX_PATH]={0},path[MAX_PATH]={0};
-					get_filename(fname,f,sizeof(f));
-					if(strlen(f)>0)
-						SetDlgItemText(hwnd,IDC_COMBO_MASK,f);
-					_splitpath(fname,drive,dir,NULL,NULL);
-					_snprintf(path,sizeof(path),"%s%s",drive,dir);
-					if(strlen(path)>0)
-						SetDlgItemText(hwnd,IDC_COMBO_PATH,path);
-
+			}
+			break;
+		case CMD_SEARCH_THIS_FILE:
+			{
+				WCHAR name[SR_MAX_PATH],path[SR_MAX_PATH];
+				name[0]=0;
+				splitpath_long(fname,path,sizeof(path)/sizeof(WCHAR),name,sizeof(name)/sizeof(WCHAR));
+				path[sizeof(path)/sizeof(WCHAR)-1]=0;
+				name[sizeof(name)/sizeof(WCHAR)-1]=0;
+				if(name[0]!=0 && path[0]!=0){
+					SetDlgItemTextW(hwnd,IDC_COMBO_MASK,name);
+					SetDlgItemTextW(hwnd,IDC_COMBO_PATH,path);
 				}
-				break;
-			case CMD_OPENASSOC:
-				ShellExecute(hwnd,"open",fname,NULL,NULL,SW_SHOWNORMAL);
-				break;
 
 			}
+			break;
+		case CMD_OPENASSOC:
+			ShellExecuteW(hwnd,L"open",fname,NULL,NULL,SW_SHOWNORMAL);
+			break;
 
 		}
 	}

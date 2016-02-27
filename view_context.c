@@ -11,6 +11,7 @@
 #include "resource.h"
 extern HINSTANCE	ghinstance;
 
+#define SR_MAX_PATH 4096
 int _fseeki64(FILE *stream,__int64 offset,int origin);
 __int64 _ftelli64(FILE *stream);
 
@@ -20,9 +21,9 @@ __int64 start_line=0;
 __int64 current_line=0;
 __int64 last_offset=0;
 int binary=FALSE;
-char fname[MAX_PATH];
+WCHAR fname[SR_MAX_PATH];
 __int64 fsize=0;
-FILE *f=0;
+FILE *gfh=0;
 int line_count=0;
 int scroll_pos=0;
 WNDPROC orig_edit=0;
@@ -35,23 +36,26 @@ int get_file_size(FILE *f,__int64 *s)
 	s[0]=_ftelli64(f);
 	return TRUE;
 }
-static int close_file()
+static int close_file(FILE **f)
 {
-	if(f!=0){
-		last_offset=_ftelli64(f);
-		fclose(f);
-		f=0;
+	if(f!=0 && ((*f)!=0)){
+		last_offset=_ftelli64(*f);
+		fclose(*f);
+		*f=0;
 		return TRUE;
 	}
 	else
 		return FALSE;
 }
-static int open_file()
+static int open_file(FILE **f)
 {
-	if(f==0){
-		f=fopen(fname,"rb");
-		if(f!=0)
-			_fseeki64(f,last_offset,SEEK_SET);
+	if(f!=0 && ((*f)==0)){
+		WCHAR tmp[SR_MAX_PATH];
+		_snwprintf(tmp,sizeof(tmp)/sizeof(WCHAR),L"\\\\?\\%s",fname);
+		tmp[sizeof(tmp)/sizeof(WCHAR)-1]=0;
+		*f=_wfopen(tmp,L"rb");
+		if(*f!=0)
+			_fseeki64(*f,last_offset,SEEK_SET);
 	}
 	return f!=0 ? TRUE:FALSE;
 }
@@ -66,14 +70,18 @@ int add_line(HWND hwnd,int ctrl,char *line)
 }
 int set_scroll_pos(HWND hwnd,int ctrl,FILE *f)
 {
+	int result=FALSE;
 	double p;
-	__int64 size,offset=_ftelli64(f);
+	__int64 size,offset;
 	int pos;
+	if(f==0)
+		return result;
+	offset=_ftelli64(f);
 	_fseeki64(f,0,SEEK_END);
 	size=_ftelli64(f);
 	if(size==0){
 		SendDlgItemMessage(hwnd,ctrl,SBM_SETPOS,0,TRUE);
-		return TRUE;
+		return result;
 	}
 	_fseeki64(f,offset,SEEK_SET);
 	p=(double)offset/(double)size;
@@ -83,7 +91,8 @@ int set_scroll_pos(HWND hwnd,int ctrl,FILE *f)
 		pos=10000;
 	scroll_pos=pos;
 	SendDlgItemMessage(hwnd,ctrl,SBM_SETPOS,pos,TRUE);
-	return TRUE;
+	result=TRUE;
+	return result;
 }
 int seek_line_relative(FILE *f,int lines,int dir)
 {
@@ -333,21 +342,22 @@ int get_number_of_lines(HWND hwnd,int ctrl)
 int do_scroll_proc(HWND hwnd,int lines,int dir,int update_pos)
 {
 	int delta;
-	if(open_file()){
-		delta=seek_line_relative(f,lines,dir);
+	if(open_file(&gfh)){
+		delta=seek_line_relative(gfh,lines,dir);
 		if(dir>0)
 			current_line+=delta;
 		else if(dir<0)
 			current_line-=delta;
-		fill_context(hwnd,IDC_CONTEXT,f);
+		fill_context(hwnd,IDC_CONTEXT,gfh);
 		if(update_pos)
-			set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
-		return close_file();
+			set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
+		return close_file(&gfh);
 	}
 	else{
-		char str[MAX_PATH*2]={0};
-		_snprintf(str,sizeof(str),"Cant open %s",fname);
-		MessageBox(hwnd,str,"error",MB_OK);
+		WCHAR str[MAX_PATH*2]={0};
+		_snwprintf(str,sizeof(str)/sizeof(WCHAR),L"Cant open %s",fname);
+		str[sizeof(str)/sizeof(WCHAR)-1]=0;
+		MessageBoxW(hwnd,str,L"error",MB_OK);
 		return FALSE;
 	}
 }
@@ -541,30 +551,30 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 			SendDlgItemMessage(hwnd,IDC_CONTEXT,EM_SETTABSTOPS,1,&tabstop);
 		}
 		set_context_font(hwnd);
-		f=fopen(fname,"rb");
-		if(f==0){
-			char str[MAX_PATH*2];
-			_snprintf(str,sizeof(str),"cant open %s",fname);
-			MessageBox(hwnd,str,"error",MB_OK);
+		open_file(&gfh);
+		if(gfh==0){
+			WCHAR str[MAX_PATH*2];
+			_snwprintf(str,sizeof(str)/sizeof(WCHAR),L"cant open %s",fname);
+			str[sizeof(str)/sizeof(WCHAR)-1]=0;
+			MessageBoxW(hwnd,str,L"error",MB_OK);
 			EndDialog(hwnd,0);
 			return 0;
 		}
-		get_file_size(f,&fsize);
-		_fseeki64(f,start_offset,SEEK_SET);
-		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
+		get_file_size(gfh,&fsize);
+		_fseeki64(gfh,start_offset,SEEK_SET);
+		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
 		SetFocus(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR));
 		get_ini_value("CONTEXT_SETTINGS","row_width",&row_width);
 		set_context_divider(row_width);
 		load_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
 		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
-		open_file();
-		fill_context(hwnd,IDC_CONTEXT,f);
-		close_file();
+		fill_context(hwnd,IDC_CONTEXT,gfh);
+		close_file(&gfh);
 		last_pos=-1;
 		orig_edit=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,subclass_edit);
 		orig_scroll=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR),GWL_WNDPROC,subclass_scroll);
-		SetWindowText(hwnd,fname);
+		SetWindowTextW(hwnd,fname);
 		grippy=create_grippy(hwnd);
 		return 0;
 	case WM_HELP:
@@ -575,10 +585,10 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		grippy_move(hwnd,grippy);
 		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
-		open_file();
-		fill_context(hwnd,IDC_CONTEXT,f);
-		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,f);
-		close_file();
+		open_file(&gfh);
+		fill_context(hwnd,IDC_CONTEXT,gfh);
+		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
+		close_file(&gfh);
 		break;
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -712,9 +722,9 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 				resize_context(hwnd);
 				return 0;
 			}
-			if(f!=0)
-				fclose(f);
-			f=0;
+			if(gfh!=0)
+				fclose(gfh);
+			gfh=0;
 			if(orig_edit!=0)SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,orig_edit);
 			save_window_size(hwnd,"CONTEXT_SETTINGS");
 			save_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
@@ -760,7 +770,7 @@ int view_context(HWND hwnd)
 			free(str);
 		}
 		fname[0]=0;
-		get_nearest_filename(hwnd,fname,sizeof(fname));
+		get_nearest_filename(hwnd,fname,sizeof(fname)/sizeof(WCHAR));
 		if(found_line && fname[0]!=0)
 			return DialogBox(ghinstance,MAKEINTRESOURCE(IDD_VIEWCONTEXT),hwnd,view_context_proc);
 	}

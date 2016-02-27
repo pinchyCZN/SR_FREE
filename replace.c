@@ -97,44 +97,68 @@ int create_new_replace_str(char *str,int size,__int64 offset)
 int splitpath_long(WCHAR *fullpath,WCHAR *path,int path_size,WCHAR *fname,int fname_size)
 {
 	int fpath_len;
-	int i,index;
+	int i,last_slash=0;
+	WCHAR fmt[12];
 	fpath_len=wcslen(fullpath);
 	for(i=fpath_len-1;i>=0;i--){
 		WCHAR a=fullpath[i];
 		if(a==L'\\'){
+			last_slash=i;
+			break;
 		}
 	}
+	if(path!=0){
+		_snwprintf(fmt,sizeof(fmt)/sizeof(WCHAR),L"%%.%is",last_slash);
+		fmt[sizeof(fmt)/sizeof(WCHAR)-1]=0;
+		_snwprintf(path,path_size,fmt,fullpath);
+		if(path_size>0)
+			path[path_size-1]=0;
+	}
+	if(fname!=0){
+		_snwprintf(fname,fname_size,L"%s",fullpath+last_slash+1);
+		if(fname_size>0)
+			fname[fname_size-1]=0;
+	}
+	return TRUE;
 }
 int create_tmp_fname(WCHAR *path,WCHAR *tmp,int len)
 {
-	WCHAR drive[_MAX_DRIVE];
-	WCHAR dir[_MAX_DIR];
-	WCHAR name[_MAX_FNAME];
-	WCHAR ext[_MAX_EXT];
+	int result=FALSE;
+	WCHAR *fpath,*fname;
+	int size=len;
 	int num=0;
 	FILE *f=-1;
-	_wsplitpath(path,drive,dir,name,ext);
-	do{
-		_snwprintf(tmp,len,L"\\\\?\\%s%s%010i%s%s",drive,dir,num,name,ext);
-		if(len>0)
-			tmp[len-1]=0;
-		if(num>100000){
-			tmp[0]=0;
-			break;
+	fpath=malloc(size*sizeof(WCHAR));
+	fname=malloc(size*sizeof(WCHAR));
+	if(fpath!=0 && fname!=0){
+		splitpath_long(path,fpath,size,fname,size);
+		do{
+			_snwprintf(tmp,len,L"\\\\?\\%s\\%010i%s",fpath,num,fname);
+			wprintf(L"%s\n",tmp);
+			if(len>0)
+				tmp[len-1]=0;
+			if(num>100000){
+				tmp[0]=0;
+				break;
+			}
+			f=_wfopen(tmp,L"rb");
+			if(f!=0)
+				fclose(f);
+			num++;
+		}while(f!=0);
+		if(f==0){
+			wprintf(L"tmpfname=%s\n",tmp);
+			result=TRUE;
 		}
-		f=_wfopen(tmp,L"rb");
-		if(f!=0)
-			fclose(f);
-		num++;
-	}while(f!=0);
-	if(f==0)
-		wprintf(L"tmpfname=%s\n",tmp);
-	return TRUE;
-
+	}
+	if(fpath!=0)
+		free(fpath);
+	if(fname!=0)
+		free(fname);
+	return result;
 }
 int move_file(WCHAR *src,WCHAR *dest)
 {
-	return FALSE;
 	return MoveFileExW(src,dest,MOVEFILE_REPLACE_EXISTING);
 }
 int move_file_data(FILE *fin,FILE *fout,__int64 len,__int64 *moved)
@@ -174,11 +198,13 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 	if(close_file){
 		if(fout!=0){
 			__int64 flen=0;
-			_fseeki64(fin,0,SEEK_END);
-			flen=_ftelli64(fin);
-			_fseeki64(fin,read_offset,SEEK_SET);
-			if(read_offset<flen)
-				move_file_data(fin,fout,flen-read_offset,&offset);
+			if(fin!=0){
+				_fseeki64(fin,0,SEEK_END);
+				flen=_ftelli64(fin);
+				_fseeki64(fin,read_offset,SEEK_SET);
+				if(read_offset<flen)
+					move_file_data(fin,fout,flen-read_offset,&offset);
+			}
 			fclose(fout);
 		}
 		if(fin!=0)
@@ -203,10 +229,22 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 	switch(state){
 	case 0:
 		get_current_fname(fname,sizeof(fname)/sizeof(WCHAR));
-		create_tmp_fname(fname,tmp,sizeof(tmp)/sizeof(WCHAR));
-		fout=_wfopen(tmp,L"wb");
-		fin=_wfopen(fname,L"rb");
-		read_offset=write_offset=0;
+		if(create_tmp_fname(fname,tmp,sizeof(tmp)/sizeof(WCHAR))){
+			WCHAR *lfname;
+			int lfname_size=SR_MAX_PATH;
+			lfname=malloc(lfname_size*sizeof(WCHAR));
+			if(lfname!=0){
+				_snwprintf(lfname,lfname_size,L"\\\\?\\%s",fname);
+				lfname[lfname_size-1]=0;
+				wcsncpy(fname,lfname,sizeof(fname)/sizeof(WCHAR));
+				fname[sizeof(fname)/sizeof(WCHAR)-1]=0;
+				fout=_wfopen(tmp,L"wb");
+				fin=_wfopen(lfname,L"rb");
+				wprintf(L"%s\n",lfname);
+				free(lfname);
+			}
+			read_offset=write_offset=0;
+		}
 		state=1;
 		break;
 	default:
@@ -254,7 +292,8 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 		else{
 			WCHAR err[MAX_PATH+80];
 			_snwprintf(err,sizeof(err)/sizeof(WCHAR),L"file data error:\r\n%s",tmp);
-			if(MessageBox(hwnd,err,"read_offset!=offset",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL){
+			err[sizeof(err)/sizeof(WCHAR)-1]=0;
+			if(MessageBoxW(hwnd,err,L"read_offset!=offset",MB_OKCANCEL|MB_SYSTEMMODAL)==IDCANCEL){
 				set_replace_all_remain(FALSE);
 				set_cancel_all(TRUE);
 			}
