@@ -96,17 +96,18 @@ int create_new_replace_str(char *str,int size,__int64 offset)
 int splitpath_long(WCHAR *fullpath,WCHAR *path,int path_size,WCHAR *fname,int fname_size)
 {
 	int fpath_len;
-	int i,last_slash=0;
-	WCHAR fmt[12];
+	int i,last_slash=0,have_slash=FALSE;
 	fpath_len=wcslen(fullpath);
 	for(i=fpath_len-1;i>=0;i--){
 		WCHAR a=fullpath[i];
 		if(a==L'\\'){
 			last_slash=i;
+			have_slash=TRUE;
 			break;
 		}
 	}
 	if(path!=0){
+		WCHAR fmt[12];
 		_snwprintf(fmt,sizeof(fmt)/sizeof(WCHAR),L"%%.%is",last_slash);
 		fmt[sizeof(fmt)/sizeof(WCHAR)-1]=0;
 		_snwprintf(path,path_size,fmt,fullpath);
@@ -114,7 +115,10 @@ int splitpath_long(WCHAR *fullpath,WCHAR *path,int path_size,WCHAR *fname,int fn
 			path[path_size-1]=0;
 	}
 	if(fname!=0){
-		_snwprintf(fname,fname_size,L"%s",fullpath+last_slash+1);
+		int index=last_slash+1;
+		if(!have_slash)
+			index=0;
+		_snwprintf(fname,fname_size,L"%s",fullpath+index);
 		if(fname_size>0)
 			fname[fname_size-1]=0;
 	}
