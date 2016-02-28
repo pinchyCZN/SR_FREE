@@ -544,6 +544,12 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 	switch(msg)
 	{
 	case WM_INITDIALOG:
+		grippy=create_grippy(hwnd);
+		init_context_win_anchor(hwnd);
+		get_ini_value("CONTEXT_WINDOW","row_width",&row_width);
+		set_context_divider(hwnd,row_width);
+		restore_context_rel_pos(hwnd);
+
 		SendDlgItemMessage(hwnd,IDC_CONTEXT_SCROLLBAR,SBM_SETRANGE,0,10000);
 		{
 			int tabstop=21; //4 fixed chars
@@ -563,8 +569,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		_fseeki64(gfh,start_offset,SEEK_SET);
 		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
 		SetFocus(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR));
-		get_ini_value("CONTEXT_SETTINGS","row_width",&row_width);
-		set_context_divider(row_width);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
 		fill_context(hwnd,IDC_CONTEXT,gfh);
 		close_file(&gfh);
@@ -572,14 +576,17 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		orig_edit=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,subclass_edit);
 		orig_scroll=SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR),GWL_WNDPROC,subclass_scroll);
 		SetWindowTextW(hwnd,fname);
-		grippy=create_grippy(hwnd);
 		return 0;
+	case WM_DESTROY:
+		save_context_rel_pos(hwnd);
+		break;
 	case WM_HELP:
 		context_help(hwnd);
 		return TRUE;
 		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
+		set_context_divider(hwnd,row_width);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
 		open_file(&gfh);
 		fill_context(hwnd,IDC_CONTEXT,gfh);
@@ -590,7 +597,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 	case WM_LBUTTONUP:
 		ReleaseCapture();
 		if(divider_drag){
-			write_ini_value("CONTEXT_SETTINGS","row_width",row_width);
+			write_ini_value("CONTEXT_WINDOW","row_width",row_width);
 			divider_drag=FALSE;
 		}
 		break;
@@ -609,7 +616,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 				GetClientRect(hwnd,&rect);
 				if((rect.right-x)>25 && x>5){
 					row_width=x;
-					set_context_divider(row_width);
+					set_context_divider(hwnd,row_width);
 				}
 			}
 		}
@@ -712,7 +719,7 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 			if(divider_drag){
 				divider_drag=FALSE;
 				ReleaseCapture();
-				set_context_divider(org_row_width);
+				set_context_divider(hwnd,org_row_width);
 				row_width=org_row_width;
 				return 0;
 			}

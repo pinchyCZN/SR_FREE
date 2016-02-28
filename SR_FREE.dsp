@@ -105,6 +105,10 @@ SOURCE=.\trex\trex.c
 # End Group
 # Begin Source File
 
+SOURCE=.\anchor_system.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\custom_text_dlg.c
 # End Source File
 # Begin Source File
@@ -134,10 +138,6 @@ SOURCE=.\options.c
 # Begin Source File
 
 SOURCE=.\replace.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\resize.c
 # End Source File
 # Begin Source File
 
