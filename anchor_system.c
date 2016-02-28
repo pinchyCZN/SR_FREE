@@ -361,6 +361,19 @@ int grippy_move(HWND hwnd,HWND grippy)
 	}
 	return 0;
 }
+struct CONTROL_ANCHOR ini_win_anchor[]={
+	{IDC_TXT_LOCAL,ANCHOR_LEFT|ANCHOR_RIGHT|ANCHOR_TOP,0,0,0},
+	{IDC_TXT_APPDATA,ANCHOR_LEFT|ANCHOR_RIGHT|ANCHOR_TOP,0,0,0},
+	{IDC_INSTALL_INFO,ANCHOR_LEFT|ANCHOR_RIGHT|ANCHOR_TOP,0,0,0}
+};
+int init_ini_win_anchor(HWND hwnd)
+{
+	return anchor_init(hwnd,ini_win_anchor,sizeof(ini_win_anchor)/sizeof(struct CONTROL_ANCHOR));
+}
+int resize_ini_win(HWND hwnd)
+{
+	return anchor_resize(hwnd,ini_win_anchor,sizeof(ini_win_anchor)/sizeof(struct CONTROL_ANCHOR));
+}
 
 struct CONTROL_ANCHOR main_win_anchor[]={
 	{IDC_COMBO_SEARCH,ANCHOR_LEFT|ANCHOR_RIGHT,0,0,0},
