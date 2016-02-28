@@ -191,7 +191,6 @@ LRESULT CALLBACK install_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			get_appdata_folder(appdata_path,sizeof(appdata_path));
 			SetWindowText(GetDlgItem(hwnd,IDC_TXT_APPDATA),appdata_path);
 			grippy=create_grippy(hwnd);
-			resize_install_dlg(hwnd);
 			if(GetWindowRect(GetDesktopWindow(),&rect)!=0){
 				int cx,cy;
 				cx=(rect.left+rect.right)/2;
@@ -206,7 +205,6 @@ LRESULT CALLBACK install_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		}
 		break;
 	case WM_SIZE:
-		resize_install_dlg(hwnd);
 		grippy_move(hwnd,grippy);
 		break;
 	case WM_COMMAND:

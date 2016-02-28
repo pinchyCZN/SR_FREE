@@ -253,15 +253,18 @@ LRESULT CALLBACK options_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 	case WM_INITDIALOG:
 		grippy=create_grippy(hwnd);
+		init_options_win_anchor(hwnd);
+		restore_options_rel_pos(hwnd);
 		SendDlgItemMessage(hwnd,IDC_MATCH_PREFIX_LEN,EM_LIMITTEXT,4,0);
 		populate_options(hwnd);
-		//dump_options(hwnd);
 		return 0;
+	case WM_DESTROY:
+		save_options_rel_pos(hwnd);
+		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
-		InvalidateRect(hwnd,NULL,TRUE);
-		//modify_list();
 		resize_options(hwnd);
+		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_DRAWITEM:
 		break;

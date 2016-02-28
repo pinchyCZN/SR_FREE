@@ -178,9 +178,15 @@ LRESULT CALLBACK custom_text_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam
 		SendDlgItemMessage(hwnd,IDC_BIG_EDIT,EM_SETSEL,0,-1);
 		if(custom_type==REPLACE)
 			SetWindowText(hwnd,"Custom Replace");
+		init_cust_text_win_anchor(hwnd);
+		restore_cust_win_rel_pos(hwnd);
 		return 0;
+	case WM_DESTROY:
+		save_cust_win_rel_pos(hwnd);
+		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
+		resize_cust_text_win(hwnd);
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_COMMAND:

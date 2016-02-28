@@ -61,28 +61,6 @@ int save_favs(HWND hwnd,int ctrl)
 	}
 	return TRUE;
 }
-int load_favs_size(HWND hwnd)
-{
-	int width=0,height=0;
-	get_ini_value("FAVS_WINDOW","width",&width);
-	get_ini_value("FAVS_WINDOW","height",&height);
-	if(width>0 && height>0)
-		SetWindowPos(hwnd,NULL,NULL,NULL,width,height,SWP_NOMOVE|SWP_NOZORDER|SWP_SHOWWINDOW);
-	return 0;
-}
-int save_favs_size(HWND hwnd)
-{
-	RECT rect={0};
-	int x,y;
-	GetWindowRect(hwnd,&rect);
-	x=rect.right-rect.left;
-	y=rect.bottom-rect.top;
-	if(x<100)x=100;
-	if(y<100)y=100;
-	write_ini_value("FAVS_WINDOW","width",x);
-	write_ini_value("FAVS_WINDOW","height",y);
-	return TRUE;
-}
 int load_parent_text(HWND hwnd,int ctrl,int parent_ctrl)
 {
 	char str[1024]={0};
@@ -105,7 +83,7 @@ int does_string_exist(HWND hwnd,int ctrl,char *str)
 			int j,len,diff=FALSE;
 			len=strlen(tmp);
 			if(len>sizeof(tmp))len=sizeof(tmp);
-			if(len!=strlen(str))
+			if(len!=(int)strlen(str))
 				continue;
 			for(j=0;j<len;j++){
 				if(tolower(str[j])!=tolower(tmp[j])){
@@ -168,7 +146,6 @@ int select_and_close(HWND hwnd)
 		if(s[0]=='>')
 			s++;
 		SetDlgItemText(hwnd_parent,get_parent_combo(),s);
-		save_favs_size(hwnd);
 		EndDialog(hwnd,0);
 	}
 	return 0;
@@ -244,6 +221,8 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 	case WM_INITDIALOG:
 		grippy=create_grippy(hwnd);
+		init_favs_win_anchor(hwnd);
+		restore_favs_win_rel_pos(hwnd);
 		if(fav_type==IDC_FILE_OPTIONS){
 			ShowWindow(GetDlgItem(hwnd,IDC_BROWSE_DIR),SW_HIDE);
 			load_favs(hwnd,IDC_LIST1);
@@ -259,13 +238,14 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SetFocus(GetDlgItem(hwnd,IDC_FAV_EDIT));
 		SendDlgItemMessage(hwnd,IDC_FAV_EDIT,EM_SETSEL,0,-1);
 		set_fonts(hwnd);
-		load_favs_size(hwnd);
-		resize_favs(hwnd);
 		return 0;
+	case WM_DESTROY:
+		save_favs_win_rel_pos(hwnd);
+		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
+		resize_favs_win(hwnd);
 		InvalidateRect(hwnd,NULL,TRUE);
-		resize_favs(hwnd);
 		break;
 	case WM_VKEYTOITEM:
 		switch(LOWORD(wparam)){
@@ -324,7 +304,6 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			}
 			break;
 		case IDCANCEL:
-			save_favs_size(hwnd);
 			EndDialog(hwnd,0);
 		}
 		break;

@@ -322,6 +322,8 @@ LRESULT CALLBACK replace_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			SetWindowText(hwnd,str);
 			get_current_fname(fname,sizeof(fname)/sizeof(WCHAR));
 			grippy=create_grippy(hwnd);
+			init_replace_win_anchor(hwnd);
+			restore_replace_rel_pos(hwnd);
 			SetFocus(GetDlgItem(hwnd,IDC_REPLACE_THIS));
 			add_listbox_str_wc(hwnd,"File %s",fname);
 			add_listbox_str(hwnd,"%s",lb_str);
@@ -329,9 +331,12 @@ LRESULT CALLBACK replace_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			add_listbox_str(hwnd,"%s",replaced_str);
 		}
 		return 0;
+	case WM_DESTROY:
+		save_replace_rel_pos(hwnd);
+		break;
 	case WM_SIZE:
-		resize_replace(hwnd);
 		grippy_move(hwnd,grippy);
+		resize_replace(hwnd);
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_DRAWITEM:

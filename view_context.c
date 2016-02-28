@@ -565,8 +565,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		SetFocus(GetDlgItem(hwnd,IDC_CONTEXT_SCROLLBAR));
 		get_ini_value("CONTEXT_SETTINGS","row_width",&row_width);
 		set_context_divider(row_width);
-		load_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
-		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
 		fill_context(hwnd,IDC_CONTEXT,gfh);
 		close_file(&gfh);
@@ -582,7 +580,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
-		resize_context(hwnd);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
 		open_file(&gfh);
 		fill_context(hwnd,IDC_CONTEXT,gfh);
@@ -613,7 +610,6 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 				if((rect.right-x)>25 && x>5){
 					row_width=x;
 					set_context_divider(row_width);
-					resize_context(hwnd);
 				}
 			}
 		}
@@ -718,15 +714,12 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 				ReleaseCapture();
 				set_context_divider(org_row_width);
 				row_width=org_row_width;
-				resize_context(hwnd);
 				return 0;
 			}
 			if(gfh!=0)
 				fclose(gfh);
 			gfh=0;
 			if(orig_edit!=0)SetWindowLong(GetDlgItem(hwnd,IDC_CONTEXT),GWL_WNDPROC,orig_edit);
-			save_window_size(hwnd,"CONTEXT_SETTINGS");
-			save_window_pos_relative(GetParent(hwnd),hwnd,"CONTEXT_SETTINGS");
 			EndDialog(hwnd,0);
 			return 0;
 		}

@@ -1099,14 +1099,18 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 				EndDialog(hwnd,0);
 			}
 			grippy=create_grippy(hwnd);
+			init_search_prog_win_anchor(hwnd);
+			restore_search_prog_rel_pos(hwnd);
 			SetFocus(GetDlgItem(hwnd,IDCANCEL));
-			load_window_pos_relative(GetParent(hwnd),hwnd,"SEARCH_STATUS_WINDOW");
 			hbutton=GetDlgItem(hwnd,IDCANCEL);
 			button_proc=0;
 			if(hbutton)
 				button_proc=SetWindowLong(hbutton,GWL_WNDPROC,search_proc);
 		}
 		return 0;
+	case WM_DESTROY:
+		save_search_prog_rel_pos(hwnd);
+		break;
 	case WM_HSCROLL:
 		PostMessage(GetDlgItem(GetParent(hwnd),IDC_LIST1),WM_VSCROLL,wparam,lparam);
 		break;
@@ -1125,11 +1129,10 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_SIZE:
 		grippy_move(hwnd,grippy);
-		resize_search(hwnd);
+		resize_search_prog(hwnd);
 		InvalidateRect(hwnd,NULL,TRUE);
 		break;
 	case WM_APP:
-		save_window_pos_relative(ghwindow,hwnd,"SEARCH_STATUS_WINDOW");
 		modeless_search_hwnd=0;
 		if(total_matches>0){
 			HWND h=GetDlgItem(ghwindow,IDC_LIST1);

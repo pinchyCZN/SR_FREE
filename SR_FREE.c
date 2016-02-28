@@ -850,67 +850,6 @@ int get_nearest_monitor(int x,int y,int width,int height,RECT *rect)
 	}
 	return FALSE;
 }
-int save_window_pos_relative(HWND hparent,HWND hwnd,char *section)
-{
-	WINDOWPLACEMENT wp;
-	if(GetWindowPlacement(hwnd,&wp)!=0){
-		RECT rect={0},rect_parent={0};
-		int xpos,ypos,width,height;
-		if(wp.flags&WPF_RESTORETOMAXIMIZED)
-			write_ini_value(section,"maximized",1);
-		else
-			write_ini_value(section,"maximized",0);
-
-		rect=wp.rcNormalPosition;
-		width=rect.right-rect.left;
-		height=rect.bottom-rect.top;
-		write_ini_value(section,"width",width);
-		write_ini_value(section,"height",height);
-
-		GetWindowRect(hparent,&rect_parent);
-		xpos=rect.left-rect_parent.left;
-		ypos=rect.top-rect_parent.top;
-		if(GetKeyState(VK_SHIFT)&0x8000){
-			xpos=ypos=0;
-		}
-		write_ini_value(section,"xpos",xpos);
-		write_ini_value(section,"ypos",ypos);
-	}
-	return TRUE;
-}
-int load_window_pos_relative(HWND hparent,HWND hwnd,char *section)
-{
-	int width=0,height=0,x=0,y=0,maximized=0;
-	RECT rect={0};
-	int result=FALSE;
-	get_ini_value(section,"width",&width);
-	get_ini_value(section,"height",&height);
-	get_ini_value(section,"xpos",&x);
-	get_ini_value(section,"ypos",&y);
-	get_ini_value(section,"maximized",&maximized);
-	if(get_nearest_monitor(x,y,width,height,&rect)){
-		int flags=SWP_SHOWWINDOW;
-		if(width<50 || height<50)
-			flags|=SWP_NOSIZE;
-		if(hparent!=0){
-			RECT rect_parent={0};
-			GetWindowRect(hparent,&rect_parent);
-			x=rect_parent.left+x;
-			y=rect_parent.top+y;
-			if(x>(rect.right-25) || x<rect.left)
-				x=rect_parent.left;
-			if(y<rect.top || y>(rect.bottom-25))
-				y=rect_parent.top;
-		}
-		else
-			flags|=SWP_NOMOVE;
-		if(SetWindowPos(hwnd,HWND_TOP,x,y,width,height,flags)!=0)
-			result=TRUE;
-	}
-	if(maximized)
-		PostMessage(hwnd,WM_SYSCOMMAND,SC_MAXIMIZE,0);
-	return result;
-}
 int clamp_window_size(int *x,int *y,int *width,int *height,RECT *monitor)
 {
 	int mwidth,mheight;
@@ -1089,6 +1028,7 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	case WM_INITDIALOG:
 		load_bitmaps(ghinstance);
 		grippy=create_grippy(hwnd);
+		init_main_win_anchor(hwnd);
 		BringWindowToTop(hwnd);
 		SendDlgItemMessage(hwnd,IDC_COMBO_SEARCH,EM_LIMITTEXT,1024,0);
 		SendDlgItemMessage(hwnd,IDC_COMBO_REPLACE,EM_LIMITTEXT,1024,0);
@@ -1100,7 +1040,6 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		get_ini_stuff(hwnd);
 		load_window_size(hwnd,"MAIN_WINDOW");
 		create_list_menu(hwnd);
-		resize_main(hwnd);
 		SetWindowPos(hwnd,IsDlgButtonChecked(hwnd,IDC_ONTOP)?HWND_TOPMOST:HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
 		SendMessage(hwnd,WM_COMMAND,MAKEWPARAM(IDC_SUBDIRS,BN_CLICKED),0);
 		load_icon(hwnd);
@@ -1111,12 +1050,17 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		show_main_help(hwnd,(HELPINFO *)lparam);
 		return TRUE;
 		break;
+	case WM_MOVING:
+		if(GetKeyState(VK_CONTROL)&0x8000)
+			snap_window(hwnd,lparam);
+		break;
+	case WM_SIZING:
+		if(GetKeyState(VK_CONTROL)&0x8000)
+			snap_sizing(hwnd,lparam,wparam);
+		break;
 	case WM_SIZE:
-		//modify_list();
 		grippy_move(hwnd,grippy);
-//		dump_main(hwnd);
-		resize_main(hwnd);
-	//	InvalidateRect(hwnd,NULL,TRUE);
+		resize_main_win(hwnd);
 		break;
 	case WM_DRAWITEM:
 		list_drawitem(hwnd,wparam,lparam);
