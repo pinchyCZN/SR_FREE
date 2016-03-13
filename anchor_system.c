@@ -17,7 +17,7 @@ struct CONTROL_ANCHOR{
 };
 
 struct WIN_REL_POS{
-	RECT rparent,rwin;
+	WINDOWPLACEMENT parent,win;
 	int initialized;
 };
 
@@ -167,31 +167,39 @@ int anchor_resize(HWND hparent,struct CONTROL_ANCHOR *clist,int clist_len)
 int save_win_rel_position(HWND hparent,HWND hwin,struct WIN_REL_POS *relpos)
 {
 	int result=FALSE;
-	WINDOWPLACEMENT wp={0};
-	wp.length=sizeof(WINDOWPLACEMENT);
-	if(GetWindowPlacement(hparent,&wp)){
-		relpos->rparent=wp.rcNormalPosition;
-		if(GetWindowPlacement(hwin,&wp)){
-			relpos->rwin=wp.rcNormalPosition;
+	memset(&relpos->parent,0,sizeof(relpos->parent));
+	relpos->parent.length=sizeof(WINDOWPLACEMENT);
+	if(GetWindowPlacement(hparent,&relpos->parent)){
+		if(relpos->parent.showCmd==SW_SHOWMAXIMIZED)
+			GetWindowRect(hparent,&relpos->parent.rcNormalPosition);
+		memset(&relpos->win,0,sizeof(relpos->win));
+		relpos->win.length=sizeof(WINDOWPLACEMENT);
+		if(GetWindowPlacement(hwin,&relpos->win)){
 			result=TRUE;
 		}
 	}
 	relpos->initialized=result;
-	return 0;
+	return result;
 }
 int restore_win_rel_position(HWND hparent,HWND hwin,struct WIN_REL_POS *relpos)
 {
 	//clamp window to nearest monitor
 	if(relpos->initialized){
-		RECT rparent;
-		if(GetWindowRect(hparent,&rparent)){
+		WINDOWPLACEMENT *wp_parent,*wp_win;
+		RECT rparent={0};
+		RECT orig_parent={0};
+		wp_parent=&relpos->parent;
+		wp_win=&relpos->win;
+		orig_parent=relpos->parent.rcNormalPosition;
+		if((!(SW_SHOWMAXIMIZED==wp_win->showCmd || SW_SHOWMINIMIZED==wp_win->showCmd)) 
+			&& GetWindowRect(hparent,&rparent)){
 			HMONITOR hmon;
 			RECT rwin;
 			int x,y,cx,cy;
-			x=relpos->rwin.left-relpos->rparent.left;
-			y=relpos->rwin.top-relpos->rparent.top;
-			cx=relpos->rwin.right-relpos->rwin.left;
-			cy=relpos->rwin.bottom-relpos->rwin.top;
+			x=wp_win->rcNormalPosition.left-orig_parent.left;
+			y=wp_win->rcNormalPosition.top-orig_parent.top;
+			cx=wp_win->rcNormalPosition.right-wp_win->rcNormalPosition.left;
+			cy=wp_win->rcNormalPosition.bottom-wp_win->rcNormalPosition.top;
 			rwin.left=rparent.left+x;
 			rwin.top=rparent.top+y;
 			rwin.right=rwin.left+cx;
@@ -217,8 +225,7 @@ int restore_win_rel_position(HWND hparent,HWND hwin,struct WIN_REL_POS *relpos)
 						x=rmon.right-cx;
 					if((y+cy)>rmon.bottom)
 						y=rmon.bottom-cy;
-					SetWindowPos(hwin,NULL,x,y,cx,cy,
-						SWP_SHOWWINDOW|SWP_NOZORDER);
+					SetWindowPos(hwin,NULL,x,y,cx,cy,SWP_NOZORDER);
 				}
 			}
 			
@@ -231,10 +238,13 @@ int save_ini_win_rel_pos(char *section,struct WIN_REL_POS *relpos)
 	if(relpos->initialized){
 		int offsetx,offsety;
 		int width,height;
-		offsetx=relpos->rparent.left-relpos->rwin.left;
-		offsety=relpos->rparent.top-relpos->rwin.top;
-		width=relpos->rwin.right-relpos->rwin.left;
-		height=relpos->rwin.bottom-relpos->rwin.top;
+		RECT *rparent,*rwin;
+		rparent=&relpos->parent.rcNormalPosition;
+		rwin=&relpos->win.rcNormalPosition;
+		offsetx=rparent->left-rwin->left;
+		offsety=rparent->top-rwin->top;
+		width=rwin->right-rwin->left;
+		height=rwin->bottom-rwin->top;
 		write_ini_value(section,"width",width);
 		write_ini_value(section,"height",height);
 		write_ini_value(section,"offsetx",offsetx);
@@ -251,13 +261,16 @@ int load_ini_win_rel_pos(char *section,struct WIN_REL_POS *relpos)
 	get_ini_value(section,"offsetx",&offsetx);
 	get_ini_value(section,"offsety",&offsety);
 	if(width>=50 && height>=50){
+		RECT *rparent,*rwin;
 		relpos->initialized=1;
-		relpos->rparent.left=offsetx;
-		relpos->rparent.top=offsety;
-		relpos->rwin.left=0;
-		relpos->rwin.top=0;
-		relpos->rwin.right=width;
-		relpos->rwin.bottom=height;
+		rparent=&relpos->parent.rcNormalPosition;
+		rwin=&relpos->win.rcNormalPosition;
+		rparent->left=offsetx;
+		rparent->top=offsety;
+		rwin->left=0;
+		rwin->top=0;
+		rwin->right=width;
+		rwin->bottom=height;
 	}
 	return 0;
 }
