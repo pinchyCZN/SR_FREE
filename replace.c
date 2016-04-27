@@ -136,7 +136,10 @@ int create_tmp_fname(WCHAR *path,WCHAR *tmp,int len)
 	if(fpath!=0 && fname!=0){
 		splitpath_long(path,fpath,size,fname,size);
 		do{
-			_snwprintf(tmp,len,L"\\\\?\\%s\\%010i%s",fpath,num,fname);
+			if(is_unc_path(fpath))
+				_snwprintf(tmp,len,L"\\\\?\\UNC%s\\%010i%s",fpath+1,num,fname);
+			else
+				_snwprintf(tmp,len,L"\\\\?\\%s\\%010i%s",fpath,num,fname);
 			wprintf(L"%s\n",tmp);
 			if(len>0)
 				tmp[len-1]=0;
@@ -237,7 +240,10 @@ int replace_in_file(HWND hwnd,char *info,int close_file)
 			int lfname_size=SR_MAX_PATH;
 			lfname=malloc(lfname_size*sizeof(WCHAR));
 			if(lfname!=0){
-				_snwprintf(lfname,lfname_size,L"\\\\?\\%s",fname);
+				if(is_unc_path(fname))
+					_snwprintf(lfname,lfname_size,L"\\\\?\\UNC%s",fname+1);
+				else
+					_snwprintf(lfname,lfname_size,L"\\\\?\\%s",fname);
 				lfname[lfname_size-1]=0;
 				wcsncpy(fname,lfname,sizeof(fname)/sizeof(WCHAR));
 				fname[sizeof(fname)/sizeof(WCHAR)-1]=0;

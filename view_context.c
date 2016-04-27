@@ -50,7 +50,10 @@ static int open_file(FILE **f)
 {
 	if(f!=0 && ((*f)==0)){
 		WCHAR tmp[SR_MAX_PATH];
-		_snwprintf(tmp,sizeof(tmp)/sizeof(WCHAR),L"\\\\?\\%s",fname);
+		if(is_unc_path(fname))
+			_snwprintf(tmp,sizeof(tmp)/sizeof(WCHAR),L"\\\\?\\UNC%s",fname+1);
+		else
+			_snwprintf(tmp,sizeof(tmp)/sizeof(WCHAR),L"\\\\?\\%s",fname);
 		tmp[sizeof(tmp)/sizeof(WCHAR)-1]=0;
 		*f=_wfopen(tmp,L"rb");
 		if(*f!=0)

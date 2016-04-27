@@ -212,6 +212,13 @@ int does_file_match(WCHAR *mask,WCHAR *fname,WCHAR *path)
 	}
 	return fmatch && pmatch;
 }
+int is_unc_path(WCHAR *str)
+{
+	if(str[0]==L'\\' && str[1]==L'\\')
+		return TRUE;
+	else
+		return FALSE;
+}
 int set_progress_bar(HWND hwnd,double percent)
 {
 	SendDlgItemMessage(hwnd,IDC_PROGRESS1,PBM_SETPOS,(int)(percent+0.5),0);
@@ -839,7 +846,10 @@ int search_replace_file(HWND hwnd,WCHAR *fname,WCHAR *path)
 {
 	FILE *f;
 	static WCHAR full_path[SR_MAX_PATH];
-	_snwprintf(full_path,sizeof(full_path)/sizeof(WCHAR),L"\\\\?\\%s\\%s",path,fname);
+	if(is_unc_path(path))
+		_snwprintf(full_path,sizeof(full_path)/sizeof(WCHAR),L"\\\\?\\UNC%s\\%s",path+1,fname);
+	else
+		_snwprintf(full_path,sizeof(full_path)/sizeof(WCHAR),L"\\\\?\\%s\\%s",path,fname);
 	full_path[sizeof(full_path)/sizeof(WCHAR)-1]=0;
 
 	_snwprintf(current_fname,sizeof(current_fname)/sizeof(WCHAR),L"%s\\%s",path,fname);
@@ -919,7 +929,10 @@ int find_files(HWND hwnd,WCHAR *path,WCHAR *filemask,int *total,
 	search_path=malloc(search_path_size*sizeof(WCHAR));
 	if(search_path==0)
 		return result;
-	_snwprintf(search_path,search_path_size,L"\\\\?\\%s\\*.*",path);
+	if(is_unc_path(path))
+		_snwprintf(search_path,search_path_size,L"\\\\?\\UNC%s\\*.*",path+1);
+	else
+		_snwprintf(search_path,search_path_size,L"\\\\?\\%s\\*.*",path);
 	search_path[search_path_size-1]=0;
 	fhandle=FindFirstFileW(search_path,&fd);
 	if(fhandle!=INVALID_HANDLE_VALUE){
