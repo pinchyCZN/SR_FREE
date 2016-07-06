@@ -245,11 +245,24 @@ int add_listbox_str_wc(HWND hwnd,WCHAR *fmt,...)
 int set_message_str_wc(HWND hwnd,WCHAR *fmt,...)
 {
 	WCHAR str[MAX_PATH*2]={0};
+	WCHAR *p;
+	int set_status2=FALSE;
 	va_list args;
 	va_start(args,fmt);
 	_vsnwprintf(str,sizeof(str)/sizeof(WCHAR),fmt,args);
 	str[sizeof(str)/sizeof(WCHAR)-1]=0;
 	SetDlgItemTextW(hwnd,IDC_SEARCH_STATUS,str);
+	p=wcsrchr(str,L'\\');
+	if(p!=0){
+		p=wcschr(p+1,L'.');
+		if(p!=0){
+			SetDlgItemTextW(hwnd,IDC_SEARCH_STATUS2,p);
+			set_status2=TRUE;
+		}
+	}
+	if(!set_status2){
+		SetDlgItemTextW(hwnd,IDC_SEARCH_STATUS2,L"");
+	}
 	return TRUE;
 }
 int convert_hex_str(char *str,int size)

@@ -74,6 +74,7 @@
 #define IDC_REGEX                       1066
 #define IDC_USE_LOCAL                   1067
 #define IDC_USE_APPDATA                 1068
+#define IDC_SEARCH_STATUS2              1068
 #define IDC_NO_INI                      1069
 #define IDC_TXT_LOCAL                   1070
 #define IDC_TXT_APPDATA                 1071
@@ -84,7 +85,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        118
 #define _APS_NEXT_COMMAND_VALUE         40003
-#define _APS_NEXT_CONTROL_VALUE         1067
+#define _APS_NEXT_CONTROL_VALUE         1069
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
