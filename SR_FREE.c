@@ -464,7 +464,6 @@ struct CTRL_SETTING{
 };
 static struct CTRL_SETTING combo_boxs[]={
 	{IDC_COMBO_SEARCH,"search"},
-	{IDC_COMBO_REPLACE,"replace"},
 	{IDC_COMBO_MASK,"mask"},
 	{IDC_COMBO_PATH,"path"}
 };
