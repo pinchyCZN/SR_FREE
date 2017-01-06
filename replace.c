@@ -331,7 +331,7 @@ LRESULT CALLBACK replace_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			init_replace_win_anchor(hwnd);
 			restore_replace_rel_pos(hwnd);
 			SetFocus(GetDlgItem(hwnd,IDC_REPLACE_THIS));
-			add_listbox_str_wc(hwnd,"File %s",fname);
+			add_listbox_str_wc(hwnd,L"File %s",fname);
 			add_listbox_str(hwnd,"%s",lb_str);
 			add_listbox_str(hwnd,"Replace with");
 			add_listbox_str(hwnd,"%s",replaced_str);
