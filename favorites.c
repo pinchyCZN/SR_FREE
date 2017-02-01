@@ -221,7 +221,6 @@ int move_item(HWND hlbox,int item,int dir)
 	item+=dir;
 	count=SendMessage(hlbox,LB_INSERTSTRING,item,tmp);
 	if(0<=count){
-		count-=dir;
 		SendMessage(hlbox,LB_SETCURSEL,count,0);
 		result=TRUE;
 	}
@@ -258,33 +257,31 @@ int sort_listbox(HWND hlbox)
 	return result;
 }
 
-WNDPROC orig_lbox=0;
-LRESULT APIENTRY subclass_lbox(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+int listbox_key(HWND hparent,HWND hlbox,int vkey)
 {
-	switch(msg){
-	case WM_GETDLGCODE:
-		switch(wparam){
-		case VK_UP:
-		case VK_DOWN:
-			if(GetKeyState(VK_CONTROL)&0x8000){
-				int sel_item;
-				sel_item=SendMessage(hwnd,LB_GETCURSEL,1,&sel_item);
-				if(sel_item>=0){
-					if(move_item(hwnd,sel_item,wparam==VK_UP?-1:1))
-						save_favs(GetParent(hwnd),IDC_LIST1);
+	int result=-1;
+	if(!(GetKeyState(VK_CONTROL)&0x8000))
+		return result;
+	switch(vkey){
+	case VK_UP:
+	case VK_DOWN:
+		{
+			int sel_item;
+			sel_item=SendMessage(hlbox,LB_GETCURSEL,1,&sel_item);
+			if(sel_item>=0){
+				if(move_item(hlbox,sel_item,vkey==VK_UP?-1:1)){
+					result=-2;
+					save_favs(hparent,IDC_LIST1);
 				}
 			}
-			break;
-		case 'S':
-			if(GetKeyState(VK_CONTROL)&0x8000){
-				if(sort_listbox(hwnd))
-					save_favs(GetParent(hwnd),IDC_LIST1);
-			}
-			break;
 		}
 		break;
+	case 'S':
+		if(sort_listbox(hlbox))
+			save_favs(hparent,IDC_LIST1);
+		break;
 	}
-	return CallWindowProc(orig_lbox,hwnd,msg,wparam,lparam); 
+	return result;
 }
 
 LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
@@ -311,7 +308,6 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SendDlgItemMessage(hwnd,IDC_FAV_EDIT,EM_SETLIMITTEXT,1024-1,0);
 		SetFocus(GetDlgItem(hwnd,IDC_FAV_EDIT));
 		SendDlgItemMessage(hwnd,IDC_FAV_EDIT,EM_SETSEL,0,-1);
-		orig_lbox=SetWindowLong(GetDlgItem(hwnd,IDC_LIST1),GWL_WNDPROC,subclass_lbox);
 		set_fonts(hwnd);
 		return 0;
 	case WM_DESTROY:
@@ -324,6 +320,11 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		break;
 	case WM_VKEYTOITEM:
 		switch(LOWORD(wparam)){
+		case VK_UP:
+		case VK_DOWN:
+		case 'S':
+			return listbox_key(hwnd,lparam,LOWORD(wparam));
+			break;
 		case VK_DELETE:
 			delete_selected_item(hwnd);
 			break;
