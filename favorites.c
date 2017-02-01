@@ -198,25 +198,99 @@ static int process_drop(HWND hwnd,HANDLE hdrop,int ctrl,int shift)
 	DragFinish(hdrop);
 	return TRUE;
 }
+
+int move_item(HWND hlbox,int item,int dir)
+{
+	int result=FALSE;
+	int count;
+	char tmp[512];
+	if(item==0 && dir<0)
+		return result;
+	count=SendMessage(hlbox,LB_GETCOUNT,0,0);
+	if(count>=0){
+		if(dir>0 && item>=(count-1))
+			return result;
+	}
+	else
+		return result;
+	count=SendMessage(hlbox,LB_GETTEXTLEN,item,0);
+	if((count+1)>=sizeof(tmp))
+		return result;
+	SendMessage(hlbox,LB_GETTEXT,item,tmp);
+	SendMessage(hlbox,LB_DELETESTRING,item,0);
+	item+=dir;
+	count=SendMessage(hlbox,LB_INSERTSTRING,item,tmp);
+	if(0<=count){
+		count-=dir;
+		SendMessage(hlbox,LB_SETCURSEL,count,0);
+		result=TRUE;
+	}
+	return result;
+}
+int sort_listbox(HWND hlbox)
+{
+	int count,result=FALSE;
+	const int MAX_STR_LEN=1024;
+	char *list;
+	count=SendMessage(hlbox,LB_GETCOUNT,0,0);
+	if(count<0)
+		return result;
+	list=calloc(count,MAX_STR_LEN);
+	if(list!=0){
+		int i;
+		for(i=0;i<count;i++){
+			int len;
+			len=SendMessage(hlbox,LB_GETTEXTLEN,i,0);
+			if((len+1)<=MAX_STR_LEN){
+				SendMessage(hlbox,LB_GETTEXT,i,list+i*MAX_STR_LEN);
+			}
+		}
+		qsort(list,count,MAX_STR_LEN,strcmp);
+		SendMessage(hlbox,LB_RESETCONTENT,0,0);
+		for(i=0;i<count;i++){
+			if(list[i*MAX_STR_LEN]!=0){
+				SendMessage(hlbox,LB_ADDSTRING,0,list+i*MAX_STR_LEN);
+			}
+		}
+		result=TRUE;
+		free(list);
+	}
+	return result;
+}
+
+WNDPROC orig_lbox=0;
+LRESULT APIENTRY subclass_lbox(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
+{
+	switch(msg){
+	case WM_GETDLGCODE:
+		switch(wparam){
+		case VK_UP:
+		case VK_DOWN:
+			if(GetKeyState(VK_CONTROL)&0x8000){
+				int sel_item;
+				sel_item=SendMessage(hwnd,LB_GETCURSEL,1,&sel_item);
+				if(sel_item>=0){
+					if(move_item(hwnd,sel_item,wparam==VK_UP?-1:1))
+						save_favs(GetParent(hwnd),IDC_LIST1);
+				}
+			}
+			break;
+		case 'S':
+			if(GetKeyState(VK_CONTROL)&0x8000){
+				if(sort_listbox(hwnd))
+					save_favs(GetParent(hwnd),IDC_LIST1);
+			}
+			break;
+		}
+		break;
+	}
+	return CallWindowProc(orig_lbox,hwnd,msg,wparam,lparam); 
+}
+
 LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 {
 	static HWND grippy=0;
 
-#ifdef _DEBUG
-	if(FALSE)
-//	if(message!=0x200&&message!=0x84&&message!=0x20&&message!=WM_ENTERIDLE)
-	if(msg!=WM_MOUSEFIRST&&msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE&&msg!=WM_DRAWITEM
-		&&msg!=WM_CTLCOLORBTN&&msg!=WM_CTLCOLOREDIT)
-	//if(msg!=WM_NCHITTEST&&msg!=WM_SETCURSOR&&msg!=WM_ENTERIDLE)
-	{
-		static DWORD tick=0;
-		if((GetTickCount()-tick)>500)
-			printf("--\n");
-		printf("*");
-		print_msg(msg,lparam,wparam);
-		tick=GetTickCount();
-	}
-#endif
 	switch(msg)
 	{
 	case WM_INITDIALOG:
@@ -237,6 +311,7 @@ LRESULT CALLBACK favorites_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 		SendDlgItemMessage(hwnd,IDC_FAV_EDIT,EM_SETLIMITTEXT,1024-1,0);
 		SetFocus(GetDlgItem(hwnd,IDC_FAV_EDIT));
 		SendDlgItemMessage(hwnd,IDC_FAV_EDIT,EM_SETSEL,0,-1);
+		orig_lbox=SetWindowLong(GetDlgItem(hwnd,IDC_LIST1),GWL_WNDPROC,subclass_lbox);
 		set_fonts(hwnd);
 		return 0;
 	case WM_DESTROY:
