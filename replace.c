@@ -51,8 +51,12 @@ int create_replace_str(char *istr,char *ostr,int olen)
 				for(i=0;i<size;i++){
 					if(i==col)
 						index+=len;
-					if(i>=col && i<=col+rlen && replace_index<rlen)
-						str[i]=rstr[replace_index++];
+					if(i>=col && i<=col+rlen && replace_index<rlen){
+						unsigned char a=rstr[replace_index++];
+						if(a<' ' || a>0x7F)
+							a='.';
+						str[i]=a;
+					}
 					else
 						str[i]=s[index++];
 				}
