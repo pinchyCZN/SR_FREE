@@ -265,35 +265,51 @@ int set_message_str_wc(HWND hwnd,WCHAR *fmt,...)
 	}
 	return TRUE;
 }
+int is_hex_digit(char a)
+{
+	int result=FALSE;
+	unsigned char b=upper_case(a);
+	if((b>='0' && b<='9') || (b>='A' && b<='F'))
+		result=TRUE;
+	return result;
+}
 int convert_hex_str(char *str,int size)
 {
-	int i,len,index=0;
+	int i,index;
 	char *s=str;
-	while(strlen(s)>0){
-		int hex,found=FALSE;
-		len=strlen(s);
-		if(len<=0 || len>=size-1)
-			break;
-		for(i=0;i<len;i++){
-			char a=upper_case(s[i]);
-			if(s[i]==0)
-				break;
-			if((a>='0' && a<='9') || (a>='A' && a<='F')){
-				s=s+i;
-				found=TRUE;
-				break;
+	i=index=0;
+	while(1){
+		char a,b;
+		a=upper_case(s[i++]);
+		b=0;
+		if(a=='0'){
+			b=s[i];
+			if(b=='x'){
+				i++;
+				a=s[i++];
+				b=0;
 			}
 		}
-		if(!found)
+		if((a>0) && (!is_hex_digit(a))){
+			continue;
+		}else if(a>0){
+			b=s[i++];
+		}
+		if(a==0)
 			break;
-		hex=strtoul(s,&s,16);
-		str[index++]=hex;
-		if(index>=size-1)
-			break;
-		if(s==0)
-			break;
+		{
+			char tmp[3]={0};
+			char *ptr=0;
+			tmp[0]=a;
+			if(is_hex_digit(b))
+				tmp[1]=b;
+			if(index>=size){
+				break;
+			}
+			str[index++]=strtoul(tmp,&ptr,16);
+		}
+		
 	}
-	str[index]=0;
 	return index;
 }
 int is_alphanumeric(unsigned char a)
@@ -794,7 +810,7 @@ int search_buffer(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 			b=search_str[i];
 			if(a==0 || b==0)
 				binary=TRUE;
-			if(!case_sensitive){
+			if(!(case_sensitive || hex_search)){
 				a=upper_case(a);
 				b=upper_case(b);
 			}
