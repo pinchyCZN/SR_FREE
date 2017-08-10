@@ -56,6 +56,7 @@ int draw_item(DRAWITEMSTRUCT *di,char *input_string)
     HBITMAP hbmpOld;
 	int bgcolor=COLOR_BACKGROUND;
 	int is_file=FALSE,is_line=FALSE,is_offset=FALSE;
+	int is_selected=di->itemState&ODS_SELECTED;
 
 	{
 		int i,index=0;
@@ -95,10 +96,9 @@ int draw_item(DRAWITEMSTRUCT *di,char *input_string)
 	BitBlt(di->hDC,di->rcItem.left,di->rcItem.top,di->rcItem.left+16,di->rcItem.top+16,hdcMem,0,0,SRCINVERT);
 	rect=di->rcItem;
 	rect.left+=16;
-//		DrawText(di->hDC,text,-1,&rect,style);
-//	SetTextColor(di->hDC,(0xFFFFFF^GetSysColor(COLOR_BTNTEXT)));
-	SetTextColor(di->hDC,GetSysColor(di->itemState&ODS_SELECTED ? COLOR_HIGHLIGHTTEXT:COLOR_WINDOWTEXT));
-	SetBkColor(di->hDC,GetSysColor(di->itemState&ODS_SELECTED ? COLOR_HIGHLIGHT:COLOR_WINDOW));
+
+	SetTextColor(di->hDC,GetSysColor(is_selected ? COLOR_HIGHLIGHTTEXT:COLOR_WINDOWTEXT));
+	SetBkColor(di->hDC,GetSysColor(is_selected ? COLOR_HIGHLIGHT:COLOR_WINDOW));
 	style=DT_LEFT|DT_NOPREFIX;
 	if(strnicmp(list_string,"file ",sizeof("file ")-1)==0)
 		is_file=TRUE;
@@ -176,7 +176,7 @@ int draw_item(DRAWITEMSTRUCT *di,char *input_string)
 				GetTextExtentPoint32(di->hDC,start,strlen(start),&size);
 				rect.left=rect.right;
 				rect.right=rect.left+size.cx;
-				SetTextColor(di->hDC,GetSysColor(COLOR_WINDOWTEXT));
+				SetTextColor(di->hDC,GetSysColor(is_selected ? COLOR_HIGHLIGHTTEXT:COLOR_WINDOWTEXT));
 				DrawText(di->hDC,start,-1,&rect,style);
 			}
 			else{
@@ -200,7 +200,7 @@ int draw_item(DRAWITEMSTRUCT *di,char *input_string)
 				GetTextExtentPoint32(di->hDC,start,strlen(start),&size);
 				rect.left=rect.right;
 				rect.right=rect.left+size.cx;
-				SetTextColor(di->hDC,GetSysColor(COLOR_WINDOWTEXT));
+				SetTextColor(di->hDC,GetSysColor(is_selected ? COLOR_HIGHLIGHTTEXT:COLOR_WINDOWTEXT));
 				DrawText(di->hDC,start,strlen(start),&rect,style);
 			}
 		}
