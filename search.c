@@ -1017,6 +1017,8 @@ int search_thread(HWND hwnd)
 	WIN32_FIND_DATAW fd;
 	int i,len,index,total=0;
 	int search_sub_dirs=TRUE;
+	char *orig_search_str=0;
+	char *orig_replace_str=0;
 	thread_busy=TRUE;
 	memset(&fd,0,sizeof(fd));
 	GetDlgItemTextW(ghwindow,IDC_COMBO_PATH,all_paths,sizeof(all_paths)/sizeof(WCHAR));
@@ -1033,6 +1035,12 @@ int search_thread(HWND hwnd)
 	match_whole=is_button_checked(ghwindow,IDC_WHOLEWORD);
 	hex_search=is_button_checked(ghwindow,IDC_HEX);
 	if(hex_search){
+		orig_search_str=malloc(sizeof(search_str));
+		orig_replace_str=malloc(sizeof(replace_str));
+		if(orig_search_str)
+			memcpy(orig_search_str,search_str,sizeof(search_str));
+		if(orig_replace_str)
+			memcpy(orig_replace_str,replace_str,sizeof(replace_str));
 		strlen_search_str=convert_hex_str(search_str,sizeof(search_str));
 		strlen_replace_str=convert_hex_str(replace_str,sizeof(replace_str));
 	}
@@ -1079,6 +1087,17 @@ int search_thread(HWND hwnd)
 					files_searched,total_matches,files_occured);
 
 		}
+	}
+	if(hex_search){
+		if(orig_search_str){
+			memcpy(search_str,orig_search_str,sizeof(search_str));
+			free(orig_search_str);
+		}
+		if(orig_replace_str){
+			memcpy(replace_str,orig_replace_str,sizeof(replace_str));
+			free(orig_replace_str);
+		}
+
 	}
 	PostMessage(hwnd,WM_APP,0,0);
 	thread_busy=FALSE;
