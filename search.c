@@ -726,43 +726,30 @@ EXIT2:
 	}
 	return 0;
 }
-int _isalnum(unsigned char a)
+int _istoken(unsigned char a)
 {
-	if((a>='0' && a<='9') || (a>='a' && a<='z') || (a>='A' && a<='Z'))
+	if((a>='0' && a<='9') || (a>='a' && a<='z') || (a>='A' && a<='Z') || a=='_')
 		return TRUE;
 	else
-		return FALSE;
-}
-int _isspace(unsigned char a)
-{
-	if(a==' ' || a=='\t' || a=='\r' || a=='\n')
-		return TRUE;
-	else 
 		return FALSE;
 }
 int verify_whole_word(char *str,int pos,int match_len,int str_len)
 {
 	int a,b;
 	if(pos>0){
-		a=_isalnum(str[pos-1]);
-		b=_isalnum(str[pos]);
+		a=_istoken(str[pos-1]);
+		b=_istoken(str[pos]);
 		if(a==b){
-			a=_isspace(str[pos-1]);
-			b=_isspace(str[pos]);
-			if(a==b)
-				return FALSE;
+			return FALSE;
 		}
 	}
 	if((pos+match_len)<str_len){
 		int c;
-		a=_isalnum(str[pos+match_len-1]);
-		b=_isalnum(str[pos+match_len]);
+		a=_istoken(str[pos+match_len-1]);
+		b=_istoken(str[pos+match_len]);
 		c=str[pos+match_len];
 		if(a==b && c!=0){
-			a=_isspace(str[pos+match_len-1]);
-			b=_isspace(str[pos+match_len]);
-			if(a==b)
-				return FALSE;
+			return FALSE;
 		}
 	}
 	return TRUE;
