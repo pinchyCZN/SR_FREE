@@ -306,7 +306,7 @@ int convert_hex_str(char *str,int size)
 			if(index>=size){
 				break;
 			}
-			str[index++]=strtoul(tmp,&ptr,16);
+			str[index++]=(char)strtoul(tmp,&ptr,16);
 		}
 		
 	}
@@ -622,7 +622,7 @@ int search_buffer_wildcard(FILE *f,HWND hwnd,int init,char *buf,int len,int eof)
 		if(stop_thread)
 			break;
 		{
-			char *str,*match;
+			const char *str,*match;
 			const char *mp;
 			const char *cp = NULL;
 			str=buf+pos;
@@ -1138,14 +1138,9 @@ LRESULT CALLBACK search_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 	{
 	case WM_INITDIALOG:
 		{
-			if(!thread_busy){
-				stop_thread=FALSE;
-				_beginthread(search_thread,0,hwnd);
-			}
-			else{
-				modeless_search_hwnd=0;
-				EndDialog(hwnd,0);
-			}
+			stop_thread=FALSE;
+			_beginthread(search_thread,0,hwnd);
+
 			grippy=create_grippy(hwnd);
 			init_search_prog_win_anchor(hwnd);
 			restore_search_prog_rel_pos(hwnd);
@@ -1241,7 +1236,7 @@ int start_search(HWND hwnd,int replace)
 #ifdef _DEBUG
 	save_ini_stuff(hwnd);
 #endif
-	do_replace=replace;
+	do_replace=FALSE;
 
 	str[0]=0;
 	GetDlgItemText(hwnd,IDC_COMBO_SEARCH,str,sizeof(str));
@@ -1271,8 +1266,14 @@ int start_search(HWND hwnd,int replace)
 	search_str[sizeof(search_str)-1]=0;
 	replace_str[sizeof(replace_str)-1]=0;
 	save_combo_edit_ctrl(hwnd);
-	if(replace)
+	if(replace){
+		if(thread_busy){
+			stop_thread=TRUE;
+			return 0;
+		}
+		do_replace=replace;
 		DialogBox(ghinstance,MAKEINTRESOURCE(IDD_SEARCH_PROGRESS),hwnd,search_proc);
+	}
 	else
 	{
 		if(modeless_search_hwnd==0)
