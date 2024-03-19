@@ -592,9 +592,11 @@ LRESULT CALLBACK view_context_proc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lpara
 		set_context_divider(hwnd,row_width);
 		line_count=get_number_of_lines(hwnd,IDC_CONTEXT);
 		open_file(&gfh);
-		fill_context(hwnd,IDC_CONTEXT,gfh);
-		set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
-		close_file(&gfh);
+		if(gfh){
+			fill_context(hwnd,IDC_CONTEXT,gfh);
+			set_scroll_pos(hwnd,IDC_CONTEXT_SCROLLBAR,gfh);
+			close_file(&gfh);
+		}
 		break;
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONUP:
