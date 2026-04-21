@@ -164,13 +164,41 @@ int anchor_resize(HWND hparent,struct CONTROL_ANCHOR *clist,int clist_len)
 	return 0;
 }
 
+int is_win_arranged(HWND hwnd)
+{
+	int result=0;
+	static int done=0;
+	typedef BOOL (WINAPI *PFN_IsWindowArranged)(HWND);
+	static PFN_IsWindowArranged pIsWindowArranged=0;
+	static HMODULE hmod = 0;
+	if(done){
+		return result;
+	}
+	if(0==hmod)
+		hmod=GetModuleHandle(TEXT("user32.dll"));
+	if(0==hmod)
+		hmod = LoadLibrary(TEXT("user32.dll"));
+	
+	
+	if((0==pIsWindowArranged) && hmod) {
+		pIsWindowArranged = (PFN_IsWindowArranged)GetProcAddress(hmod, "IsWindowArranged");
+	}
+	if(pIsWindowArranged) {
+		result=pIsWindowArranged(hwnd);
+	}
+	else{
+		done=1;
+	}
+	return result;
+}
+
 int save_win_rel_position(HWND hparent,HWND hwin,struct WIN_REL_POS *relpos)
 {
 	int result=FALSE;
 	memset(&relpos->parent,0,sizeof(relpos->parent));
 	relpos->parent.length=sizeof(WINDOWPLACEMENT);
 	if(GetWindowPlacement(hparent,&relpos->parent)){
-		if(relpos->parent.showCmd==SW_SHOWMAXIMIZED)
+		if((relpos->parent.showCmd==SW_SHOWMAXIMIZED) || is_win_arranged(hparent))
 			GetWindowRect(hparent,&relpos->parent.rcNormalPosition);
 		memset(&relpos->win,0,sizeof(relpos->win));
 		relpos->win.length=sizeof(WINDOWPLACEMENT);
