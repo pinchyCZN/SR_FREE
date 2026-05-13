@@ -172,6 +172,8 @@ int show_main_help(HWND hwnd,HELPINFO *hi)
 				"wildcards *,?\r\n"
 				"~=exclude\r\n"
 				"\\=path ex:\\*test* matches all paths that contain test\r\n"
+				"to exclude a file:~*.exe\r\n"
+				"to exclude a path:~\\*path\\subfolder\\sub*\r\n"
 				"seperate mask with ;\r\n"
 				,"HELP",MB_OK);
 			break;
