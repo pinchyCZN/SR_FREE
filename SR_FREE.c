@@ -147,7 +147,9 @@ int show_main_help(HWND hwnd,HELPINFO *hi)
 					"F9 / ctrl+o=open options\r\n"
 					"ALT+HOME = always on top\r\n"
 					"double click on line to open in context viewer\r\n"
-					"[1-9] open with app set in options\r\n"
+					"[1-9,0] open with app set in options\r\n"
+					"ctrl+o open with associated\r\n"
+					"\r\n"
 					"ctrl+a select all lines\r\n"
 					"ctrl+c copy lines\r\n"
 					"ctrl+shift+c copy lines with all info\r\n"
@@ -1091,9 +1093,16 @@ LRESULT CALLBACK MainDlg(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam)
 			case '0':case '1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
 				{
 					int index=CMD_OPENWITH+LOWORD(wparam)-'1';
-				if(LOWORD(wparam)=='0')
-					index=CMD_OPENASSOC;
-				handle_context_open(hwnd,index);
+					if('0'==key){
+						index=CMD_OPENWITH+9;
+					}
+					handle_context_open(hwnd,index);
+				}
+				break;
+			case 'O':
+				{
+					if(ctrl)
+						handle_context_open(hwnd,CMD_OPENASSOC);
 				}
 				break;
 			case 'C':
